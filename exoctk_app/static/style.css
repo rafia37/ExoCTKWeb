@@ -469,7 +469,7 @@ table.dataTable td {
 a               { color: #377BA8; text-decoration: none; }
 a:hover         { text-decoration: underline; }
 h1, h2          { font-family: 'Georgia', serif; margin: 0; }
-h1              { border-bottom: 2px solid #eee; }
+/*h1              { border-bottom: 2px solid #eee; }*/
 h2              { font-size: 1.2em; }
 .page           { background: white; padding: 0.8em; margin: 1em auto;}
 .error          { background: #F0D6D6; padding: 0.5em; margin: 2em auto; width: 35em; border: 5px solid #ccc;
@@ -480,14 +480,14 @@ h2              { font-size: 1.2em; }
 #grey_note a:hover  { text-decoration: underline; }
 
 /* Header (image and menu items) */
-#branding       { background: #000000; }
+#branding       { background: #ffffff;}
 
 #branding ul { list-style-type: none; margin: 0; padding: 0; overflow: hidden;
-               border: 0px; background-color: #000000; }
+               border:1px; border-color: #000000; background-color: #1E68AD; }
 #branding li { float: left; }
 #branding li a { display: block; color: white; text-align: center;
                  padding: 14px 16px; text-decoration: none; }
-#branding li a:hover { background-color: #f9f9f9; color: #373737; }
+#branding li a:hover { background-color: #eeeeee; color: #373737; }
 
 /* Hover box for Browse page */
 a span {
