@@ -20,15 +20,94 @@
         </p>
 
     </div>
+    
+    <h3>Step 1: Create a Model Grid</h3>
+    
+    <form id='searchform' method='post' action='results' >
+        <p> Enter the path to the directory of model spectra on your local machine:
+            <input type="text" name="modeldir" size="80" rows="1" value="/Users/jfilippazzo/Documents/Modules/limb_dark_jeff/limb/specint/" />
+        </p>
+    
+        <p><table>
+            <tr>
+                <td></td>
+                <td>min</td>
+                <td>max</td>
+            </tr>
+            <tr>
+                <td>Wavelength range [um]</td>
+                <td><input type="text" name="wave_min" size="10" rows="1" value="1.4" /></td>
+                <td><input type="text" name="wave_max" size="10" rows="1" value="1.8" /></td>
+            </tr>
+            <tr>
+                <td>Teff range [K]</td>
+                <td><input type="text" name="teff_min" size="10" rows="1" value="2400" /></td>
+                <td><input type="text" name="teff_max" size="10" rows="1" value="2700" /></td>
+            </tr>
+            <tr>
+                <td>Log(g) range [dex]</td>
+                <td><input type="text" name="logg_min" size="10" rows="1" value="4.5" /></td>
+                <td><input type="text" name="logg_max" size="10" rows="1" value="5.5" /></td>
+            </tr>
+            <tr>
+                <td>Fe/H range [dex]</td>
+                <td><input type="text" name="feh_min" size="10" rows="1" value="-0.5" /></td>
+                <td><input type="text" name="feh_max" size="10" rows="1" value="0.5" /></td>
+            </tr>
+        </table></p>
 
+    <h3>Step 2: Choose a Filter</h3>
+    
+    <input type="radio" name="bandpass" value="" checked> Top Hat<br>
+    <input type="radio" name="bandpass" value="2MASS/2MASS.J"> 2MASS J<br>
+    <input type="radio" name="bandpass" value="2MASS/2MASS.H"> 2MASS H<br>
+    <input type="radio" name="bandpass" value="2MASS/2MASS.Ks"> 2MASS Ks
+    
+    <h3>Step 3: Choose a Limb Darkening Profile</h3>
+    <input type="radio" name="profile" value="uniform"> Uniform<br>
+    <input type="radio" name="profile" value="linear"> Linear<br>
+    <input type="radio" name="profile" value="quadratic" checked> Quadratic<br>
+    <input type="radio" name="profile" value="square-root"> Square-root<br>
+    <input type="radio" name="profile" value="logarithmic"> Logarithmic<br>
+    <input type="radio" name="profile" value="exponential"> Exponential<br>
+    <input type="radio" name="profile" value="3-parameter"> 3-parameter<br>
+    <input type="radio" name="profile" value="nonlinear"> Nonlinear<br>
+    
+    <h3>Step 4: Choose the Stellar Parameters to Calculate</h3>
+    
+    <p><table>
+        <tr>
+            <td>Teff value [K]</td>
+            <td><input type="text" name="teff" size="10" rows="1" value="2553" /></td>
+        </tr>
+        <tr>
+            <td>Log(g) value [dex]</td>
+            <td><input type="text" name="logg" size="10" rows="1" value="5.22" /></td>
+        </tr>
+        <tr>
+            <td>Fe/H value [dex]</td>
+            <td><input type="text" name="feh" size="10" rows="1" value="0.0" /></td>
+        </tr>
+    </table></p>
+    
+    <br>
+    <p>
+        <input type='submit' value='Calculate Coefficients' />
+          (This can take up to 20 seconds.)
+    </p>
+    
     <hr>
 
     <p id="grey_note">
-        Created by <a href="http://stsci.edu/~jfilippazzo/">Joe Filippazzo</a>.</br>
-        Running ExoCTK version {{version|safe}}.</br>
-        <a href="http://dx.doi.org/10.5281/zenodo.47866">
-            <img src="https://zenodo.org/badge/doi/10.5281/zenodo.47866.svg" alt="10.5281/zenodo.47866">
-        </a>
+        <div style="float:left;">
+            Running ExoCTK version {{version|safe}}.<br>
+            <p><a href="http://dx.doi.org/10.5281/zenodo.47866">
+                <img src="https://zenodo.org/badge/doi/10.5281/zenodo.47866.svg" alt="10.5281/zenodo.47866">
+            </a></p>
+        </div>
+        <div style="float:right;">
+            <a style="float:right" href='/'><img src="static/images/STScI_logo.png" width="150px" /></a>
+        </div>
     </p>
 
 </div>

@@ -1,0 +1,68 @@
+<!doctype html>
+<title>ExoCTK: Limb Darkening Calculator</title>
+<link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
+<script src="{{ url_for('static', filename='jquery-1.12.0.min.js')}} "></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.js"></script>
+
+<link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-0.11.0.min.css" type="text/css" />
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.11.0.min.js"></script>
+
+{{ script|safe }}
+
+<header id="branding">
+    <a href='/'><img src="static/images/ExoCTK_logo.gif" width="500px" /></a>
+    <ul>
+        <li><a href="ldc">Limb Darkening Caluclator</a></li>
+        <li><a href="pal">Planetary Atmospheres Libraries</a></li>
+    </ul>
+</header>
+
+<div class=page>
+
+    <h1>Limb Darkening Calculator</h1>
+
+    <div class=metanav>
+        <p>
+            Here is a bunch of stuff about the LDC.
+        </p>
+
+    </div>
+    
+    <h3>Results</h3>
+    
+    <p>Coefficients:
+    {{coeff|safe}}</p>
+    
+    <p>Mu:
+    {{mu|safe}}</p>
+    
+    <p>Effective Radius:
+    {{r|safe}}</p>
+    
+    {{ plot|safe }}
+
+    <form id='formatselect' method='post' action='savefile' >
+        <p>Save to a file:
+            <select name="format">
+                <option value="ascii">ASCII</option>
+                <option value="votable">VOTable</option>
+            </select>
+            <input type='submit' value='Save' />
+        </p>
+    </form>
+
+</div>
+
+<hr>
+
+<p id="grey_note">
+    <div style="float:left;">
+        Running ExoCTK version {{version|safe}}.<br>
+        <p><a href="http://dx.doi.org/10.5281/zenodo.47866">
+            <img src="https://zenodo.org/badge/doi/10.5281/zenodo.47866.svg" alt="10.5281/zenodo.47866">
+        </a></p>
+    </div>
+    <div style="float:right;">
+        <a style="float:right" href='/'><img src="static/images/STScI_logo.png" width="150px" /></a>
+    </div>
+</p>

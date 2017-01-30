@@ -1,37 +1,52 @@
-<!doctype html>
-<title>ExoCTK</title>
-<link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ExoCTK</title>
+        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
+        <link rel="import" href="header.html">
+    
+    </head>
+    <body>
 
-<header id="branding">
-    <a href='/'><img src="static/images/ExoCTK_logo.gif" width="500px" /></a>
-    <ul>
-        <li><a href="ldc">Limb Darkening Caluclator</a></li>
-        <li><a href="pal">Planetary Atmospheres Libraries</a></li>
-    </ul>
-</header>
+        <header id="branding">
+            <a href='/'><img src="static/images/ExoCTK_logo.gif" width="500px" /></a>
+            <ul>
+                <li><a href="ldc">Limb Darkening Caluclator</a></li>
+                <li><a href="pal">Planetary Atmospheres Libraries</a></li>
+            </ul>
+        </header>
 
-<div class=page>
+        <div class=page>
 
-    <h1>Exoplanet Characterization Tool Kit</h1>
+            <h1>Exoplanet Characterization Tool Kit</h1>
 
-    <div class=metanav>
-        <p>
-            Here is a description of what this Web app can do.
+            <div class=metanav>
+                <p>
+                    Here is a description of what this Web app can do.
+                </p>
+                <p>
+                    Here is a link to the Github package if you want the full functionality.
+                </p>
+
+            </div>
+
+        <div id="footer"></div>
+
+        </div>
+        
+        <hr>
+
+        <p id="grey_note">
+            <div style="float:left;">
+                Running ExoCTK version {{version|safe}}.<br>
+                <p><a href="http://dx.doi.org/10.5281/zenodo.47866">
+                    <img src="https://zenodo.org/badge/doi/10.5281/zenodo.47866.svg" alt="10.5281/zenodo.47866">
+                </a></p>
+            </div>
+            <div style="float:right;">
+                <a style="float:right" href='/'><img src="static/images/STScI_logo.png" width="150px" /></a>
+            </div>
         </p>
-        <p>
-            Here is a link to the Github package if you want the full functionality.
-        </p>
-
-    </div>
-
-    <hr>
-
-    <p id="grey_note">
-        Created by <a href="http://stsci.edu/~jfilippazzo/">Joe Filippazzo</a>.</br>
-        Running ExoCTK version {{version|safe}}.</br>
-        <a href="http://dx.doi.org/10.5281/zenodo.47866">
-            <img src="https://zenodo.org/badge/doi/10.5281/zenodo.47866.svg" alt="10.5281/zenodo.47866">
-        </a>
-    </p>
-
-</div>
+        
+    </body>
+</html>
