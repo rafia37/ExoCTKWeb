@@ -5,10 +5,16 @@ app_exoctk = Flask(__name__)
 import ExoCTK
 import pandas
 import numpy as np
-from bokeh.plotting import figure
+import matplotlib.pyplot as plt
+import bokeh
 from bokeh.embed import components
-from bokeh.models import ColumnDataSource, HoverTool, OpenURL, TapTool
-from bokeh.models.widgets import Panel, Tabs
+from bokeh.models import Range1d, Label
+from bokeh import mpl
+from bokeh.core.properties import Override
+from bokeh.models import Label
+# from bokeh.plotting import figure
+# from bokeh.models import ColumnDataSource, HoverTool, OpenURL, TapTool
+# from bokeh.models.widgets import Panel, Tabs
 
 # Redirect to the index
 VERSION = ExoCTK.__version__
@@ -28,7 +34,7 @@ def exoctk_ldc():
 @app_exoctk.route('/results', methods=['GET', 'POST'])
 def exoctk_results():
     
-    # Get the input
+    # Get the input from the form
     modeldir = request.form['modeldir']
     wave_rng = (float(request.form['wave_min']),float(request.form['wave_max']))
     Teff_rng = (float(request.form['teff_min']),float(request.form['teff_max']))
@@ -45,21 +51,17 @@ def exoctk_results():
     model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng, wave_rng=wave_rng)
 
     # Calculate the coefficients
-    coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass)
+    coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=True)
     
-    # Plotting
-    tools = "resize,crosshair,pan,wheel_zoom,box_zoom,reset"
-    x = 'Wavelength (um)'
-    y = 'Limb Darkening'
+    # Make the matplotlib plot into a Bokeh plot
+    p = mpl.to_bokeh()
+    p.y_range = Range1d(0, 1)
+    p.x_range = Range1d(0, 1)
     
-    # can specify plot_width if needed
-    p = figure(tools=tools, title='Foo', x_axis_label=x, y_axis_label=y, plot_width=800)
-
-    # Evaluate the limb darkening profile
-    mu_vals = np.linspace(0, 1, 1000)
-    ldfunc = ExoCTK.ldc.ldcfit.ld_profile(profile)
-    ld_vals = ldfunc(mu_vals, *coeff)
-    p.line(mu_vals, ld_vals, line_width=2)
+    # p.xaxis.axis_label = LatexLabel(text=plt.gca().xaxis.get_label().get_text(),
+    #                      x_units='screen', y_units='screen', render_mode='css', text_font_size='16pt')
+    # p.yaxis.axis_label = LatexLabel(text=plt.gca().yaxis.get_label().get_text(),
+    #                      x_units='screen', y_units='screen', render_mode='css', text_font_size='16pt')
 
     script, div = components(p)
 
@@ -77,3 +79,64 @@ def exoctk_savefile():
     response = make_response(file_as_string)
     response.headers["Content-Disposition"] = "attachment; filename=%s" % filename
     return response
+
+JS_CODE = """
+import {Label, LabelView} from "models/annotations/label"
+
+export class LatexLabelView extends LabelView
+  render: () ->
+
+    #--- Start of copied section from ``Label.render`` implementation
+
+    ctx = @plot_view.canvas_view.ctx
+
+    # Here because AngleSpec does units tranform and label doesn't support specs
+    switch @model.angle_units
+      when "rad" then angle = -1 * @model.angle
+      when "deg" then angle = -1 * @model.angle * Math.PI/180.0
+
+    if @model.x_units == "data"
+      vx = @xmapper.map_to_target(@model.x)
+    else
+      vx = @model.x
+    sx = @canvas.vx_to_sx(vx)
+
+    if @model.y_units == "data"
+      vy = @ymapper.map_to_target(@model.y)
+    else
+      vy = @model.y
+    sy = @canvas.vy_to_sy(vy)
+
+    if @model.panel?
+      panel_offset = @_get_panel_offset()
+      sx += panel_offset.x
+      sy += panel_offset.y
+
+    #--- End of copied section from ``Label.render`` implementation
+
+    # ``katex`` is loaded into the global window at runtime
+    # katex.renderToString returns a html ``span`` element
+    latex = katex.renderToString(@model.text, {displayMode: true})
+
+    # Must render as superpositioned div (not on canvas) so that KaTex
+    # css can properly style the text
+    @_css_text(ctx, latex, sx + @model.x_offset, sy - @model.y_offset, angle)
+
+export class LatexLabel extends Label
+  type: 'LatexLabel'
+  default_view: LatexLabelView
+"""
+
+class LatexLabel(Label):
+    """A subclass of the Bokeh built-in `Label` that supports rendering
+    LaTex using the KaTex typesetting library.
+
+    Only the render method of LabelView is overloaded to perform the
+    text -> latex (via katex) conversion. Note: ``render_mode="canvas``
+    isn't supported and certain DOM manipulation happens in the Label
+    superclass implementation that requires explicitly setting
+    `render_mode='css'`).
+    """
+    __javascript__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js"]
+    __css__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css"]
+    __implementation__ = JS_CODE
