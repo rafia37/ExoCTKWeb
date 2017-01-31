@@ -32,16 +32,12 @@
                 </p>
 
             </div>
+        
+            {{summary|safe}}
+            
+            <br>
     
-            <h3>Results</h3>
-    
-            <p>Coefficients: {{coeff|safe}}</p>
-    
-            <p>Mu: {{mu|safe}}</p>
-    
-            <p>Effective Radius: {{r|safe}}</p>
-    
-            <p>{{ plot|safe }}</p>
+            {{ plot|safe }}
 
             <form id='formatselect' method='post' action='savefile' >
                 <p>Save to a file:

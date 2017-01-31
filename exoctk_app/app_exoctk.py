@@ -53,19 +53,56 @@ def exoctk_results():
     # Calculate the coefficients
     coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=True)
     
+    # Make some HTML for the input summary
+    coeff_text = ', '.join(['c{} = {:.3f}'.format(n+1,c) for n,c in enumerate(coeff)])
+    summary = """<h3>Input</h3>
+    <table style="border-spacing: 10px; border-collapse: separate;">
+    <tr>
+        <td>Teff</td>
+        <td>{}</td>
+    </tr>
+    <tr>
+        <td>log(g)</td>
+        <td>{}</td>
+    </tr>
+    <tr>
+        <td>Fe/H</td>
+        <td>{}</td>
+    </tr>
+    <tr>
+        <td>Bandpass</td>
+        <td>{}</td>
+    </tr>
+    <tr>
+        <td>Profile</td>
+        <td>{}</td>
+    </tr>
+    </table>
+    <h3>Result</h3>
+    <table style="border-spacing: 10px; border-collapse: separate;">
+    <tr>
+        <td>Coefficients</td>
+        <td>{}</td>
+    </tr>
+    <tr>
+        <td>mu</td>
+        <td>{:.3f}</td>
+    </tr>
+    <tr>
+        <td>Effective Radius</td>
+        <td>{}</td>
+    </tr>
+    
+    </table>
+    """.format(teff, logg, feh, bandpass or 'None', profile, coeff_text, mu, int(r))
+    
     # Make the matplotlib plot into a Bokeh plot
     p = mpl.to_bokeh()
     p.y_range = Range1d(0, 1)
     p.x_range = Range1d(0, 1)
-    
-    # p.xaxis.axis_label = LatexLabel(text=plt.gca().xaxis.get_label().get_text(),
-    #                      x_units='screen', y_units='screen', render_mode='css', text_font_size='16pt')
-    # p.yaxis.axis_label = LatexLabel(text=plt.gca().yaxis.get_label().get_text(),
-    #                      x_units='screen', y_units='screen', render_mode='css', text_font_size='16pt')
-
     script, div = components(p)
 
-    return render_template('results.html', coeff=coeff, mu=mu, r=r, script=script, plot=div, version=VERSION)
+    return render_template('results.html', summary=summary, script=script, plot=div, version=VERSION)
 
 # Save the results to file
 @app_exoctk.route('/savefile', methods=['POST'])
@@ -79,64 +116,3 @@ def exoctk_savefile():
     response = make_response(file_as_string)
     response.headers["Content-Disposition"] = "attachment; filename=%s" % filename
     return response
-
-JS_CODE = """
-import {Label, LabelView} from "models/annotations/label"
-
-export class LatexLabelView extends LabelView
-  render: () ->
-
-    #--- Start of copied section from ``Label.render`` implementation
-
-    ctx = @plot_view.canvas_view.ctx
-
-    # Here because AngleSpec does units tranform and label doesn't support specs
-    switch @model.angle_units
-      when "rad" then angle = -1 * @model.angle
-      when "deg" then angle = -1 * @model.angle * Math.PI/180.0
-
-    if @model.x_units == "data"
-      vx = @xmapper.map_to_target(@model.x)
-    else
-      vx = @model.x
-    sx = @canvas.vx_to_sx(vx)
-
-    if @model.y_units == "data"
-      vy = @ymapper.map_to_target(@model.y)
-    else
-      vy = @model.y
-    sy = @canvas.vy_to_sy(vy)
-
-    if @model.panel?
-      panel_offset = @_get_panel_offset()
-      sx += panel_offset.x
-      sy += panel_offset.y
-
-    #--- End of copied section from ``Label.render`` implementation
-
-    # ``katex`` is loaded into the global window at runtime
-    # katex.renderToString returns a html ``span`` element
-    latex = katex.renderToString(@model.text, {displayMode: true})
-
-    # Must render as superpositioned div (not on canvas) so that KaTex
-    # css can properly style the text
-    @_css_text(ctx, latex, sx + @model.x_offset, sy - @model.y_offset, angle)
-
-export class LatexLabel extends Label
-  type: 'LatexLabel'
-  default_view: LatexLabelView
-"""
-
-class LatexLabel(Label):
-    """A subclass of the Bokeh built-in `Label` that supports rendering
-    LaTex using the KaTex typesetting library.
-
-    Only the render method of LabelView is overloaded to perform the
-    text -> latex (via katex) conversion. Note: ``render_mode="canvas``
-    isn't supported and certain DOM manipulation happens in the Label
-    superclass implementation that requires explicitly setting
-    `render_mode='css'`).
-    """
-    __javascript__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js"]
-    __css__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css"]
-    __implementation__ = JS_CODE
