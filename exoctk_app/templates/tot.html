@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+    <head>
+        <title>ExoCTK: Transit Observation Tools</title>
+        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
+        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
+    </head>
+    <body>
+
+        <script>
+            $(document).ready(function(){
+                $("#header").load('{{ url_for('static',filename='header.html')}}');
+                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
+            });
+        </script>
+    
+        <div id="header"></div>
+
+        <div class=page>
+
+            <h1>Transit Observation Tools</h1>
+
+            <div class=metanav>
+                <p>
+                    Here is a bunch of stuff about the TOT.
+                </p>
+
+            </div>
+    
+            <form id='searchform' method='post' action='tot_results' >
+                
+                <h3>Step 1: Data</h3>
+                
+                <p><table>
+                    <tr>
+                        <td>Model spectrum filename</td>
+                        <td><input type="text" name="exopath" size="50" rows="1" value="/Users/jfilippazzo/Documents/Modules/ExoCTK/ExoCTK/data/tot/WASP43b-Eclipse_Spectrum.txt" /></td>
+                    </tr>
+                    <tr>
+                        <td>Wavelength units</td>
+                        <td>
+                            <div style="width:5em; float:left"><input type="radio" name="w_unit" value="um" checked> um</div>
+                            <div style="width:5em; float:left"><input type="radio" name="w_unit" value="nm"> nm</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Flux units</td>
+                        <td>
+                            <div style="width:5em; float:left"><input type="radio" name="f_unit" value="fp/f*" checked> fp/f*</div>
+                            <div style="width:5em; float:left"><input type="radio" name="f_unit" value="(rp/r*)^2"> (rp/r*)^2</div>
+                        </td>
+                    </tr>
+                </table></p>
+                
+                <h3>Step 2: System Parameters</h3>
+                
+                <p><table>
+                    <tr>
+                        <td>H-band magnitude of the system</td>
+                        <td><input type="text" name="hmag" size="10" rows="1" value="9.397" /></td>
+                    </tr>
+                    <tr>
+                        <td>Orbital inclination [degrees]</td>
+                        <td><input type="text" name="i" size="10" rows="1" value="82.6" /></td>
+                    </tr>
+                    <tr>
+                        <td>Semi-major axis [R*]</td>
+                        <td><input type="text" name="ars" size="10" rows="1" value="5.13" /></td>
+                    </tr>
+                    <tr>
+                        <td>Orbital period [days]</td>
+                        <td><input type="text" name="period" size="10" rows="1" value="0.8135" /></td>
+                    </tr>
+                </table></p>
+                
+                <h3>Step 3: Detector and Observation Inputs</h3>
+    
+                <br>
+                <p>
+                    <input type='submit' value='Calculate Transit Curves' />
+                      (This can take up to 20 seconds.)
+                </p>
+            
+            </form>
+
+        </div>
+    
+        <div id="footer"></div>
+
+    </body>
+</html>

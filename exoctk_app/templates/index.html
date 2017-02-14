@@ -2,19 +2,18 @@
 <html>
     <head>
         <title>ExoCTK</title>
-        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
-        <link rel="import" href="header.html">
-    
+        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>    
+        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
     </head>
     <body>
-
-        <header id="branding">
-            <a href='/'><img src="static/images/ExoCTK_logo.gif" width="500px" /></a>
-            <ul>
-                <li><a href="ldc">Limb Darkening Caluclator</a></li>
-                <li><a href="pal">Planetary Atmospheres Libraries</a></li>
-            </ul>
-        </header>
+        <script>
+            $(document).ready(function(){
+                $("#header").load('{{ url_for('static',filename='header.html')}}');
+                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
+            });
+        </script>
+            
+        <div id="header"></div>
 
         <div class=page>
 
@@ -30,23 +29,9 @@
 
             </div>
 
-        <div id="footer"></div>
-
         </div>
         
-        <hr>
-
-        <p id="grey_note">
-            <div style="float:left;">
-                Running ExoCTK version {{version|safe}}.<br>
-                <p><a href="http://dx.doi.org/10.5281/zenodo.47866">
-                    <img src="https://zenodo.org/badge/doi/10.5281/zenodo.47866.svg" alt="10.5281/zenodo.47866">
-                </a></p>
-            </div>
-            <div style="float:right;">
-                <a style="float:right" href='/'><img src="static/images/STScI_logo.png" width="150px" /></a>
-            </div>
-        </p>
+        <div id="footer"></div>
         
     </body>
 </html>

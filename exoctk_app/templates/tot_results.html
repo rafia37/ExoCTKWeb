@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>ExoCTK: Transit Observation Tools</title>
+        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
+        <script src="{{ url_for('static', filename='jquery-1.12.0.min.js')}} "></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.js"></script>
+
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.css" type="text/css" />
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.js"></script>
+        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
+
+    </head>
+    <body>
+        
+        {{sim_script|safe}}
+        {{obs_script|safe}}
+
+        <script>
+            $(document).ready(function(){
+                $("#header").load('{{ url_for('static',filename='header.html')}}');
+                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
+            });
+        </script>
+    
+        <div id="header"></div>
+
+        <div class=page>
+
+            <h1>Transit Observation Tools</h1>
+
+            <div class=metanav>
+                <p>
+                    Here is a bunch of stuff about the TOT.
+                </p>
+
+            </div>
+        
+            {{summary|safe}}
+            
+            <br>
+    
+            {{sim_plot|safe}}
+                        
+            {{obs_plot|safe}}
+            
+            <form id='formatselect' method='post' action='savefile' >
+                <p>Save to a file:
+                    <select name="format">
+                        <option value="ascii">ASCII</option>
+                        <option value="votable">VOTable</option>
+                    </select>
+                    <input type='submit' value='Save' />
+                </p>
+            </form>
+
+        </div>
+
+        <div id="footer"></div>
+        
+    </body>
+</html>
