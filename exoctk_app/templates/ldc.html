@@ -66,9 +66,7 @@
                 <h3>Step 2: Choose a Filter</h3>
     
                 <input type="radio" name="bandpass" value="" checked> Top Hat<br>
-                <input type="radio" name="bandpass" value="2MASS/2MASS.J"> 2MASS J<br>
-                <input type="radio" name="bandpass" value="2MASS/2MASS.H"> 2MASS H<br>
-                <input type="radio" name="bandpass" value="2MASS/2MASS.Ks"> 2MASS Ks
+                {{filters|safe}}
     
                 <h3>Step 3: Choose a Limb Darkening Profile</h3>
                 <input type="radio" name="profile" value="uniform"> Uniform<br>

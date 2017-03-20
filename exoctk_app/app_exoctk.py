@@ -27,7 +27,13 @@ def index():
 # Load the LDC page
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
 def exoctk_ldc():
-    return render_template('ldc.html', version=VERSION)
+    # Get all the available filters
+    filters = ExoCTK.core.filter_list()['bands']
+    
+    # Make HTML for filters
+    filt_list = '\n'.join(['<input type="radio" name="bandpass" value="{0}">{0}<br>'.format(b) for b in filters])
+    
+    return render_template('ldc.html', filters=filt_list, version=VERSION)
     
 # Load the LDC results page
 @app_exoctk.route('/ldc_results', methods=['GET', 'POST'])
