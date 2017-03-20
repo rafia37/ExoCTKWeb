@@ -59,7 +59,11 @@ def exoctk_ldc_results():
     coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=True)
     
     # Make some HTML for the input summary
-    coeff_text = ', '.join(['c{} = {:.3f}'.format(n+1,c) for n,c in enumerate(coeff)])
+    #coeff_text = ', '.join(['c{} = {:.3f}'.format(n+1,c) for n,c in enumerate(coeff)])
+    coeff_text = ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)
+    for n,c in enumerate(coeff):
+        coeff_text = coeff_text.replace('c{}'.format(n+1),'{:.3f}'.format(c))
+    
     summary = """<h3>Input</h3>
     <table style="border-spacing: 10px; border-collapse: separate;">
     <tr>
@@ -86,11 +90,11 @@ def exoctk_ldc_results():
     <h3>Result</h3>
     <table style="border-spacing: 10px; border-collapse: separate;">
     <tr>
-        <td>Coefficients</td>
-        <td>{}</td>
+        <td>Polynomial</td>
+        <td>\({}\)</td>
     </tr>
     <tr>
-        <td>mu</td>
+        <td>\(\mu\)</td>
         <td>{:.3f}</td>
     </tr>
     <tr>
@@ -99,7 +103,7 @@ def exoctk_ldc_results():
     </tr>
     
     </table>
-    """.format(teff, logg, feh, bandpass or 'None', profile, coeff_text, mu, int(r))
+    """.format(teff, logg, feh, bandpass or 'None', profile, coeff_text.replace('*','\cdot'), mu, int(r))
     
     # Make the matplotlib plot into a Bokeh plot
     p = mpl.to_bokeh()
