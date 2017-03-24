@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, make_response
+from flask import Flask, render_template, request, redirect, make_response, current_app
+from flask_cache import Cache
 
 app_exoctk = Flask(__name__)
 
@@ -6,14 +7,20 @@ import ExoCTK
 import numpy as np
 import matplotlib.pyplot as plt
 import bokeh
-from bokeh.embed import components
-from bokeh.models import Range1d, Label
 from bokeh import mpl
 from bokeh.core.properties import Override
+from bokeh.embed import components
+from bokeh.models import Range1d
 from bokeh.models import Label
-# from bokeh.plotting import figure
-# from bokeh.models import ColumnDataSource, HoverTool, OpenURL, TapTool
-# from bokeh.models.widgets import Panel, Tabs
+from bokeh.models import HoverTool
+from bokeh.models import ColumnDataSource
+from bokeh.plotting import figure, show
+
+# define the cache config keys, remember that it can be done in a settings file
+app_exoctk.config['CACHE_TYPE'] = 'simple'
+
+# register the cache instance and binds it on to your app 
+cache = Cache(app_exoctk)
 
 # Redirect to the index
 VERSION = ExoCTK.__version__
@@ -31,7 +38,7 @@ def exoctk_ldc():
     filters = ExoCTK.core.filter_list()['bands']
     
     # Make HTML for filters
-    filt_list = '\n'.join(['<input type="radio" name="bandpass" value="{0}">{0}<br>'.format(b) for b in filters])
+    filt_list = '\n'.join(['<input type="radio" name="bandpass" value="{0}"> {0}<br>'.format(b) for b in filters])
     
     return render_template('ldc.html', filters=filt_list, version=VERSION)
     
@@ -51,67 +58,66 @@ def exoctk_ldc_results():
     logg = float(request.form['logg'])
     feh = float(request.form['feh'])
     
-    # Make the model grid
-    model_grid = ExoCTK.core.ModelGrid(modeldir)
-    model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng, wave_rng=wave_rng)
+    # Make the model grid, caching if necessary
+    grid_params = ['_'.join(map(str,tup)) for tup in [Teff_rng,logg_rng,FeH_rng,wave_rng]]
+    cache_key = modeldir.replace('/','_')+'_'.join(grid_params)
+    cached = cache.get(cache_key)
+    print(cache_key)
+    if cached:
+        model_grid = cached
+    else:
+        model_grid = ExoCTK.core.ModelGrid(modeldir)
+        model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng, wave_rng=wave_rng)
+    
+        if len(model_grid.data)>0:
+            cache.set(cache_key, model_grid, timeout=300)
+        
+    if len(model_grid.data)==0:
+        
+        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                    band=bandpass or 'None', profile=profile, models=model_grid.path, \
+                    script=script, version=VERSION)
+    
+    else:
+        
+        # Calculate the coefficients
+        coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=True)
+    
+        # LaTeX formatting
+        r = '{:.4f} R_\odot'.format(r*1.4377979836321077e-11)
+        mu = '{:.4f}'.format(mu)
+        coeff_text = ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)
+        for n,c in enumerate(coeff):
+            coeff_text = coeff_text.replace('c{}'.format(n+1),'{:.3f}'.format(c))
+        poly = coeff_text.replace('*','\cdot')
+    
+        # Make the matplotlib plot into a Bokeh plot
+        p = mpl.to_bokeh()
+        p.y_range = Range1d(0, 1)
+        p.x_range = Range1d(0, 1)
+        
+        # # Make LaTeX labels
+        # xlabel = LatexLabel(text="\mu", angle=0, angle_units='deg',
+        #                    x=250, y=-20, x_units='screen', y_units='screen',
+        #                    render_mode='css', text_font_size='16pt',
+        #                    background_fill_color='#ffffff')
+        # ylabel = LatexLabel(text="I(\mu)/I(\mu=1)", angle=90, angle_units='deg',
+        #                    x=-100, y=250, x_units='screen', y_units='screen',
+        #                    render_mode='css', text_font_size='16pt',
+        #                    background_fill_color='#ffffff')
+        # p.add_layout(xlabel)
+        # p.add_layout(ylabel)
+        
+        script, div = components(p)
 
-    # Calculate the coefficients
-    coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=True)
-    
-    # Make some HTML for the input summary
-    #coeff_text = ', '.join(['c{} = {:.3f}'.format(n+1,c) for n,c in enumerate(coeff)])
-    coeff_text = ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)
-    for n,c in enumerate(coeff):
-        coeff_text = coeff_text.replace('c{}'.format(n+1),'{:.3f}'.format(c))
-    
-    summary = """<h3>Input</h3>
-    <table style="border-spacing: 10px; border-collapse: separate;">
-    <tr>
-        <td>Teff</td>
-        <td>{}</td>
-    </tr>
-    <tr>
-        <td>log(g)</td>
-        <td>{}</td>
-    </tr>
-    <tr>
-        <td>Fe/H</td>
-        <td>{}</td>
-    </tr>
-    <tr>
-        <td>Bandpass</td>
-        <td>{}</td>
-    </tr>
-    <tr>
-        <td>Profile</td>
-        <td>{}</td>
-    </tr>
-    </table>
-    <h3>Result</h3>
-    <table style="border-spacing: 10px; border-collapse: separate;">
-    <tr>
-        <td>Polynomial</td>
-        <td>\({}\)</td>
-    </tr>
-    <tr>
-        <td>\(\mu\)</td>
-        <td>{:.3f}</td>
-    </tr>
-    <tr>
-        <td>Effective Radius</td>
-        <td>{}</td>
-    </tr>
-    
-    </table>
-    """.format(teff, logg, feh, bandpass or 'None', profile, coeff_text.replace('*','\cdot'), mu, int(r))
-    
-    # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
-    p.y_range = Range1d(0, 1)
-    p.x_range = Range1d(0, 1)
-    script, div = components(p)
+        return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
+                    band=bandpass or 'None', profile=profile, poly=poly, mu=mu, \
+                    r=r, models=model_grid.path, script=script, plot=div, version=VERSION)
 
-    return render_template('ldc_results.html', summary=summary, script=script, plot=div, version=VERSION)
+# Load the LDC error page
+@app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
+def exoctk_ldc_error():
+    return render_template('ldc_error.html', version=VERSION)
 
 # Load the TOT page
 @app_exoctk.route('/tot', methods=['GET', 'POST'])
@@ -215,9 +221,7 @@ def exoctk_tot_results():
     
     return render_template('tot_results.html', summary=summary, sim_script=sim_script, sim_plot=sim_plot, 
                            obs_script=obs_script, obs_plot=obs_plot, version=VERSION)
-                           
-# tony darnell, scott lewis, ask to do one about Backyard Worlds?
-# Write blog post
+    
 
 # Save the results to file
 @app_exoctk.route('/savefile', methods=['POST'])
@@ -231,3 +235,65 @@ def exoctk_savefile():
     response = make_response(file_as_string)
     response.headers["Content-Disposition"] = "attachment; filename=%s" % filename
     return response
+
+class LatexLabel(Label):
+    """A subclass of the Bokeh built-in `Label` that supports rendering
+    LaTex using the KaTex typesetting library.
+
+    Only the render method of LabelView is overloaded to perform the
+    text -> latex (via katex) conversion. Note: ``render_mode="canvas``
+    isn't supported and certain DOM manipulation happens in the Label
+    superclass implementation that requires explicitly setting
+    `render_mode='css'`).
+    """
+    __javascript__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js"]
+    __css__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css"]
+    __implementation__ = """
+import {Label, LabelView} from "models/annotations/label"
+
+export class LatexLabelView extends LabelView
+  render: () ->
+
+    #--- Start of copied section from ``Label.render`` implementation
+
+    ctx = @plot_view.canvas_view.ctx
+
+    # Here because AngleSpec does units tranform and label doesn't support specs
+    switch @model.angle_units
+      when "rad" then angle = -1 * @model.angle
+      when "deg" then angle = -1 * @model.angle * Math.PI/180.0
+
+    if @model.x_units == "data"
+      vx = @xmapper.map_to_target(@model.x)
+    else
+      vx = @model.x
+    sx = @canvas.vx_to_sx(vx)
+
+    if @model.y_units == "data"
+      vy = @ymapper.map_to_target(@model.y)
+    else
+      vy = @model.y
+    sy = @canvas.vy_to_sy(vy)
+
+    if @model.panel?
+      panel_offset = @_get_panel_offset()
+      sx += panel_offset.x
+      sy += panel_offset.y
+      
+    if @model.orientation == 'v'
+      angle = angle + 90
+
+    #--- End of copied section from ``Label.render`` implementation
+
+    # ``katex`` is loaded into the global window at runtime
+    # katex.renderToString returns a html ``span`` element
+    latex = katex.renderToString(@model.text, {displayMode: true})
+
+    # Must render as superpositioned div (not on canvas) so that KaTex
+    # css can properly style the text
+    @_css_text(ctx, latex, sx + @model.x_offset, sy - @model.y_offset, angle)
+
+export class LatexLabel extends Label
+  type: 'LatexLabel'
+  default_view: LatexLabelView
+"""
