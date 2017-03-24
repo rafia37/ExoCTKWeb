@@ -38,14 +38,57 @@
                 </p>
 
             </div>
-        
-            {{summary|safe}}
+            
+            <h3>Input</h3>
+            <table style="border-spacing: 10px; border-collapse: separate;">
+            <tr>
+                <td>Teff</td>
+                <td>{{teff|safe}}</td>
+            </tr>
+            <tr>
+                <td>log(g)</td>
+                <td>{{logg|safe}}</td>
+            </tr>
+            <tr>
+                <td>Fe/H</td>
+                <td>{{feh|safe}}</td>
+            </tr>
+            <tr>
+                <td>Bandpass</td>
+                <td>{{band|safe}}</td>
+            </tr>
+            <tr>
+                <td>Profile</td>
+                <td>{{profile|safe}}</td>
+            </tr>
+            <tr>
+                <td>Models</td>
+                <td>{{models|safe}}</td>
+            </tr>
+            </table>
+            
+            <h3>Result</h3>
+            <table style="border-spacing: 10px; border-collapse: separate;">
+            <tr>
+                <td>\(I(\mu)/I(\mu=1)\)</td>
+                <td>\({{poly|safe}}\)</td>
+            </tr>
+            <tr>
+                <td>\(\mu\)</td>
+                <td>{{mu|safe}}</td>
+            </tr>
+            <tr>
+                <td>Effective Radius</td>
+                <td>\({{r|safe}}\)</td>
+            </tr>
+    
+            </table>
             
             <br>
     
             {{ plot|safe }}
 
-            <form id='formatselect' method='post' action='savefile' >
+            <!-- <form id='formatselect' method='post' action='savefile' >
                 <p>Save to a file:
                     <select name="format">
                         <option value="ascii">ASCII</option>
@@ -53,7 +96,7 @@
                     </select>
                     <input type='submit' value='Save' />
                 </p>
-            </form>
+            </form> -->
 
         </div>
 
