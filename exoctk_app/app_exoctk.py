@@ -16,10 +16,10 @@ from bokeh.models import HoverTool
 from bokeh.models import ColumnDataSource
 from bokeh.plotting import figure, show
 
-# define the cache config keys, remember that it can be done in a settings file
-app_exoctk.config['CACHE_TYPE'] = 'simple'
-
-# register the cache instance and binds it on to your app 
+# # define the cache config keys, remember that it can be done in a settings file
+# app_exoctk.config['CACHE_TYPE'] = 'simple'
+#
+# register the cache instance and binds it on to your app
 cache = Cache(app_exoctk)
 
 # Redirect to the index
@@ -29,7 +29,7 @@ VERSION = ExoCTK.__version__
 
 # Load the Index page
 def index():
-    return render_template('index.html', version=VERSION)
+    return render_template('index.html')
 
 # Load the LDC page
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
@@ -38,9 +38,9 @@ def exoctk_ldc():
     filters = ExoCTK.core.filter_list()['bands']
     
     # Make HTML for filters
-    filt_list = '\n'.join(['<input type="radio" name="bandpass" value="{0}"> {0}<br>'.format(b) for b in filters])
+    filt_list = '\n'.join(['<option value="{0}"> {0}</option>'.format(b) for b in filters])
     
-    return render_template('ldc.html', filters=filt_list, version=VERSION)
+    return render_template('ldc.html', filters=filt_list)
     
 # Load the LDC results page
 @app_exoctk.route('/ldc_results', methods=['GET', 'POST'])
@@ -62,10 +62,12 @@ def exoctk_ldc_results():
     grid_params = ['_'.join(map(str,tup)) for tup in [Teff_rng,logg_rng,FeH_rng,wave_rng]]
     cache_key = modeldir.replace('/','_')+'_'.join(grid_params)
     cached = cache.get(cache_key)
-    print(cache_key)
+    
     if cached:
         model_grid = cached
+        print('Fetching grid from cache:',cache_key)
     else:
+        print('Not cached:',cache_key)
         model_grid = ExoCTK.core.ModelGrid(modeldir)
         model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng, wave_rng=wave_rng)
     
@@ -76,7 +78,7 @@ def exoctk_ldc_results():
         
         return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
                     band=bandpass or 'None', profile=profile, models=model_grid.path, \
-                    script=script, version=VERSION)
+                    script=script)
     
     else:
         
@@ -112,17 +114,17 @@ def exoctk_ldc_results():
 
         return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
                     band=bandpass or 'None', profile=profile, poly=poly, mu=mu, \
-                    r=r, models=model_grid.path, script=script, plot=div, version=VERSION)
+                    r=r, models=model_grid.path, script=script, plot=div)
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
 def exoctk_ldc_error():
-    return render_template('ldc_error.html', version=VERSION)
+    return render_template('ldc_error.html')
 
 # Load the TOT page
 @app_exoctk.route('/tot', methods=['GET', 'POST'])
 def exoctk_tot():
-    return render_template('tot.html', version=VERSION)
+    return render_template('tot.html')
 
 # Load the TOT results page
 @app_exoctk.route('/tot_results', methods=['GET', 'POST'])
@@ -220,7 +222,7 @@ def exoctk_tot_results():
                minphase, maxphase)
     
     return render_template('tot_results.html', summary=summary, sim_script=sim_script, sim_plot=sim_plot, 
-                           obs_script=obs_script, obs_plot=obs_plot, version=VERSION)
+                           obs_script=obs_script, obs_plot=obs_plot)
     
 
 # Save the results to file

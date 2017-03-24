@@ -64,19 +64,21 @@
                 </table></p>
 
                 <h3>Step 2: Choose a Filter</h3>
+                
+                <select name="bandpass">
+                    <option value="" checked> Top Hat</option>
+                    {{filters|safe}}
+                </select>
     
-                <input type="radio" name="bandpass" value="" checked> Top Hat<br>
-                {{filters|safe}}
-    
-                <h3>Step 3: Choose a Limb Darkening Profile</h3>
-                <input type="radio" name="profile" value="uniform"> Uniform<br>
-                <input type="radio" name="profile" value="linear"> Linear<br>
-                <input type="radio" name="profile" value="quadratic" checked> Quadratic<br>
-                <input type="radio" name="profile" value="square-root"> Square-root<br>
-                <input type="radio" name="profile" value="logarithmic"> Logarithmic<br>
-                <input type="radio" name="profile" value="exponential"> Exponential<br>
-                <input type="radio" name="profile" value="3-parameter"> 3-parameter<br>
-                <input type="radio" name="profile" value="4-parameter"> 4-parameter<br>
+                <h3>Step 3: Choose One or More Limb Darkening Profiles</h3>
+                <input type="checkbox" name="profile" value="uniform"> Uniform<br>
+                <input type="checkbox" name="profile" value="linear"> Linear<br>
+                <input type="checkbox" name="profile" value="quadratic" checked> Quadratic<br>
+                <input type="checkbox" name="profile" value="square-root"> Square-root<br>
+                <input type="checkbox" name="profile" value="logarithmic"> Logarithmic<br>
+                <input type="checkbox" name="profile" value="exponential"> Exponential<br>
+                <input type="checkbox" name="profile" value="3-parameter"> 3-parameter<br>
+                <input type="checkbox" name="profile" value="4-parameter"> 4-parameter<br>
     
                 <h3>Step 4: Choose the Stellar Parameters to Calculate</h3>
     
