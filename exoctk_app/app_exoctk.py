@@ -6,6 +6,7 @@ app_exoctk = Flask(__name__)
 import ExoCTK
 import numpy as np
 import matplotlib.pyplot as plt
+import astropy.table as at
 import bokeh
 from bokeh import mpl
 from bokeh.core.properties import Override
@@ -16,9 +17,9 @@ from bokeh.models import HoverTool
 from bokeh.models import ColumnDataSource
 from bokeh.plotting import figure, show
 
-# # define the cache config keys, remember that it can be done in a settings file
-# app_exoctk.config['CACHE_TYPE'] = 'simple'
-#
+# define the cache config keys, remember that it can be done in a settings file
+app_exoctk.config['CACHE_TYPE'] = 'simple'
+
 # register the cache instance and binds it on to your app
 cache = Cache(app_exoctk)
 
@@ -45,34 +46,27 @@ def exoctk_ldc():
 # Load the LDC results page
 @app_exoctk.route('/ldc_results', methods=['GET', 'POST'])
 def exoctk_ldc_results():
-    
+        
     # Get the input from the form
-    modeldir = request.form['modeldir']
-    wave_rng = (float(request.form['wave_min']),float(request.form['wave_max']))
-    Teff_rng = (float(request.form['teff_min']),float(request.form['teff_max']))
-    logg_rng = (float(request.form['logg_min']),float(request.form['logg_max']))
-    FeH_rng = (float(request.form['feh_min']),float(request.form['feh_max']))
-    profile = request.form['profile']
+    modeldir = '/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/'#request.form['modeldir']
+    profiles = list(filter(None,[request.form.get(pf) for pf in ['uniform', 'linear', 'quadratic', 'square-root', 'logarithmic', 'exponential', '3-parameter', '4-parameter']]))
     bandpass = request.form['bandpass']
     teff = int(request.form['teff'])
     logg = float(request.form['logg'])
     feh = float(request.form['feh'])
     
     # Make the model grid, caching if necessary
-    grid_params = ['_'.join(map(str,tup)) for tup in [Teff_rng,logg_rng,FeH_rng,wave_rng]]
-    cache_key = modeldir.replace('/','_')+'_'.join(grid_params)
-    cached = cache.get(cache_key)
+    cached = cache.get(modeldir)
     
     if cached:
         model_grid = cached
-        print('Fetching grid from cache:',cache_key)
+        print('Fetching grid from cache:',modeldir)
     else:
-        print('Not cached:',cache_key)
+        print('Not cached:',modeldir)
         model_grid = ExoCTK.core.ModelGrid(modeldir)
-        model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng, wave_rng=wave_rng)
     
         if len(model_grid.data)>0:
-            cache.set(cache_key, model_grid, timeout=300)
+            cache.set(modeldir, model_grid, timeout=300)
         
     if len(model_grid.data)==0:
         
@@ -80,41 +74,64 @@ def exoctk_ldc_results():
                     band=bandpass or 'None', profile=profile, models=model_grid.path, \
                     script=script)
     
-    else:
+    # Trim the grid and calculate
+    def find_closest(A, a):
+        #A must be sorted
+        idx = np.clip(A.searchsorted(a), 1, len(A)-1)
+        return (A[idx-1], A[idx])
         
-        # Calculate the coefficients
-        coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=True)
+    Teff_rng = find_closest(model_grid.Teff_vals,teff)
+    logg_rng = find_closest(model_grid.logg_vals,logg)
+    FeH_rng = find_closest(model_grid.FeH_vals,feh)
+    model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng)
     
+    # Calculate the coefficients
+    coeff_list, mu_list, r_list, poly_list = [], [], [], []
+    fig = plt.figure()
+    for profile in profiles:
+        coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=fig)
+
         # LaTeX formatting
         r = '{:.4f} R_\odot'.format(r*1.4377979836321077e-11)
         mu = '{:.4f}'.format(mu)
-        coeff_text = ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)
-        for n,c in enumerate(coeff):
-            coeff_text = coeff_text.replace('c{}'.format(n+1),'{:.3f}'.format(c))
-        poly = coeff_text.replace('*','\cdot')
-    
-        # Make the matplotlib plot into a Bokeh plot
-        p = mpl.to_bokeh()
-        p.y_range = Range1d(0, 1)
-        p.x_range = Range1d(0, 1)
+        coeff_vals = ', '.join(['c{} = {:.3f}'.format(n+1,c) for n,c in enumerate(coeff)])
+        poly = '\({}\)'.format(ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)).replace('*','\cdot').replace('\e','e')
         
-        # # Make LaTeX labels
-        # xlabel = LatexLabel(text="\mu", angle=0, angle_units='deg',
-        #                    x=250, y=-20, x_units='screen', y_units='screen',
-        #                    render_mode='css', text_font_size='16pt',
-        #                    background_fill_color='#ffffff')
-        # ylabel = LatexLabel(text="I(\mu)/I(\mu=1)", angle=90, angle_units='deg',
-        #                    x=-100, y=250, x_units='screen', y_units='screen',
-        #                    render_mode='css', text_font_size='16pt',
-        #                    background_fill_color='#ffffff')
-        # p.add_layout(xlabel)
-        # p.add_layout(ylabel)
+        coeff_list.append(coeff_vals)
+        mu_list.append(mu)
+        r_list.append(r)
+        poly_list.append(poly)
         
-        script, div = components(p)
+    table = at.Table([profiles, poly_list, coeff_list], names=['Profile','\(I(\mu)/I(\mu=1)\)','Coefficients'])
+    table = '\n'.join(table.pformat(html=True)).replace('<table','<table class="results"')
+    profile = ', '.join(profiles)
 
-        return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
-                    band=bandpass or 'None', profile=profile, poly=poly, mu=mu, \
-                    r=r, models=model_grid.path, script=script, plot=div)
+    # Make the matplotlib plot into a Bokeh plot
+    p = mpl.to_bokeh()
+    p.y_range = Range1d(0, 1)
+    p.x_range = Range1d(0, 1)
+
+    # # # Make LaTeX labels
+    # # xlabel = LatexLabel(text="\mu", angle=0, angle_units='deg',
+    # #                    x=250, y=-20, x_units='screen', y_units='screen',
+    # #                    render_mode='css', text_font_size='16pt',
+    # #                    background_fill_color='#ffffff')
+    # # ylabel = LatexLabel(text="I(\mu)/I(\mu=1)", angle=90, angle_units='deg',
+    # #                    x=-100, y=250, x_units='screen', y_units='screen',
+    # #                    render_mode='css', text_font_size='16pt',
+    # #                    background_fill_color='#ffffff')
+    # # p.add_layout(xlabel)
+    # # p.add_layout(ylabel)
+
+    script, div = components(p)
+
+    # return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
+    #             band=bandpass or 'None', profile=profile, poly=poly, mu=mu, \
+    #             r=r, models=model_grid.path, script=script, plot=div)
+    
+    return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
+                band=bandpass or 'None', profile=profile, mu=mu_list[0], \
+                r=r_list[0], models=model_grid.path, table=table, script=script, plot=div)
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])

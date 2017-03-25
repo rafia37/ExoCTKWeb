@@ -34,34 +34,6 @@
                 <p> Enter the path to the directory of model spectra on your local machine:
                     <input type="text" name="modeldir" size="80" rows="1" value="/user/jfilippazzo/Models/ACES/" />
                 </p>
-    
-                <p><table>
-                    <tr>
-                        <td></td>
-                        <td>min</td>
-                        <td>max</td>
-                    </tr>
-                    <tr>
-                        <td>Wavelength range [um]</td>
-                        <td><input type="text" name="wave_min" size="10" rows="1" value="1.4" /></td>
-                        <td><input type="text" name="wave_max" size="10" rows="1" value="1.8" /></td>
-                    </tr>
-                    <tr>
-                        <td>Teff range [K]</td>
-                        <td><input type="text" name="teff_min" size="10" rows="1" value="2400" /></td>
-                        <td><input type="text" name="teff_max" size="10" rows="1" value="2700" /></td>
-                    </tr>
-                    <tr>
-                        <td>Log(g) range [dex]</td>
-                        <td><input type="text" name="logg_min" size="10" rows="1" value="4.5" /></td>
-                        <td><input type="text" name="logg_max" size="10" rows="1" value="5.5" /></td>
-                    </tr>
-                    <tr>
-                        <td>Fe/H range [dex]</td>
-                        <td><input type="text" name="feh_min" size="10" rows="1" value="-0.5" /></td>
-                        <td><input type="text" name="feh_max" size="10" rows="1" value="0.5" /></td>
-                    </tr>
-                </table></p>
 
                 <h3>Step 2: Choose a Filter</h3>
                 
@@ -71,14 +43,14 @@
                 </select>
     
                 <h3>Step 3: Choose One or More Limb Darkening Profiles</h3>
-                <input type="checkbox" name="profile" value="uniform"> Uniform<br>
-                <input type="checkbox" name="profile" value="linear"> Linear<br>
-                <input type="checkbox" name="profile" value="quadratic" checked> Quadratic<br>
-                <input type="checkbox" name="profile" value="square-root"> Square-root<br>
-                <input type="checkbox" name="profile" value="logarithmic"> Logarithmic<br>
-                <input type="checkbox" name="profile" value="exponential"> Exponential<br>
-                <input type="checkbox" name="profile" value="3-parameter"> 3-parameter<br>
-                <input type="checkbox" name="profile" value="4-parameter"> 4-parameter<br>
+                <input type="checkbox" name="uniform" value="uniform"> Uniform<br>
+                <input type="checkbox" name="linear" value="linear"> Linear<br>
+                <input type="checkbox" name="quadratic" value="quadratic" checked> Quadratic<br>
+                <input type="checkbox" name="square-root" value="square-root"> Square-root<br>
+                <input type="checkbox" name="logarithmic" value="logarithmic"> Logarithmic<br>
+                <input type="checkbox" name="exponential" value="exponential"> Exponential<br>
+                <input type="checkbox" name="3-parameter" value="3-parameter"> 3-parameter<br>
+                <input type="checkbox" name="4-parameter" value="4-parameter"> 4-parameter<br>
     
                 <h3>Step 4: Choose the Stellar Parameters to Calculate</h3>
     
