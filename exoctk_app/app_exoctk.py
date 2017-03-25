@@ -48,16 +48,19 @@ def exoctk_ldc():
 def exoctk_ldc_results():
         
     # Get the input from the form
-    modeldir = '/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/'#request.form['modeldir']
+    modeldir = request.form['modeldir']
     profiles = list(filter(None,[request.form.get(pf) for pf in ['uniform', 'linear', 'quadratic', 'square-root', 'logarithmic', 'exponential', '3-parameter', '4-parameter']]))
     bandpass = request.form['bandpass']
     teff = int(request.form['teff'])
     logg = float(request.form['logg'])
     feh = float(request.form['feh'])
     
+    # Get models from local directory if necessary
+    if not modeldir:
+        modeldir = request.form['local_files']
+    
     # Make the model grid, caching if necessary
     cached = cache.get(modeldir)
-    
     if cached:
         model_grid = cached
         print('Fetching grid from cache:',modeldir)
@@ -75,17 +78,12 @@ def exoctk_ldc_results():
                     script=script)
     
     # Trim the grid and calculate
-    def find_closest(A, a):
-        #A must be sorted
-        idx = np.clip(A.searchsorted(a), 1, len(A)-1)
-        return (A[idx-1], A[idx])
-        
     Teff_rng = find_closest(model_grid.Teff_vals,teff)
     logg_rng = find_closest(model_grid.logg_vals,logg)
     FeH_rng = find_closest(model_grid.FeH_vals,feh)
     model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng)
     
-    # Calculate the coefficients
+    # Calculate the coefficients for each profile
     coeff_list, mu_list, r_list, poly_list = [], [], [], []
     fig = plt.figure()
     for profile in profiles:
@@ -97,11 +95,13 @@ def exoctk_ldc_results():
         coeff_vals = ', '.join(['c{} = {:.3f}'.format(n+1,c) for n,c in enumerate(coeff)])
         poly = '\({}\)'.format(ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)).replace('*','\cdot').replace('\e','e')
         
+        # Add the results to the lists
         coeff_list.append(coeff_vals)
         mu_list.append(mu)
         r_list.append(r)
         poly_list.append(poly)
         
+    # Make the results into a list for easy printing
     table = at.Table([profiles, poly_list, coeff_list], names=['Profile','\(I(\mu)/I(\mu=1)\)','Coefficients'])
     table = '\n'.join(table.pformat(html=True)).replace('<table','<table class="results"')
     profile = ', '.join(profiles)
@@ -125,10 +125,6 @@ def exoctk_ldc_results():
 
     script, div = components(p)
 
-    # return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
-    #             band=bandpass or 'None', profile=profile, poly=poly, mu=mu, \
-    #             r=r, models=model_grid.path, script=script, plot=div)
-    
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
                 band=bandpass or 'None', profile=profile, mu=mu_list[0], \
                 r=r_list[0], models=model_grid.path, table=table, script=script, plot=div)
@@ -241,6 +237,24 @@ def exoctk_tot_results():
     return render_template('tot_results.html', summary=summary, sim_script=sim_script, sim_plot=sim_plot, 
                            obs_script=obs_script, obs_plot=obs_plot)
     
+def find_closest(A, a):
+    """
+    Find the two neighboring models for a given parameter
+    
+    Parameters
+    ----------
+    A: array-like
+        The array to search
+    a: float, int
+        The value to search for
+    
+    Returns
+    -------
+    tuple
+        The values to the left and right of 'a' in 'A'
+    """
+    idx = np.clip(A.searchsorted(a), 1, len(A)-1)
+    return (A[idx-1], A[idx])
 
 # Save the results to file
 @app_exoctk.route('/savefile', methods=['POST'])

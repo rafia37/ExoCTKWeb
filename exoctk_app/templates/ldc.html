@@ -29,11 +29,10 @@
     
             <form id='searchform' method='post' action='ldc_results' >
                 
-                <h3>Step 1: Create a Model Grid</h3>
-                
-                <p> Enter the path to the directory of model spectra on your local machine:
-                    <input type="text" name="modeldir" size="80" rows="1" value="/user/jfilippazzo/Models/ACES/" />
-                </p>
+                <h3>Step 1: Choose a Model Grid</h3>
+                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ACES/" checked/> Phoenix ACES<br>
+                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ATLAS9/" /> Kurucz ATLAS9<br>
+                <input type="radio" name="modeldir" value="" /> Local files: <input type="text" name="local_files" size="80" rows="1" value="/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/"/>​​​​​​​​​​​​​​​​​​​​​​<br>
 
                 <h3>Step 2: Choose a Filter</h3>
                 
