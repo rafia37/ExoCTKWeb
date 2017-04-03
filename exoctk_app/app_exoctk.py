@@ -15,6 +15,7 @@ from bokeh.models import Range1d
 from bokeh.models import Label
 from bokeh.models import HoverTool
 from bokeh.models import ColumnDataSource
+from bokeh.models import Span
 from bokeh.plotting import figure, show
 
 # define the cache config keys, remember that it can be done in a settings file
@@ -22,6 +23,15 @@ app_exoctk.config['CACHE_TYPE'] = 'simple'
 
 # register the cache instance and binds it on to your app
 cache = Cache(app_exoctk)
+
+# Nice colors for plotting
+COLORS = ['blue', 'red', 'green', 'orange', 
+          'cyan', 'magenta', 'pink', 'purple']
+
+# Supported profiles
+PROFILES = ['uniform', 'linear', 'quadratic', 
+            'square-root', 'logarithmic', 'exponential', 
+            '3-parameter', '4-parameter']
 
 # Redirect to the index
 VERSION = ExoCTK.__version__
@@ -49,11 +59,12 @@ def exoctk_ldc_results():
         
     # Get the input from the form
     modeldir = request.form['modeldir']
-    profiles = list(filter(None,[request.form.get(pf) for pf in ['uniform', 'linear', 'quadratic', 'square-root', 'logarithmic', 'exponential', '3-parameter', '4-parameter']]))
+    profiles = list(filter(None,[request.form.get(pf) for pf in PROFILES]))
     bandpass = request.form['bandpass']
     teff = int(request.form['teff'])
     logg = float(request.form['logg'])
     feh = float(request.form['feh'])
+    mu_min = float(request.form['mu_min'])
     
     # Get models from local directory if necessary
     if not modeldir:
@@ -78,56 +89,55 @@ def exoctk_ldc_results():
                     script=script)
     
     # Trim the grid and calculate
-    Teff_rng = find_closest(model_grid.Teff_vals,teff)
-    logg_rng = find_closest(model_grid.logg_vals,logg)
-    FeH_rng = find_closest(model_grid.FeH_vals,feh)
+    Teff_rng = ExoCTK.core.find_closest(model_grid.Teff_vals,teff)
+    logg_rng = ExoCTK.core.find_closest(model_grid.logg_vals,logg)
+    FeH_rng = ExoCTK.core.find_closest(model_grid.FeH_vals,feh)
     model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng)
     
+    # Draw the figure
+    TOOLS = 'box_zoom,box_select,crosshair,resize,reset,hover'
+    fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1),
+                 plot_width=800, plot_height=400)
+    
     # Calculate the coefficients for each profile
-    coeff_list, mu_list, r_list, poly_list = [], [], [], []
-    fig = plt.figure()
+    grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
+                    mu_min=mu_min, bandpass=bandpass, plot=fig, colors=COLORS)
+    
+    # Get all coefficients
+    coeff_list, err_list, poly_list = [], [], []
+    r_eff = '{:.4f} R_\odot'.format(grid_point['r_eff']*1.438e-11)
+    mu_eff = '{:.4f}'.format(0)
+    
     for profile in profiles:
-        coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=fig)
-
         # LaTeX formatting
-        r = '{:.4f} R_\odot'.format(r*1.4377979836321077e-11)
-        mu = '{:.4f}'.format(mu)
-        coeff_vals = ', '.join(['c{} = {:.3f}'.format(n+1,c) for n,c in enumerate(coeff)])
-        poly = '\({}\)'.format(ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)).replace('*','\cdot').replace('\e','e')
+        coeffs = grid_point[profile]['coeffs']
+        errs = grid_point[profile]['err']
+        coeff_vals = ', '.join(['\(c_{} = {:.3f}\)'.format(n+1,c) for n,c in enumerate(coeffs)])
+        err_vals = ', '.join(['\(\sigma c_{} = {:.3f}\)'.format(n+1,c) for n,c in enumerate(errs)])
+        latex = ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)
+        poly = '\({}\)'.format(latex).replace('*','\cdot').replace('\e','e')
         
         # Add the results to the lists
         coeff_list.append(coeff_vals)
-        mu_list.append(mu)
-        r_list.append(r)
+        err_list.append(err_vals)
         poly_list.append(poly)
         
     # Make the results into a list for easy printing
-    table = at.Table([profiles, poly_list, coeff_list], names=['Profile','\(I(\mu)/I(\mu=1)\)','Coefficients'])
-    table = '\n'.join(table.pformat(html=True)).replace('<table','<table class="results"')
+    table = at.Table([profiles, poly_list, coeff_list, err_list], names=['Profile','\(I(\mu)/I(\mu=1)\)','Coefficients','Errors'])    
+    table = '\n'.join(table.pformat(max_width=500, html=True)).replace('<table','<table class="results"')
     profile = ', '.join(profiles)
 
-    # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
-    p.y_range = Range1d(0, 1)
-    p.x_range = Range1d(0, 1)
-
-    # # # Make LaTeX labels
-    # # xlabel = LatexLabel(text="\mu", angle=0, angle_units='deg',
-    # #                    x=250, y=-20, x_units='screen', y_units='screen',
-    # #                    render_mode='css', text_font_size='16pt',
-    # #                    background_fill_color='#ffffff')
-    # # ylabel = LatexLabel(text="I(\mu)/I(\mu=1)", angle=90, angle_units='deg',
-    # #                    x=-100, y=250, x_units='screen', y_units='screen',
-    # #                    render_mode='css', text_font_size='16pt',
-    # #                    background_fill_color='#ffffff')
-    # # p.add_layout(xlabel)
-    # # p.add_layout(ylabel)
-
-    script, div = components(p)
-
+    # Plot formatting
+    fig.legend.location = 'bottom_right'
+    fig.xaxis.axis_label = 'mu'
+    fig.yaxis.axis_label = 'Intensity'
+    
+    # Get HTML
+    script, div = components(fig)
+    
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
-                band=bandpass or 'None', profile=profile, mu=mu_list[0], \
-                r=r_list[0], models=model_grid.path, table=table, script=script, plot=div)
+                band=bandpass or 'None', profile=profile, mu=mu_eff, \
+                r=r_eff, models=model_grid.path, table=table, script=script, plot=div)
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
@@ -236,25 +246,6 @@ def exoctk_tot_results():
     
     return render_template('tot_results.html', summary=summary, sim_script=sim_script, sim_plot=sim_plot, 
                            obs_script=obs_script, obs_plot=obs_plot)
-    
-def find_closest(A, a):
-    """
-    Find the two neighboring models for a given parameter
-    
-    Parameters
-    ----------
-    A: array-like
-        The array to search
-    a: float, int
-        The value to search for
-    
-    Returns
-    -------
-    tuple
-        The values to the left and right of 'a' in 'A'
-    """
-    idx = np.clip(A.searchsorted(a), 1, len(A)-1)
-    return (A[idx-1], A[idx])
 
 # Save the results to file
 @app_exoctk.route('/savefile', methods=['POST'])

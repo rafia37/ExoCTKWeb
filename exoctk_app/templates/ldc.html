@@ -1,9 +1,13 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
         <title>ExoCTK: Limb Darkening Calculator</title>
         <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
         <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
+        
+        <script type="text/javascript" async
+            src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+        </script>
     </head>
     <body>
 
@@ -30,9 +34,9 @@
             <form id='searchform' method='post' action='ldc_results' >
                 
                 <h3>Step 1: Choose a Model Grid</h3>
-                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ACES/" checked/> Phoenix ACES<br>
+                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ACES/"/> Phoenix ACES<br>
                 <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ATLAS9/" /> Kurucz ATLAS9<br>
-                <input type="radio" name="modeldir" value="" /> Local files: <input type="text" name="local_files" size="80" rows="1" value="/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/"/>​​​​​​​​​​​​​​​​​​​​​​<br>
+                <input type="radio" name="modeldir" value="" checked/> Local files: <input type="text" name="local_files" size="80" rows="1" value="/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/"/>​​​​​​​​​​​​​​​​​​​​​​<br>
 
                 <h3>Step 2: Choose a Filter</h3>
                 
@@ -65,6 +69,10 @@
                     <tr>
                         <td>Fe/H value [dex]</td>
                         <td><input type="text" name="feh" size="10" rows="1" value="0.0" /></td>
+                    </tr>
+                    <tr>
+                        <td>Minimum \(\mu\) to fit</td>
+                        <td><input type="text" name="mu_min" size="10" rows="1" value="0.05" /></td>
                     </tr>
                 </table></p>
     
