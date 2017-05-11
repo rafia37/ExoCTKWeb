@@ -1,37 +1,42 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>ExoCTK</title>
-        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>    
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
-    </head>
-    <body>
-        <script>
-            $(document).ready(function(){
-                $("#header").load('{{ url_for('static',filename='header.html')}}');
-                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
-            });
-        </script>
-            
-        <div id="header"></div>
+{% extends "base.html" %}
 
-        <div class=page>
 
-            <h1>Exoplanet Characterization Tool Kit</h1>
+{% block content %}
 
-            <div class=metanav>
-                <p>
-                    Here is a description of what this Web app can do.
-                </p>
-                <p>
-                    Here is a link to the Github package if you want the full functionality.
-                </p>
 
-            </div>
+                <p  style="WIDTH:750px">
+                    
+                    &nbsp; &nbsp;&nbsp;Here is a description of what this Web app can do.
+                    I assume this will be much more fledged out, so I'm putting some more
+                    text in here to get a look of how it scales, how it stretches, etc.
+                    I'm already growing quite tired of how I write usless text -- so 
+                    perhaps this space can now be dedicated to improving my general communication.
+                    This growing stream of conciousness to fill out this paragraph is becoming 
+                    slightly revelaing of my inner self. Pls no one read this.
+                    
+                    <br></br>
 
-        </div>
+                    Following are links to our GitHub packages : 
+                    <br></br>
+                    <a href="https://github.com/ExoCTK/ExoCTK">ExoCTK</a> is the computing package behind the website.
+                    <br></br>
+                    <a href="https://github.com/ExoCTK/ExoCTKWeb">ExoCTKWeb</a> is the literal soure code of this website.
+                    <br></br>
+                    <a href="https://github.com/ExoCTK/PandExo_HST">PandExo_HST</a> is our counterpart for HST observations.
+                    <br></br>
+                    And <a href="https://github.com/ExoCTK/chimera">chimera</a> is a spooky monster or something, I guess. Tbh, idk...
         
-        <div id="footer"></div>
-        
-    </body>
-</html>
+<script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
+<script src="//cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/2/dataTables.bootstrap.js"></script>
+
+<script>
+$(document).ready(function(){
+    $('#scriptstatus').DataTable( {
+        "paging":   false,
+        "bFilter": false,
+        stateSave: true
+    } );
+});
+</script>
+
+{% endblock%}

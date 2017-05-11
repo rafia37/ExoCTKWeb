@@ -1,21 +1,32 @@
-from flask import Flask, render_template, request, redirect, make_response, current_app
-from flask_cache import Cache
+## -- IMPORTS
+import os
 
-app_exoctk = Flask(__name__)
-
-import ExoCTK
-import numpy as np
-import matplotlib.pyplot as plt
 import astropy.table as at
+import matplotlib.pyplot as plt
+import numpy as np
+
 import bokeh
 from bokeh import mpl
 from bokeh.core.properties import Override
-from bokeh.embed import components
-from bokeh.models import Range1d
-from bokeh.models import Label
-from bokeh.models import HoverTool
 from bokeh.models import ColumnDataSource
-from bokeh.plotting import figure, show
+from bokeh.embed import components
+from bokeh.models import HoverTool
+from bokeh.models import Label
+from bokeh.models import Range1d
+from bokeh.plotting import figure
+from bokeh.plotting import show
+from flask import Flask
+from flask import render_template
+from flask import request
+from flask import redirect
+from flask import make_response
+from flask import current_app
+from flask_cache import Cache
+
+import ExoCTK
+
+## -- FLASK SET UP (?)
+app_exoctk = Flask(__name__)
 
 # define the cache config keys, remember that it can be done in a settings file
 app_exoctk.config['CACHE_TYPE'] = 'simple'
@@ -27,6 +38,8 @@ cache = Cache(app_exoctk)
 VERSION = ExoCTK.__version__
 @app_exoctk.route('/')
 @app_exoctk.route('/index')
+
+## -- FUNCITONS
 
 # Load the Index page
 def index():
@@ -138,6 +151,11 @@ def exoctk_ldc_error():
 @app_exoctk.route('/tot', methods=['GET', 'POST'])
 def exoctk_tot():
     return render_template('tot.html')
+
+# Load the TOR page
+@app_exoctk.route('/tor', methods=['GET', 'POST'])
+def exoctk_tor():
+    return render_template('tor.html')
 
 # Load the TOT results page
 @app_exoctk.route('/tot_results', methods=['GET', 'POST'])
@@ -330,3 +348,8 @@ export class LatexLabel extends Label
   type: 'LatexLabel'
   default_view: LatexLabelView
 """
+
+## -- RUN
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app_exoctk.run(host='0.0.0.0', port=port, debug=True)

@@ -1,24 +1,8 @@
-<!doctype html>
-<html>
-    <head>
-        <title>ExoCTK: Limb Darkening Calculator</title>
-        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
-    </head>
-    <body>
+{% extends "base.html" %}
 
-        <script>
-            $(document).ready(function(){
-                $("#header").load('{{ url_for('static',filename='header.html')}}');
-                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
-            });
-        </script>
-    
-        <div id="header"></div>
-
-        <div class=page>
-
-            <h1>Limb Darkening Calculator</h1>
+{% block content %}
+            
+        <h1>Limb Darkening Calculator</h1>
 
             <div class=metanav>
                 <p>
@@ -77,8 +61,5 @@
             </form>
 
         </div>
-    
-        <div id="footer"></div>
 
-    </body>
-</html>
+{% endblock %}
