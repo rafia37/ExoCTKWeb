@@ -82,7 +82,10 @@
             
             <br>
             
-            {{table|safe}}
+            {% for tab in table %}
+                {{ tab|safe }}
+            <br>
+            {% endfor %}
             
             <br><br>
     

@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import astropy.table as at
 import bokeh
+from svo_filters import svo
 from bokeh import mpl
 from bokeh.core.properties import Override
 from bokeh.embed import components
@@ -46,10 +47,10 @@ def index():
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
 def exoctk_ldc():
     # Get all the available filters
-    filters = ExoCTK.core.filter_list()['bands']
+    filters = svo.filters()['Band']
     
     # Make HTML for filters
-    filt_list = '\n'.join(['<option value="{0}"> {0}</option>'.format(b) for b in filters])
+    filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,' checked' if b=='Kepler.K' else '') for b in filters])
     
     return render_template('ldc.html', filters=filt_list)
     
@@ -70,30 +71,39 @@ def exoctk_ldc_results():
     if not modeldir:
         modeldir = request.form['local_files']
     
-    # Make the model grid, caching if necessary
-    cached = cache.get(modeldir)
-    if cached:
-        model_grid = cached
-        print('Fetching grid from cache:',modeldir)
-    else:
-        print('Not cached:',modeldir)
-        model_grid = ExoCTK.core.ModelGrid(modeldir)
+    # # Make the model grid, caching if necessary
+    # cached = cache.get(modeldir)
+    # if cached:
+    #     model_grid = cached
+    #     print('Fetching grid from cache:',modeldir)
+    # else:
+    #     print('Not cached:',modeldir)
+    #     model_grid = ExoCTK.core.ModelGrid(modeldir, resolution=500)
+    #
+    #     if len(model_grid.data)>0:
+    #         cache.set(modeldir, model_grid, timeout=300)
     
-        if len(model_grid.data)>0:
-            cache.set(modeldir, model_grid, timeout=300)
-        
+    model_grid = ExoCTK.core.ModelGrid(modeldir, resolution=500)
+    
+    # No data, redirect to the error page
     if len(model_grid.data)==0:
         
         return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
                     band=bandpass or 'None', profile=profile, models=model_grid.path, \
                     script=script)
-    
-    # Trim the grid and calculate
-    Teff_rng = ExoCTK.core.find_closest(model_grid.Teff_vals,teff)
-    logg_rng = ExoCTK.core.find_closest(model_grid.logg_vals,logg)
-    FeH_rng = ExoCTK.core.find_closest(model_grid.FeH_vals,feh)
-    model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng)
-    
+                    
+    # Trim the grid to the correct wavelength
+    # to speed up calculations, if a bandpass is given
+    if bandpass in svo.filters()['Band']:
+        bandpass = svo.Filter(bandpass)
+        min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
+        full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
+        trim_rng = ExoCTK.core.find_closest(full_rng, [teff,logg,feh], 
+                                            n=1, values=True)
+        
+        model_grid.customize(Teff_rng=trim_rng[0], logg_rng=trim_rng[1], 
+                             FeH_rng=trim_rng[2], wave_rng=min_max)
+        
     # Draw the figure
     TOOLS = 'box_zoom,box_select,crosshair,resize,reset,hover'
     fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1),
@@ -103,30 +113,31 @@ def exoctk_ldc_results():
     grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
                     mu_min=mu_min, bandpass=bandpass, plot=fig, colors=COLORS)
     
-    # Get all coefficients
-    coeff_list, err_list, poly_list = [], [], []
+    # Format mu and r_eff vals
     r_eff = '{:.4f} R_\odot'.format(grid_point['r_eff']*1.438e-11)
     mu_eff = '{:.4f}'.format(0)
     
+    # Make a table for each profile with a row for each wavelength bin
+    profile_tables = []
     for profile in profiles:
-        # LaTeX formatting
-        coeffs = grid_point[profile]['coeffs']
-        errs = grid_point[profile]['err']
-        coeff_vals = ', '.join(['\(c_{} = {:.3f}\)'.format(n+1,c) for n,c in enumerate(coeffs)])
-        err_vals = ', '.join(['\(\sigma c_{} = {:.3f}\)'.format(n+1,c) for n,c in enumerate(errs)])
+        
+        # Make LaTeX for polynomials
         latex = ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)
         poly = '\({}\)'.format(latex).replace('*','\cdot').replace('\e','e')
         
-        # Add the results to the lists
-        coeff_list.append(coeff_vals)
-        err_list.append(err_vals)
-        poly_list.append(poly)
+        # Make the table into LaTeX
+        table = grid_point[profile]['coeffs']
         
-    # Make the results into a list for easy printing
-    table = at.Table([profiles, poly_list, coeff_list, err_list], names=['Profile','\(I(\mu)/I(\mu=1)\)','Coefficients','Errors'])    
-    table = '\n'.join(table.pformat(max_width=500, html=True)).replace('<table','<table class="results"')
-    profile = ', '.join(profiles)
-
+        # Add the results to the lists
+        html_table = '\n'.join(table.pformat(max_width=500, html=True))\
+                     .replace('<table','<table class="results"')
+        
+        # Add the table title
+        header = '<h2>{}</h2><br>{}<br>'.format(profile,poly)
+        html_table = header+html_table
+        
+        profile_tables.append(html_table)
+    
     # Plot formatting
     fig.legend.location = 'bottom_right'
     fig.xaxis.axis_label = 'mu'
@@ -136,8 +147,9 @@ def exoctk_ldc_results():
     script, div = components(fig)
     
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
-                band=bandpass or 'None', profile=profile, mu=mu_eff, \
-                r=r_eff, models=model_grid.path, table=table, script=script, plot=div)
+                band=bandpass or 'None', mu=mu_eff, \
+                r=r_eff, models=model_grid.path, table=profile_tables, \
+                script=script, plot=div)
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
