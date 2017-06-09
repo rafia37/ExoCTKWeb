@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, make_response, current_app
-from flask_cache import Cache
+# from flask_cache import Cache
 
 app_exoctk = Flask(__name__)
 
@@ -20,10 +20,10 @@ from bokeh.models import Span
 from bokeh.plotting import figure, show
 
 # define the cache config keys, remember that it can be done in a settings file
-app_exoctk.config['CACHE_TYPE'] = 'simple'
+# app_exoctk.config['CACHE_TYPE'] = 'simple'
 
 # register the cache instance and binds it on to your app
-cache = Cache(app_exoctk)
+# cache = Cache(app_exoctk)
 
 # Nice colors for plotting
 COLORS = ['blue', 'red', 'green', 'orange', 
@@ -113,9 +113,9 @@ def exoctk_ldc_results():
     grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
                     mu_min=mu_min, bandpass=bandpass, plot=fig, colors=COLORS)
     
-    # Format mu and r_eff vals
-    r_eff = '{:.4f} R_\odot'.format(grid_point['r_eff']*1.438e-11)
-    mu_eff = '{:.4f}'.format(0)
+    # # Format mu and r_eff vals
+    # r_eff = '{:.4f} R_\odot'.format(grid_point['r_eff']*1.438e-11)
+    # mu_eff = '{:.4f}'.format(0)
     
     # Make a table for each profile with a row for each wavelength bin
     profile_tables = []
@@ -148,7 +148,7 @@ def exoctk_ldc_results():
     script, div = components(fig)
     
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
-                band=bandpass or 'None', mu=mu_eff, \
+                band=bandpass.filterID or '-', mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \
                 script=script, plot=div)
 
