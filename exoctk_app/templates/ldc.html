@@ -15,6 +15,18 @@
             $(document).ready(function(){
                 $("#header").load('{{ url_for('static',filename='header.html')}}');
                 $("#footer").load('{{ url_for('static',filename='footer.html')}}');
+            
+                $('#filterselect').on('change', function() {
+                  if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141')
+                  {
+                    $("#n_bins").show();
+                  }
+                  else
+                  {
+                    $("#n_bins").hide();
+                  }
+                });
+                
             });
         </script>
     
@@ -40,10 +52,17 @@
 
                 <h3>Step 2: Choose a Filter</h3>
                 
-                <select name="bandpass">
+                <select name="bandpass" id="filterselect">
                     <option value=""> Top Hat</option>
                     {{filters|safe}}
                 </select>
+                <div id='n_bins' style='display:none; margin-top:10px;'>
+                    Indicate the desired number of wavelength bins: 
+                    <input type="text" name="n_bins" size="5" rows="1"/>​​​​​​​​​​​​​​   
+                    <br>
+                    Or the number of channels per wavelength bin:
+                    <input type="text" name="n_channels" size="5" rows="1"/>​​​​​​​​​​​​​​
+                </div>
     
                 <h3>Step 3: Choose One or More Limb Darkening Profiles</h3>
                 <input type="checkbox" name="uniform" value="uniform"> Uniform<br>

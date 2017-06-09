@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, make_response, current_app
+from flask import Flask, render_template, request
+from flask import redirect, make_response, current_app
 # from flask_cache import Cache
 
 app_exoctk = Flask(__name__)
@@ -8,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import astropy.table as at
 import bokeh
+import os
 from svo_filters import svo
 from bokeh import mpl
 from bokeh.core.properties import Override
@@ -50,7 +52,8 @@ def exoctk_ldc():
     filters = svo.filters()['Band']
     
     # Make HTML for filters
-    filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,' checked' if b=='Kepler.K' else '') for b in filters])
+    filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
+                ' checked' if b=='Kepler.K' else '') for b in filters])
     
     return render_template('ldc.html', filters=filt_list)
     
@@ -66,6 +69,9 @@ def exoctk_ldc_results():
     logg = float(request.form['logg'])
     feh = float(request.form['feh'])
     mu_min = float(request.form['mu_min'])
+    n_bins = request.form.get('n_bins')
+    n_channels = request.form.get('n_channels')
+    print(n_bins,n_channels)
     
     # Get models from local directory if necessary
     if not modeldir:
@@ -94,15 +100,19 @@ def exoctk_ldc_results():
                     
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
+    min_max = model_grid.wave_rng
     if bandpass in svo.filters()['Band']:
-        bandpass = svo.Filter(bandpass)
+        kwargs = {'n_bins':int(n_bins)} if n_bins else {'n_channels':int(n_channels)} if n_channels else {}
+        bandpass = svo.Filter(bandpass, **kwargs)
         min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
-        full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
-        trim_rng = ExoCTK.core.find_closest(full_rng, [teff,logg,feh], 
-                                            n=1, values=True)
         
-        model_grid.customize(Teff_rng=trim_rng[0], logg_rng=trim_rng[1], 
-                             FeH_rng=trim_rng[2], wave_rng=min_max)
+    # Trim the grid to nearby grid points to speed up calculation
+    full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
+    trim_rng = ExoCTK.core.find_closest(full_rng, [teff,logg,feh], 
+                                        n=1, values=True)
+    
+    model_grid.customize(Teff_rng=trim_rng[0], logg_rng=trim_rng[1], 
+                         FeH_rng=trim_rng[2], wave_rng=min_max)
         
     # Draw the figure
     TOOLS = 'box_zoom,box_select,crosshair,resize,reset,hover'
@@ -111,11 +121,18 @@ def exoctk_ldc_results():
     
     # Calculate the coefficients for each profile
     grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
-                    mu_min=mu_min, bandpass=bandpass, plot=fig, colors=COLORS)
+                    mu_min=mu_min, bandpass=bandpass, plot=fig, colors=COLORS,
+                    save='output.txt')
+    
+    # Read the file into a string and delete it
+    with open('output.txt', 'r') as f:
+        file_as_string = f.read()
+    os.remove('output.txt')
     
     # # Format mu and r_eff vals
     # r_eff = '{:.4f} R_\odot'.format(grid_point['r_eff']*1.438e-11)
     # mu_eff = '{:.4f}'.format(0)
+    r_eff = mu_eff = ''
     
     # Make a table for each profile with a row for each wavelength bin
     profile_tables = []
@@ -150,7 +167,7 @@ def exoctk_ldc_results():
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
                 band=bandpass.filterID or '-', mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \
-                script=script, plot=div)
+                script=script, plot=div, file_as_string=repr(file_as_string))
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
@@ -261,17 +278,50 @@ def exoctk_tot_results():
                            obs_script=obs_script, obs_plot=obs_plot)
 
 # Save the results to file
-@app_exoctk.route('/savefile', methods=['POST'])
+@app_exoctk.route('/download', methods=['POST'])
 def exoctk_savefile():
-    export_fmt = request.form['format']
-    if export_fmt == 'votable':
-        filename = 'exoctk_table.vot'
-    else:
-        filename = 'exoctk_table.txt'
-
+    file_as_string = eval(request.form['file_as_string'])
+    
     response = make_response(file_as_string)
-    response.headers["Content-Disposition"] = "attachment; filename=%s" % filename
+    response.headers["Content-type"] = 'text; charset=utf-8'
+    response.headers["Content-Disposition"] = "attachment; filename=ExoXTK_results.txt"
     return response
+
+# @app_exoctk.route('/export', methods=['POST'])
+# def exoctk_export():
+#
+#     # Get all the checked rows
+#     checked = request.form
+#
+#     # Get column names
+#     results = [list(eval(checked.get('cols')))]
+#
+#     for k in sorted(checked):
+#         if k.isdigit():
+#
+#             # Convert string to list and strip HTML
+#             vals = eval(checked[k])
+#             for i,v in enumerate(vals):
+#                 try:
+#                     vals[i] = str(v).split('>')[1].split('<')[0]
+#                 except:
+#                     pass
+#
+#             results.append(vals)
+#
+#     # Make an array to export
+#     results = np.array(results, dtype=str)
+#     filename = 'ONCdb_results.txt'
+#     np.savetxt(filename, results, delimiter='|', fmt='%s')
+#
+#     with open(filename, 'r') as f:
+#         file_as_string = f.read()
+#     os.remove(filename)  # Delete the file after it's read
+#
+#     response = make_response(str(file_as_string))
+#     response.headers["Content-type"] = 'text; charset=utf-8'
+#     response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
+#     return response
 
 class LatexLabel(Label):
     """A subclass of the Bokeh built-in `Label` that supports rendering
