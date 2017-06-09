@@ -127,13 +127,14 @@ def exoctk_ldc_results():
         
         # Make the table into LaTeX
         table = grid_point[profile]['coeffs']
+        table.rename_column('wavelength', '\(\lambda_\mbox{eff}\hspace{5px}(\mu m)\)')
         
         # Add the results to the lists
         html_table = '\n'.join(table.pformat(max_width=500, html=True))\
                      .replace('<table','<table class="results"')
         
         # Add the table title
-        header = '<h2>{}</h2><br>{}<br>'.format(profile,poly)
+        header = '<strong>{}</strong><br><p>\(I(\mu)/I(\mu=1)\) = {}</p>'.format(profile,poly)
         html_table = header+html_table
         
         profile_tables.append(html_table)
