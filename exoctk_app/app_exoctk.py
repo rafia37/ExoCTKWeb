@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from flask import redirect, make_response, current_app
-# from flask_cache import Cache
+from flask_cache import Cache
 
 app_exoctk = Flask(__name__)
 
@@ -8,6 +8,7 @@ import ExoCTK
 import numpy as np
 import matplotlib.pyplot as plt
 import astropy.table as at
+import astropy.units as q
 import bokeh
 import os
 from svo_filters import svo
@@ -22,7 +23,7 @@ from bokeh.models import Span
 from bokeh.plotting import figure, show
 
 # define the cache config keys, remember that it can be done in a settings file
-# app_exoctk.config['CACHE_TYPE'] = 'simple'
+app_exoctk.config['CACHE_TYPE'] = 'null'
 
 # register the cache instance and binds it on to your app
 # cache = Cache(app_exoctk)
@@ -71,7 +72,8 @@ def exoctk_ldc_results():
     mu_min = float(request.form['mu_min'])
     n_bins = request.form.get('n_bins')
     n_channels = request.form.get('n_channels')
-    print(n_bins,n_channels)
+    wl_min = request.form.get('wave_min')
+    wl_max = request.form.get('wave_max')
     
     # Get models from local directory if necessary
     if not modeldir:
@@ -102,7 +104,13 @@ def exoctk_ldc_results():
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
     if bandpass in svo.filters()['Band']:
-        kwargs = {'n_bins':int(n_bins)} if n_bins else {'n_channels':int(n_channels)} if n_channels else {}
+        kwargs = {'n_bins':int(n_bins)} if n_bins else \
+                 {'n_channels':int(n_channels)} if n_channels else {}
+                 
+        if wl_min and wl_max:
+            kwargs['wl_min'] = float(wl_min)*q.um
+            kwargs['wl_max'] = float(wl_max)*q.um
+            
         bandpass = svo.Filter(bandpass, **kwargs)
         min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
         
@@ -110,19 +118,27 @@ def exoctk_ldc_results():
     full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
     trim_rng = ExoCTK.core.find_closest(full_rng, [teff,logg,feh], 
                                         n=1, values=True)
-    
+                                        
     model_grid.customize(Teff_rng=trim_rng[0], logg_rng=trim_rng[1], 
                          FeH_rng=trim_rng[2], wave_rng=min_max)
-        
+                         
     # Draw the figure
     TOOLS = 'box_zoom,box_select,crosshair,resize,reset,hover'
     fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1),
                  plot_width=800, plot_height=400)
-    
+                 
     # Calculate the coefficients for each profile
     grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
                     mu_min=mu_min, bandpass=bandpass, plot=fig, colors=COLORS,
                     save='output.txt')
+                    
+    # Plot formatting
+    fig.legend.location = 'bottom_right'
+    fig.xaxis.axis_label = 'mu'
+    fig.yaxis.axis_label = 'Intensity'
+    
+    # Get HTML
+    script, div = components(fig)
     
     # Read the file into a string and delete it
     with open('output.txt', 'r') as f:
@@ -155,15 +171,7 @@ def exoctk_ldc_results():
         html_table = header+html_table
         
         profile_tables.append(html_table)
-    
-    # Plot formatting
-    fig.legend.location = 'bottom_right'
-    fig.xaxis.axis_label = 'mu'
-    fig.yaxis.axis_label = 'Intensity'
-    
-    # Get HTML
-    script, div = components(fig)
-    
+        
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
                 band=bandpass.filterID or '-', mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \

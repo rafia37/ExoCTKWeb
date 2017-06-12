@@ -46,8 +46,8 @@
             <form id='searchform' method='post' action='ldc_results' >
                 
                 <h3>Step 1: Choose a Model Grid</h3>
-                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ACES/"/> Phoenix ACES<br>
-                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ATLAS9/" /> Kurucz ATLAS9<br>
+                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ACES/default/"/> Phoenix ACES<br>
+                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ATLAS9/default/" /> Kurucz ATLAS9<br>
                 <input type="radio" name="modeldir" value="" checked/> Local files: <input type="text" name="local_files" size="80" rows="1" value="/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/"/>​​​​​​​​​​​​​​​​​​​​​​<br>
 
                 <h3>Step 2: Choose a Filter</h3>
@@ -56,13 +56,25 @@
                     <option value=""> Top Hat</option>
                     {{filters|safe}}
                 </select>
-                <div id='n_bins' style='display:none; margin-top:10px;'>
-                    Indicate the desired number of wavelength bins: 
-                    <input type="text" name="n_bins" size="5" rows="1"/>​​​​​​​​​​​​​​   
-                    <br>
-                    Or the number of channels per wavelength bin:
-                    <input type="text" name="n_channels" size="5" rows="1"/>​​​​​​​​​​​​​​
-                </div>
+                <table id='n_bins' style='display:none; margin-top:10px;'>
+                    <tr>
+                        <td>Indicate the desired number of wavelength bins [1]:</td>
+                        <td><input type="text" name="n_bins" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OR</strong> the number of channels per wavelength bin:</td>
+                        <td><input type="text" name="n_channels" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
+                    </tr>
+                    <tr>
+                        <td>Wavelength min [\(\mu\)m]:</td>
+                        <td><input type="text" name="wave_min" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>Wavelength max [\(\mu\)m]:</td>
+                        <td><input type="text" name="wave_max" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
+                    </tr>
+                </table>
     
                 <h3>Step 3: Choose One or More Limb Darkening Profiles</h3>
                 <input type="checkbox" name="uniform" value="uniform"> Uniform<br>

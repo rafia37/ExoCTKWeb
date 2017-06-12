@@ -68,6 +68,9 @@
             </table>
             
             <h3>Result</h3>
+            
+            <br>
+            {{ plot|safe }}
             <!-- <table>
             <tr>
                 <td>\(\mu\)</td>
@@ -95,10 +98,6 @@
                 {{ tab|safe }}
             <br>
             {% endfor %}
-            
-            <br><br>
-    
-            {{ plot|safe }}
 
             <!-- <form id='formatselect' method='post' action='savefile' >
                 <p>Save to a file:
