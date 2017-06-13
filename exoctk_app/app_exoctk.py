@@ -103,7 +103,7 @@ def exoctk_ldc_results():
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
-    if bandpass in svo.filters()['Band']:
+    if bandpass in svo.filters()['Band'] or bandpass=='tophat':
         kwargs = {'n_bins':int(n_bins)} if n_bins else \
                  {'n_channels':int(n_channels)} if n_channels else {}
                  
@@ -124,7 +124,7 @@ def exoctk_ldc_results():
             for i,(x,y) in enumerate(bandpass.rsr):
                 bk_plot.line(x, y, color=(COLORS*5)[i])
         else:
-            bk_plot.line(*bandpass.rsr)
+            bk_plot.line(*bandpass.raw)
         bk_plot.xaxis.axis_label = 'Wavelength [um]'
         bk_plot.yaxis.axis_label = 'Throughput'
         filt_script, filt_plot = components(bk_plot)

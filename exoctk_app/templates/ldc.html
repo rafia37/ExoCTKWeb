@@ -17,19 +17,13 @@
                 $("#footer").load('{{ url_for('static',filename='footer.html')}}');
             
                 $('#filterselect').on('change', function() {
-                  if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141')
+                  if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141' || this.value == 'tophat' )
                   {
                     $("#n_bins").show();
-                    $("#wave_rng").show();
                   } 
-                  else if (this.value == '') {
-                      $("#wave_rng").show();
-                      $("#n_bins").hide();
-                  }
                   else
                   {
                     $("#n_bins").hide();
-                    $("#wave_rng").hide();
                   }
                 });
                 
@@ -59,10 +53,10 @@
                 <h3>Step 2: Choose a Filter</h3>
                 
                 <select name="bandpass" id="filterselect">
-                    <option value=""> Top Hat</option>
+                    <option value="tophat"> Top Hat</option>
                     {{filters|safe}}
                 </select>
-                <table id='wave_rng' style='margin-top:10px;'>
+                <table id='n_bins'>
                     <tr>
                         <td>Wavelength min [\(\mu\)m]:</td>
                         <td><input type="text" name="wave_min" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
@@ -72,8 +66,6 @@
                         <td>Wavelength max [\(\mu\)m]:</td>
                         <td><input type="text" name="wave_max" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
                     </tr>
-                </table>
-                <table id='n_bins' style='display:none;'>
                     <tr>
                         <td>Indicate the desired number of wavelength bins:</td>
                         <td><input type="text" name="n_bins" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
