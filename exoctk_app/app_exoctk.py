@@ -19,8 +19,8 @@ from bokeh.models import Range1d
 from bokeh.models import Label
 from bokeh.models import HoverTool
 from bokeh.models import ColumnDataSource
-from bokeh.models import Span
 from bokeh.plotting import figure, show
+from bokeh.models.widgets import Panel, Tabs
 
 # define the cache config keys, remember that it can be done in a settings file
 app_exoctk.config['CACHE_TYPE'] = 'null'
@@ -114,6 +114,8 @@ def exoctk_ldc_results():
         bandpass = svo.Filter(bandpass, **kwargs)
         min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
         
+        n_bins = bandpass.n_bins
+        
     # Trim the grid to nearby grid points to speed up calculation
     full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
     trim_rng = ExoCTK.core.find_closest(full_rng, [teff,logg,feh], 
@@ -122,23 +124,33 @@ def exoctk_ldc_results():
     model_grid.customize(Teff_rng=trim_rng[0], logg_rng=trim_rng[1], 
                          FeH_rng=trim_rng[2], wave_rng=min_max)
                          
-    # Draw the figure
-    TOOLS = 'box_zoom,box_select,crosshair,resize,reset,hover'
-    fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1),
-                 plot_width=800, plot_height=400)
-                 
     # Calculate the coefficients for each profile
     grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
-                    mu_min=mu_min, bandpass=bandpass, plot=fig, colors=COLORS,
+                    mu_min=mu_min, bandpass=bandpass, plot=False, colors=COLORS,
                     save='output.txt')
                     
-    # Plot formatting
-    fig.legend.location = 'bottom_right'
-    fig.xaxis.axis_label = 'mu'
-    fig.yaxis.axis_label = 'Intensity'
+    # Draw the figure
+    tabs = []
+    for i in range(n_bins or 1):
+        
+        # PLot it
+        TOOLS = 'box_zoom,box_select,crosshair,resize,reset,hover'
+        fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1),
+                     plot_width=800, plot_height=400)
+        ld_funcs = [ExoCTK.ldc.ldcfit.ld_profile(p) for p in profiles]
+        ExoCTK.ldc.ldcplot.ld_plot(ld_funcs, grid_point, fig=fig, bin_idx=i)
+                                    
+        # Plot formatting
+        fig.legend.location = 'bottom_right'
+        fig.xaxis.axis_label = 'mu'
+        fig.yaxis.axis_label = 'Intensity'
+        
+        tabs.append(Panel(child=fig, title=str(grid_point['centers'][0][i])))
+                
+    final = Tabs(tabs=tabs)
     
     # Get HTML
-    script, div = components(fig)
+    script, div = components(final)
     
     # Read the file into a string and delete it
     with open('output.txt', 'r') as f:

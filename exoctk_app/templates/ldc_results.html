@@ -7,7 +7,9 @@
         <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.js"></script>
 
         <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.css" type="text/css" />
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.css" type="text/css" />
         <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.js"></script>
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.js"></script>
         <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
         
         <script type="text/javascript" async
@@ -69,8 +71,11 @@
             
             <h3>Result</h3>
             
+            <div style='clear:both;'>
+                {{ plot|safe }}
+            </div>
+            <div style="clear:both;"></div>
             <br>
-            {{ plot|safe }}
             <!-- <table>
             <tr>
                 <td>\(\mu\)</td>
