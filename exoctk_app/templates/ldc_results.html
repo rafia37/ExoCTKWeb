@@ -20,6 +20,7 @@
     <body>
         
         {{ script|safe }}
+        {{ filt_script|safe }}
 
         <script>
             $(document).ready(function(){
@@ -42,32 +43,40 @@
             </div>
             
             <h3>Input</h3>
-            <table>
-            <tr>
-                <td>Teff</td>
-                <td>{{teff|safe}}</td>
-            </tr>
-            <tr>
-                <td>log(g)</td>
-                <td>{{logg|safe}}</td>
-            </tr>
-            <tr>
-                <td>Fe/H</td>
-                <td>{{feh|safe}}</td>
-            </tr>
-            <tr>
-                <td>Bandpass</td>
-                <td>{{band|safe}}</td>
-            </tr>
-            <tr>
-                <td>Profiles</td>
-                <td>{{profile|safe}}</td>
-            </tr>
-            <tr>
-                <td>Models</td>
-                <td>{{models|safe}}</td>
-            </tr>
-            </table>
+            
+            <div style='float:left; width:500px;'>
+                <table>
+                    <tr>
+                        <td>Teff</td>
+                        <td>{{teff|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>log(g)</td>
+                        <td>{{logg|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Fe/H</td>
+                        <td>{{feh|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Bandpass</td>
+                        <td>{{band|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Profiles</td>
+                        <td>{{profile|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Models</td>
+                        <td>{{models|safe}}</td>
+                    </tr>
+                </table>
+            </div>
+            <div style='float:right; width:450px;'>
+                {{filt_plot|safe}}
+            </div>
+            <div class='clearfix'></div>
+            <br>
             
             <h3>Result</h3>
             

@@ -113,8 +113,23 @@ def exoctk_ldc_results():
             
         bandpass = svo.Filter(bandpass, **kwargs)
         min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
-        
         n_bins = bandpass.n_bins
+        
+        # Get the filter plot
+        TOOLS = 'box_zoom,resize,reset'
+        bk_plot = figure(tools=TOOLS, title=bandpass.filterID, plot_width=400, plot_height=300,
+                         x_range=Range1d(bandpass.WavelengthMin,bandpass.WavelengthMax))
+        if n_bins>1:
+            bk_plot.line(*bandpass.raw, line_width=5, color='black', alpha=0.1)
+            for i,(x,y) in enumerate(bandpass.rsr):
+                bk_plot.line(x, y, color=(COLORS*5)[i])
+        else:
+            bk_plot.line(*bandpass.rsr)
+        bk_plot.xaxis.axis_label = 'Wavelength [um]'
+        bk_plot.yaxis.axis_label = 'Throughput'
+        filt_script, filt_plot = components(bk_plot)
+        
+        plt.close()
         
     # Trim the grid to nearby grid points to speed up calculation
     full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
@@ -187,7 +202,8 @@ def exoctk_ldc_results():
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
                 band=bandpass.filterID or '-', mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \
-                script=script, plot=div, file_as_string=repr(file_as_string))
+                script=script, plot=div, file_as_string=repr(file_as_string), \
+                filt_plot=filt_plot, filt_script=filt_script)
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])

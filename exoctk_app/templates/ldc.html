@@ -20,10 +20,16 @@
                   if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141')
                   {
                     $("#n_bins").show();
+                    $("#wave_rng").show();
+                  } 
+                  else if (this.value == '') {
+                      $("#wave_rng").show();
+                      $("#n_bins").hide();
                   }
                   else
                   {
                     $("#n_bins").hide();
+                    $("#wave_rng").hide();
                   }
                 });
                 
@@ -56,15 +62,7 @@
                     <option value=""> Top Hat</option>
                     {{filters|safe}}
                 </select>
-                <table id='n_bins' style='display:none; margin-top:10px;'>
-                    <tr>
-                        <td>Indicate the desired number of wavelength bins [1]:</td>
-                        <td><input type="text" name="n_bins" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
-                    </tr>
-                    <tr>
-                        <td><strong>OR</strong> the number of channels per wavelength bin:</td>
-                        <td><input type="text" name="n_channels" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
-                    </tr>
+                <table id='wave_rng' style='margin-top:10px;'>
                     <tr>
                         <td>Wavelength min [\(\mu\)m]:</td>
                         <td><input type="text" name="wave_min" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
@@ -73,6 +71,16 @@
                     <tr>
                         <td>Wavelength max [\(\mu\)m]:</td>
                         <td><input type="text" name="wave_max" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
+                    </tr>
+                </table>
+                <table id='n_bins' style='display:none;'>
+                    <tr>
+                        <td>Indicate the desired number of wavelength bins:</td>
+                        <td><input type="text" name="n_bins" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OR</strong> the number of pixels per wavelength bin:</td>
+                        <td><input type="text" name="n_channels" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
                     </tr>
                 </table>
     
