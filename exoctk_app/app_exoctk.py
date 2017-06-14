@@ -71,7 +71,7 @@ def exoctk_ldc_results():
     feh = float(request.form['feh'])
     mu_min = float(request.form['mu_min'])
     n_bins = request.form.get('n_bins')
-    n_channels = request.form.get('n_channels')
+    pixels_per_bin = request.form.get('pixels_per_bin')
     wl_min = request.form.get('wave_min')
     wl_max = request.form.get('wave_max')
     
@@ -105,12 +105,13 @@ def exoctk_ldc_results():
     min_max = model_grid.wave_rng
     if bandpass in svo.filters()['Band'] or bandpass=='tophat':
         kwargs = {'n_bins':int(n_bins)} if n_bins else \
-                 {'n_channels':int(n_channels)} if n_channels else {}
+                 {'pixels_per_bin':int(pixels_per_bin)} if pixels_per_bin else {}
                  
         if wl_min and wl_max:
             kwargs['wl_min'] = float(wl_min)*q.um
             kwargs['wl_max'] = float(wl_max)*q.um
             
+        print(kwargs)
         bandpass = svo.Filter(bandpass, **kwargs)
         min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
         n_bins = bandpass.n_bins

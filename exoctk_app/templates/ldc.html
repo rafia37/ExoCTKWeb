@@ -17,10 +17,18 @@
                 $("#footer").load('{{ url_for('static',filename='footer.html')}}');
             
                 $('#filterselect').on('change', function() {
-                  if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141' || this.value == 'tophat' )
+                  if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141' )
                   {
-                    $("#n_bins").show();
+                      $("#n_bins").show();
+                      $("#or").show()
+                      $("#and").hide()
                   } 
+                  else if ( this.value == 'tophat' )
+                  {
+                      $("#tophat").show()
+                      $("#and").show()
+                      $("#or").hide()
+                  }
                   else
                   {
                     $("#n_bins").hide();
@@ -71,8 +79,8 @@
                         <td><input type="text" name="n_bins" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
                     </tr>
                     <tr>
-                        <td><strong>OR</strong> the number of pixels per wavelength bin:</td>
-                        <td><input type="text" name="n_channels" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
+                        <td><strong><span id='and'>AND</span><span id='or' style='display:none;'>OR</span></strong> the number of pixels per wavelength bin:</td>
+                        <td><input type="text" name="pixels_per_bin" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
                     </tr>
                 </table>
     
