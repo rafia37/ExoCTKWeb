@@ -111,7 +111,6 @@ def exoctk_ldc_results():
             kwargs['wl_min'] = float(wl_min)*q.um
             kwargs['wl_max'] = float(wl_max)*q.um
             
-        print(kwargs)
         bandpass = svo.Filter(bandpass, **kwargs)
         min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
         n_bins = bandpass.n_bins
