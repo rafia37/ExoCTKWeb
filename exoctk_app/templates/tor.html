@@ -1,0 +1,216 @@
+{%extends "base.html" %}
+
+{% block content %}
+<!doctype html>
+
+            <h1>Time-Series Observation & Reduction Tools</h1>
+
+            <div class=metanav>
+                <p>
+                    Let's find you an exoplanet transit!
+                    (This is essentially de-mystify-apt.py.) It works to take your
+                    transit parameters and spit out EXACTLY what you need to plan 
+                    your proposal in APT: number of groups
+                    per integrations and the number of integrations that make up
+                    the entirety of your transit without oversaturating whichever
+                    instrument your heart -- or planet -- desires!
+                </p>
+
+                    <p>    
+                    How exactly do we calculate this? When is this going to a poor estimate for
+                    your star/planet/system? Well, feel free to <a href="{{ url_for('exoctk_tor_background') }}">check our math!</a>
+                    </p>
+            </div>
+            <div class="span300"> 
+                <p>
+            <form id='searchform' method='post' action='tor_results' >
+
+            <div class="span20">
+                <h3>Star/Transit Parameters</h3>
+                First off, we'll need a bit of information about the star. Technically we can fit any magnitude
+                you throw at us, but the closer the magnitude band is to the filter, the better your estimate will be!
+                
+            
+                <br></br>
+                (Or perhaps -- you're above all of this, and you already know how many groups you want. That's okay too!
+                Just make sure you have a vlue for groups and the transit observation time in this section.
+
+                <br></br>
+                <div class="row">
+                    <div class="span4">
+                        Stellar Temperature:
+                        <input type="text" name="temp" size="7" rows="1" value='2550'  placeholder"(in Kelvin)"/>
+                    </div>
+                    
+                    <div class="span20"> 
+                    Stellar Magnitude: 
+                    <input type="text" name="mag" size="7" rows="1" value='10.3' placeholder="magnitude"/>
+                    <input type="text" name="band" size="7" rows="1" value='K'  placeholder="band"/>        
+                    </div> 
+                </div>
+
+                <div class="row">
+                    <div class="span20">
+                        Transit Observation Time:
+                        <input type="text" name="T" size="7" rows="1" value='5'  placeholder="(in hours)"/>
+                    </div>
+                    
+                    <div class="span10">
+                        Groups -- if you know:
+                        <input type="text" name="groups" size="7" rows="1" value='0' />
+                    </div>
+                </div>
+            </div>
+
+            <div class="span20">
+                <h3>Instrument Specifics</h3>
+                Next we need a bit of info about how you'll be using JWST. 
+                Theoretically most of these guys should be replace by subarray mode or something when I work out the logic...
+
+                <br></br>
+
+                Are you a little turned around about what filter goes where? What throughput level is best for 
+                your observation! That's fine!! We all are. Take a quick peep at these filter profiles...
+                <br></br>
+                {% for this_ins in button_ins %}
+                    <a class="btn" href="{{ url_for('exoctk_filter_profile', ins=this_ins) }}">{{ this_ins }}</a>
+                {% endfor %}
+                
+                <br></br>
+
+                <div class="row">
+                    <div class="span4">
+                        Instrument:
+                        <select name="ins">
+                            <option value="MIRI">MIRI</option>
+                            <option value="NIRCam">NIRCam</option>
+                            <option value="NIRSpec">NIRSpec</option>
+                            <option value="NIRISS">NIRISS</option>
+                        </select>
+                    </div>
+
+                    <div class="span10">
+                        Filter:
+                        <select name="filt">
+                            <optgroup label='MIRI'>
+                                <option value="LRS">LRS</option>
+                            </optgroup>
+                            <optgroup label='NIRCam'>
+                                <option value="F322W2">F322W2</option>
+                                <option value="F444W">F444W</option>
+                                <option value="F277W">F277W</option>
+                            </optgroup>
+                            <optgroup label='NIRSpec'>
+                                <option value="G140H">G140H</option>
+                                <option value="G140M">G140M</option>
+                                <option value="G235H">G235H</option>
+                                <option value="G235M">G235M</option>
+                                <option value="G395H">G395H</option>
+                                <option value="G395M">G395M</option>
+                            </optgroup>
+                            <optgroup label='NIRISS'>
+                                <option value="GR700XD">GR700XD</option>
+                            </optgroup>
+                        </select>
+                        
+                    </div>
+                </div>
+                
+                <div class="row">
+
+                    <div class="span10">
+                        Subarray:
+                        <select name="subarray">
+                            <optgroup label='MIRI'>
+                                <option value='FULL'>FULL FRAME</option>
+                                <option value='SLITLESSPRISM'>SLITLESSPRISM</option>
+                            </optgroup>
+                            <optgroup label='NIRCam'>
+                                <option value='FULL'>(FULL FRAME</option>
+                                <option value='SUB640'>SUB640</option>
+                                <option value='SUB320'>SUB320</option>
+                                <option value='SUB160'>SUB160</option>
+                                <option value='SUB160P'>SUB160P</option>
+                                <option value='SUB400'>SUB400</option>
+                                <option value='SUB64P'>SUB64P</option>
+                                <option value='SUBGRISM256'>SUBGRISM256</option>
+                                <option value='SUBGRISM128'>SUBGRISM128</option>
+                                <option value='SUBGRISM64'>SUBGRISM64</option>
+                                <option value='SUB2048'>SUB2048</option>
+                                <option value='SUB1024A'>SUB1024A</option>
+                            </optgroup>
+                            <optgroup label='NIRSpec'>
+                                <option value='SUB2048'>SUB2048</option>
+                                <option value='SUB1024A'>SUB1024A</option>
+                                <option value='SUB1024B'>SUB1024B</option>
+                                <option value='SUB512'>SUB512</option>
+                                <option value='SUB512S'>SUB512S</option>
+                            <optgroup label='NIRISS'>
+                                <option value='FULL'>FULL FRAME</option>
+                                <option value='SUBSTRIP96'>SUBSTRIP96</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="span10">
+                        Resets:
+                        <input type="text" name="n_reset" size="7" value='1' />
+                    </div>
+                </div>
+            </div>
+
+            <div class="span20">
+                <h3>Risk Assessment</h3>
+                Our final questions for you gauge how comfortable you are with danger. The dedicated JWST instrument
+                teams have yet to come to a solid consensus on what dictates a dangerous saturation level, so you 
+                must decide! Similarly, to make this run on the fly, we use a flat estimate for throughput saturation
+                (you can check out the profiles above.) You can choose whether you'd like the mean, median, or maximum
+                throughput to be applied to your estimate.
+                
+                <br></br>
+                
+                <div class="row">
+                    
+                    <div class="span4">
+                        What throughput estimate would you like?
+                    
+                        <br>
+
+                        <div style="width:5em"><input type="radio" name="tp" value="med" > median</div>
+                        <div style="width:5em"><input type="radio" name="tp" value="mean"> mean</div>
+                        <div style="width:5em"><input type="radio" name="tp" value="max" checked> max</div>
+                    </div>
+
+                        <br></br>
+
+                    <div class="span10">
+                        Saturation can be input in counts or full well fraction (i.e. less than 1!)
+                        <div style="width:10em"><input type="radio" name="sat" value="counts" checked> counts</div>
+                        <div style="width:10em"><input type="radio" name="sat" value="well"> full well fraction</div>
+                    </div>
+                    
+                </div>
+                <div class="row">
+                    <div class="span10">
+                        Saturation Level</td>
+                        <input type="text" name="sat_lvl" size="7" value='20000' placeholder='counts or full well fraction'/>
+                    </div>
+
+
+                </div>
+            </div>
+
+            <div class="span300">
+                    <h3>Okay! Press the button!</h3>
+
+                <input class="btn" type='submit' value='CALCULATE!'></p>
+            </div>
+
+            </form>
+            </p>
+
+            <HR>
+
+            </div>
+
+{% endblock %}

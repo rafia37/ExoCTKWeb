@@ -1,0 +1,64 @@
+{%extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="/../static/css/custom.css">
+
+<div class="span500">
+
+            <h1>Time-Series Observation & Reduction Tools</h1>
+            
+
+            <div class="span100">
+                <h4> Input Parameters:</h4>
+            
+                    <center>
+                    <table id="myTable">
+                        <tr class="header">
+                            <th>Rows</th>
+                            <th>Columns</th>
+                            <th>Amplifiers </th>
+                            <th>Reset </th>
+                            <th>Transit Observation Time</th>
+                        </tr>
+                        <tr>
+                            <td>{{ tor_dict['n_row'] }}</td>
+                            <td>{{ tor_dict['n_col'] }}</td>
+                            <td>{{ tor_dict['n_amp'] }}</td>
+                            <td>{{ tor_dict['n_reset']}}</td>
+                            <td>{{ tor_dict['obs_time'] }}</td>
+                        </tr>
+                    </table>
+                    </center>
+            </div>
+
+            <div class="span100">
+                <h4> APT Ready Outputs and Useful Tidbits:</h4>
+                    
+                    <center>
+                    <table id="myTable">
+                        <tr class="header">
+                            <th> Integrations </th>
+                            <th> Groups </th>
+                            <th> Integration Time </th>
+                            <th> Exposure Time </th>
+                            <th> Duration Time </th>
+                            <th> Frame Time </th>
+                            <th> Observation Efficiency </th>
+                        </tr>
+                        <tr>
+                            <td>{{ tor_dict['n_int'] }}</td>
+                            <td>{{ tor_dict['n_group'] }}</td>
+                            <td>{{ tor_dict['t_int'] }}</td>
+                            <td>{{ tor_dict['t_exp'] }}</td>
+                            <td>{{ tor_dict['t_duration'] }}</td>
+                            <td>{{ tor_dict['t_frame'] }}</td>
+                            <td>{{ tor_dict['obs_eff'] }}</td>
+                        </tr>
+                    </table>
+                    </center>
+            </div>
+
+</div>
+
+{% endblock %}

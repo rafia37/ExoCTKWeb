@@ -1,0 +1,32 @@
+{%extends "base.html" %}
+
+{% block content %}
+
+<script type="text/javascript"
+            src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG">
+</script>
+            
+            <h1>Time-Series Observation & Reduction Tools</h1>
+            
+            <h2>Here there will be lots of cute figures and some (less cute?) math.</h2>
+
+            Basically a brief run through of how exactly this is calculated -- maybe some error
+            if we're feelin' real classy, and some suggestions as to when this may or may not
+            be an optimal test of saturation?
+
+            <br></br>
+
+            This all starts with a model of your star!! Given the star's magnitude (through whatever given band) and temperature
+            we fit it to a blackbody curve, and compare the integrated flux through the input band and the filter of your choice
+            to create a scaling factor :
+
+            <br></br>
+
+
+<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>f</mi><mo>=</mo><msub><mi>log</mi><mn>10</mn></msub><mo>(</mo><mtext>Flux</mtext><mo>[</mo><msup><mtext>e</mtext><mo>-</mo></msup><mo>]</mo><mo>)</mo><mo>,</mo><mo>&#x200A;</mo><mo>&#x200A;</mo><mi>d</mi><mo>=</mo><mtext>MJD</mtext><mo>-</mo><mn>55400</mn></math>
+<p></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>S</mi><mo>=</mo><mo>&#x2211;</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msup><mi>d</mi><mi>i</mi></msup><msup><mi>f</mi><mi>j</mi></msup><mo>=</mo><msub><mi>c</mi><mn>00</mn></msub><mo>+</mo><msub><mi>c</mi><mn>01</mn></msub><mi>f</mi><mo>+</mo><msub><mi>c</mi><mn>02</mn></msub><msup><mi>f</mi><mn>2</mn></msup><mo>+</mo><mi>d</mi><mo>&#xB7;</mo><mo>(</mo><msub><mi>c</mi><mn>10</mn></msub><mo>+</mo><msub><mi>c</mi><mn>11</mn></msub><mi>f</mi><mo>+</mo><msub><mi>c</mi><mn>12</mn></msub><msup><mi>f</mi><mn>2</mn></msup><mo>)</mo><mo>+</mo><msup><mi>d</mi><mn>2</mn></msup><mo>&#xB7;</mo><mo>(</mo><msub><mi>c</mi><mn>20</mn></msub><mo>+</mo><msub><mi>c</mi><mn>21</mn></msub><mi>f</mi><mo>+</mo><msub><mi>c</mi><mn>22</mn></msub><msup><mi>f</mi><mn>2</mn></msup><mo>)</mo></math>
+<p></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>f</mi><mtext>corr</mtext></msub><mo>[</mo><msup><mtext>e</mtext><mo>-</mo></msup><mo>]</mo><mo>=</mo><msub><mi>f</mi><mtext>uncorr</mtext></msub><mo>[</mo><msup><mtext>e</mtext><mo>-</mo></msup><mo>]</mo><mo>+</mo><mfrac><mi>S</mi><mrow><mn>2</mn><mo>.</mo><mn>5</mn></mrow></mfrac><mo>&#xB7;</mo><mfrac><mi>Y</mi><mn>2048</mn></mfrac></math>
+
+{% endblock %}
