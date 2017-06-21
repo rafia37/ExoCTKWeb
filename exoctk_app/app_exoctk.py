@@ -1,4 +1,5 @@
 ## -- IMPORTS
+import glob
 import os
 
 import astropy.table as at
@@ -7,6 +8,7 @@ import numpy as np
 
 import bokeh
 from bokeh import mpl
+from bokeh.mpl import to_bokeh
 from bokeh.core.properties import Override
 from bokeh.models import ColumnDataSource
 from bokeh.embed import components
@@ -24,6 +26,9 @@ from flask import current_app
 from flask_cache import Cache
 
 import ExoCTK
+from tor import create_tor_dict
+
+#from ExoCTK.tor import create_tor_dict
 
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
@@ -152,10 +157,6 @@ def exoctk_ldc_error():
 def exoctk_tot():
     return render_template('tot.html')
 
-# Load the TOR page
-@app_exoctk.route('/tor', methods=['GET', 'POST'])
-def exoctk_tor():
-    return render_template('tor.html')
 
 # Load the TOT results page
 @app_exoctk.route('/tot_results', methods=['GET', 'POST'])
@@ -198,7 +199,8 @@ def exoctk_tot_results():
                      labels=['Model Spectrum', 'Simulated Obs.'])
     
     # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
+    plt.savefig('static/plots/sim.png')
+    p = mpl.to_bokeh(plt.gcf())
     plt.close()
     xmin, xmax = (1.125,1.650)
     ymin, ymax = (np.min(binspec)-2*deptherr, np.max(binspec)+2*deptherr)
@@ -217,44 +219,85 @@ def exoctk_tot_results():
                                               aRs, period, windowSize, ecc=0, w=90.)
                                               
     # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
+    plt.savefig('static/plots/obs.png')
+    p = mpl.to_bokeh(plt.gcf())
     plt.close()
     obs_script, obs_plot = components(p)
     
-    # Make some HTML for the input summary
-    summary = """<h3>Input</h3>
-    <table>
-        <tr>
-            <td>H-band magnitude of the system</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Orbital inclination [degrees]</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Semi-major axis [R*]</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Orbital period [days]</td>
-            <td>{}</td>
-        </tr>
-    </table>
+    exo_dict['minphase'] = round(minphase, 4)
+    exo_dict['maxphase'] = round(maxphase, 4)
+
+    script_dict = {'sim_script': sim_script, 'obs_script': obs_script}
+    plot_dict = {'sim_plot': sim_plot, 'obs_plot': obs_plot}
+    print('----------------------------SIM SCRIPT--------------------------------------------------------------------------------------------------')
+    print(sim_script)
+    print('----------------------------SIM PLOT--------------------------------------------------------------------------------------------------')
+    print(obs_script)
     
-    <h3>Result</h3>
-    <table>
-        <tr>
-            <td>Start observations between orbital phases:</td>
-            <td>{:.4f} - {:.4f}</td>
-        </tr>
-    </table>
-    """.format(exo_dict['star']['hmag'], exo_dict['planet']['i'], exo_dict['planet']['ars'], exo_dict['planet']['period'],
-               minphase, maxphase)
+    print('----------------------------OBS SCRIPT--------------------------------------------------------------------------------------------------')
+    print(sim_plot)
+    print('----------------------------OBS PLOT--------------------------------------------------------------------------------------------------')
+    print(obs_plot)
+    return render_template('tot_results.html', exo_dict=exo_dict, script_dict=script_dict, plot_dict=plot_dict)
+
+# Load the WIP page
+@app_exoctk.route('/wip')
+def exoctk_wip():
+    return render_template('wip.html')
+
+# Load the TOR page
+@app_exoctk.route('/tor', methods=['GET', 'POST'])
+def exoctk_tor():
+
+    ins = glob.glob('static/filter_dat/*')
+    button_ins = [this_ins[18:] for this_ins in ins]
+
+    return render_template('tor.html', button_ins=button_ins)
+
+# Load the TOR results
+@app_exoctk.route('/tor_results', methods=['GET', 'POST'])
+def exoctk_tor_results():
     
-    return render_template('tot_results.html', summary=summary, sim_script=sim_script, sim_plot=sim_plot, 
-                           obs_script=obs_script, obs_plot=obs_plot)
+    n_group = int(request.form['groups']) 
+    mag = float(request.form['mag'])
+    band = request.form['band']
+    obs_time = float(request.form['T'])
+    temp = float(request.form['temp'])
+    sat_max = float(request.form['sat_lvl'])
+    sat_mode = request.form['sat']
+    throughput = request.form['tp']
+    filt = request.form['filt']
+    ins = request.form['ins']
+    subarray = request.form['subarray']
+    n_reset = int(request.form['n_reset'])
     
+    tor_output = create_tor_dict(obs_time, n_group, mag, band, temp, sat_max, sat_mode, throughput, filt, ins, subarray, n_reset)
+    
+    if type(tor_output) == str:
+        tor_err = tor_output
+        return render_template('tor_error.html', tor_err=tor_err)
+    
+    else:
+        tor_dict = tor_output
+        return render_template('tor_results.html', tor_dict=tor_dict)
+
+# Load the TOR background
+@app_exoctk.route('/tor_background')
+def exoctk_tor_background():
+    return render_template('tor_background.html')
+
+# Load filter profiles pages
+@app_exoctk.route('/filter_profile_<ins>')
+def exoctk_filter_profile(ins):
+
+    filt_imgs = glob.glob('static/filter_dat/' + ins + '/' + ins + '*')
+    names = [filt_img[19+len(ins):-4] for filt_img in filt_imgs]
+    print(filt_imgs)
+    filt_imgs = ['../' + filt_img for filt_img in filt_imgs]
+
+    return render_template('tor_filter_profile.html', names=names, filt_imgs=filt_imgs, ins=ins)
+    
+
 def find_closest(A, a):
     """
     Find the two neighboring models for a given parameter

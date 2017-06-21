@@ -14,6 +14,9 @@
         <link rel="stylesheet" href="/../static/css/bootstrap.min.css">
         <link rel="icon" type="image/png" href="/../static/images/favicon.png">
 
+        <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.css" type="text/css" />
+        <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.css" type="text/css" />
+        
         <style>
 		body {
 			padding-top: 60px;
@@ -34,6 +37,12 @@
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
         <script>window.jQuery || document.write('<script src="/../static/js/vendor/jquery-1.10.1.min.js"><\/script>')</script>
 
+        
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.2.min.js"></script>
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.2.min.js"></script>
+<script type="text/javascript">
+    Bokeh.set_log_level("info");
+</script>
     </head>
     <body>
         <!--[if lt IE 7]>
@@ -47,11 +56,11 @@
                     <div class="nav-collapse collapse">
                     <a class="brand pull-left no-overflow" href="/">Exoplanet Characterization Tool Kit</a>
                     <ul class="nav pull-left">
-                             <li><a href="ldc">Limb Darkening Caluclator</a></li>
-                             <li><a href="tot">Transit Observation Tools</a></li>
-                             <li><a href="tor">Time-Series Observation & Reduction Tools</a></li>
                              <li><a
                                     href="https://2.bp.blogspot.com/-LTmFbKdu_zk/Vxji7vwMZ3I/AAAAAAAAR_c/NbVTEj9-iM8KB_MW-tlQjOUhZUZ2mK8tgCLcB/s1600/TLC.jpg">TLC</a></li>
+                             <li><a href="ldc">Limb Darkening Calculator</a></li>
+                             <li><a href="tot">Transit Observation Tools</a></li>
+                             <li><a href="tor">Time-series Observation & Reduction tools</a></li>
                     </ul>
                     </div><!--/.nav-collapse -->
                 </div>

@@ -1,34 +1,56 @@
 {% extends "base.html" %}
 
 {% block content %}
-        {{sim_script|safe}}
-        {{obs_script|safe}}
 
 
             <h1>Transit Observation Tools</h1>
 
-            <div class=metanav>
-                <p>
-                    Here is a bunch of stuff about the TOT.
-                </p>
-
-            </div>
         
-            {{summary|safe}}
-            
-            <br>
+    <h3>Input</h3>
     
-            {{sim_plot|safe}}
-                        
-            {{obs_plot|safe}}
+    <table>
+        <tr>
+            <td>H-band magnitude of the system</td>
+            <td>{{ exo_dict['star']['hmag'] }}</td>
+        </tr>
+        <tr>
+            <td>Orbital inclination [degrees]</td>
+            <td>{{ exo_dict['planet']['i'] }}</td>
+        </tr>
+        <tr>
+            <td>Semi-major axis [R*]</td>
+            <td>{{ exo_dict['planet']['ars'] }}</td>
+        </tr>
+        <tr>
+            <td>Orbital period [days]</td>
+            <td>{{ exo_dict['planet']['period'] }}</td>
+        </tr>
+    </table>
+    
+    <h3>Result</h3>
+    <table>
+        <tr>
+            <td>Start observations between orbital phases:</td>
+            <td>{{ exo_dict['minphase'] - exo_dict['maxphase'] }}</td>
+        </tr>
+    </table>
             
+            <br></br>
+            <img src="../static/plots/sim.png">
+            <!--    {{ script_dict['sim_script']|safe}}    --!>
+            <!--    {{ plot_dict['sim_plot']|safe}}        --!>      
+            <br></br>
+            <img src="../static/plots/obs.png">
+            <!-- {{ script_dict['obs_script']|safe}}  --!>
+            <!-- {{ plot_dict['obs_plot']|safe}}      --!>
+            
+            <br></br>
             <form id='formatselect' method='post' action='savefile' >
-                <p>Save to a file:
+                <p><input class="btn" type='submit' value='Save'> to a file of either format: </p>
                     <select name="format">
                         <option value="ascii">ASCII</option>
                         <option value="votable">VOTable</option>
-                    </select>
-                    <input type='submit' value='Save' />
+                  </select>
                 </p>
             </form>
 
