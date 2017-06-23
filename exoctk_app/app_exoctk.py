@@ -364,7 +364,7 @@ def exotransmit_page():
     tab.write(fh, format='ascii.no_header')
     table_string = fh.getvalue()
 
-    fig = figure(plot_width=1000, plot_height=250, responsive=False)
+    fig = figure(plot_width=1100, plot_height=400, responsive=False)
     fig.line(x/1e-6, y/100, color='Black', line_width=0.5)
     fig.xaxis.axis_label = 'Wavelength (um)'
     fig.yaxis.axis_label = 'Transit Depth'
