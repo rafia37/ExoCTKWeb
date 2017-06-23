@@ -1,14 +1,24 @@
+import flask
 from flask import Flask, render_template, request, redirect, make_response, current_app
 from flask_cache import Cache
 
 app_exoctk = Flask(__name__)
 
+import shutil
+import os
+from datetime import datetime
+
 import ExoCTK
+from ExoCTK.pal import exotransmit
 import numpy as np
 import matplotlib.pyplot as plt
 import astropy.table as at
+from astropy.extern.six.moves import StringIO
+
 import bokeh
 from bokeh import mpl
+from bokeh.resources import INLINE
+from bokeh.util.string import encode_utf8
 from bokeh.core.properties import Override
 from bokeh.embed import components
 from bokeh.models import Range1d
@@ -269,64 +279,124 @@ def exoctk_savefile():
     response.headers["Content-Disposition"] = "attachment; filename=%s" % filename
     return response
 
-class LatexLabel(Label):
-    """A subclass of the Bokeh built-in `Label` that supports rendering
-    LaTex using the KaTex typesetting library.
+exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
 
-    Only the render method of LabelView is overloaded to perform the
-    text -> latex (via katex) conversion. Note: ``render_mode="canvas``
-    isn't supported and certain DOM manipulation happens in the Label
-    superclass implementation that requires explicitly setting
-    `render_mode='css'`).
+def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
+    current_dir = os.path.abspath(os.curdir)
+    now = datetime.now().isoformat()
+    os.chdir(os.path.join(exotransmit_dir, 'runs'))
+    os.mkdir(now)
+    os.chdir(now)
+    output_file = os.path.relpath('result.dat', start=exotransmit_dir)
+    exotransmit.exotransmit(base_dir=exotransmit_dir,
+                            EOS_file=os.path.join('/EOS', eos),
+                            T_P_file=os.path.join('/T_P', tp),
+                            g=g,
+                            R_planet=R_p*69.911e6,
+                            R_star=R_s*695.7e6,
+                            P_cloud=P*100000,
+                            Rayleigh=Rayleigh,
+                            output_file='/'+output_file,
+                            )
+    x, y = np.loadtxt('result.dat', skiprows=2, unpack=True)
+    os.chdir(current_dir)
+    shutil.rmtree(os.path.join(exotransmit_dir, 'runs', now))
+    return x, y
+
+@app_exoctk.context_processor
+def utility_processor():
+    def process_eos(fname):
+        params = fname[:-4].split('_')[1:]
+        if len(params) == 1:
+            params[0] = params[0] + ' Only Atmosphere'
+            return params[0]
+        else:
+            if 'solar' in params[0]:
+                params[0] = params[0].replace('p', '.').replace('X',
+                                                                'x ').replace(
+                    'solar', 'Solar Metallicity')
+            if 'CtoO' in params:
+                params[1] = params[1].replace('p', '.') + ' C:O'
+                params.pop(2)
+            if 'gas' in params:
+                params[params.index('gas')] = 'Gas only'
+            if 'cond' in params:
+                if 'graphite' in params:
+                    params[params.index('cond')] = 'w/ Condensation and rainout'
+                    params[params.index('graphite')] = 'including graphite'
+                else:
+                    params[params.index(
+                        'cond')] = 'w/ Condensation and rainout (no graphite)'
+
+        return ', '.join(params)
+
+    def process_tp(fname):
+        return fname[4:-4] + ' Isothermal'
+
+    return dict(process_eos=process_eos, process_tp=process_tp)
+
+
+@app_exoctk.route('/exotransmit', methods=['GET','POST'])
+def exotransmit_page():
+    """ 
+    Run Exo-Transmit taking inputs from the HTML form and plot the results
     """
-    __javascript__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js"]
-    __css__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css"]
-    __implementation__ = """
-import {Label, LabelView} from "models/annotations/label"
+    if exotransmit_dir is None:
+        flask.abort(404)
+    # Grab the inputs arguments from the URL
+    args = flask.request.args
+    # Get all the form arguments in the url with defaults
+    eos = args.get('eos', 'eos_0p1Xsolar_cond.dat')
+    tp = args.get('tp', 't_p_800K.dat')
+    g = float(args.get('g', 9.8))
+    R_p = float(args.get('R_p', 0.0915))
+    R_s = float(args.get('R_s', 1.0))
+    P = float(args.get('P', 0.0))
+    Rayleigh = float(args.get('Rayleigh', 1.0))
 
-export class LatexLabelView extends LabelView
-  render: () ->
+    if args:
+        x, y = exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh)
+    else:
+        x, y = np.loadtxt(os.path.join(exotransmit_dir, 'Spectra/default.dat'), skiprows=2, unpack=True)
 
-    #--- Start of copied section from ``Label.render`` implementation
+    tab = at.Table(data=[x/1e-6, y/100])
+    fh = StringIO()
+    tab.write(fh, format='ascii.no_header')
+    table_string = fh.getvalue()
 
-    ctx = @plot_view.canvas_view.ctx
+    fig = figure(plot_width=1000, plot_height=250, responsive=False)
+    fig.line(x/1e-6, y/100, color='Black', line_width=0.5)
+    fig.xaxis.axis_label = 'Wavelength (um)'
+    fig.yaxis.axis_label = 'Transit Depth'
 
-    # Here because AngleSpec does units tranform and label doesn't support specs
-    switch @model.angle_units
-      when "rad" then angle = -1 * @model.angle
-      when "deg" then angle = -1 * @model.angle * Math.PI/180.0
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
 
-    if @model.x_units == "data"
-      vx = @xmapper.map_to_target(@model.x)
-    else
-      vx = @model.x
-    sx = @canvas.vx_to_sx(vx)
+    script, div = components(fig)
 
-    if @model.y_units == "data"
-      vy = @ymapper.map_to_target(@model.y)
-    else
-      vy = @model.y
-    sy = @canvas.vy_to_sy(vy)
+    html = flask.render_template(
+        'exotransmit.html',
+        plot_script=script,
+        plot_div=div,
+        js_resources=js_resources,
+        css_resources=css_resources,
+        eos_files=os.listdir(os.path.join(exotransmit_dir,'EOS')),
+        tp_files=os.listdir(os.path.join(exotransmit_dir, 'T_P')),
+        tp=tp,
+        eos=eos,
+        g=g,
+        R_p=R_p,
+        R_s=R_s,
+        P=P,
+        Rayleigh=Rayleigh,
+        table_string=table_string
+    )
+    return encode_utf8(html)
 
-    if @model.panel?
-      panel_offset = @_get_panel_offset()
-      sx += panel_offset.x
-      sy += panel_offset.y
-      
-    if @model.orientation == 'v'
-      angle = angle + 90
 
-    #--- End of copied section from ``Label.render`` implementation
-
-    # ``katex`` is loaded into the global window at runtime
-    # katex.renderToString returns a html ``span`` element
-    latex = katex.renderToString(@model.text, {displayMode: true})
-
-    # Must render as superpositioned div (not on canvas) so that KaTex
-    # css can properly style the text
-    @_css_text(ctx, latex, sx + @model.x_offset, sy - @model.y_offset, angle)
-
-export class LatexLabel extends Label
-  type: 'LatexLabel'
-  default_view: LatexLabelView
-"""
+@app_exoctk.route('/exotransmit_result', methods=['POST'])
+def save_exotransmit_result():
+    table_string = flask.request.form['data_file']
+    return flask.Response(table_string, mimetype="text/dat",
+                          headers={"Content-disposition":
+                                      "attachment; filename=exotransmit.dat"})

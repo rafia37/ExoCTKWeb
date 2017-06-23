@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--<link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">-->
+
+    <!--<link rel="stylesheet" href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/bootstrap.css">-->
+    <link rel="stylesheet" href="/static/style.css">
+        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
+
+    <meta charset='utf-8' />
+    <meta http-equiv='content-type' content='text/html; charset=utf-8' />
+
+    <title>Exo-Transmit</title>
+
+    {{ js_resources|indent(4)|safe }}
+
+    {{ css_resources|indent(4)|safe }}
+
+    {{ plot_script|indent(4)|safe }}
+
+  </head>
+  <body>
+    {{sim_script|safe}}
+    {{obs_script|safe}}
+
+    <script>
+        $(document).ready(function(){
+            $("#header").load('{{ url_for('static',filename='header.html')}}');
+            $("#footer").load('{{ url_for('static',filename='footer.html')}}');
+        });
+    </script>
+
+    <div id="header"></div>
+    <div class="page">
+        <h1>Exo-Transmit</h1>
+
+            <div class=metanav>
+                <p>
+                Exo-Transmit calculates the transmission spectrum of an exoplanet atmosphere given specified
+                input information about the planetary and stellar radii, the planet's surface gravity, the
+                atmospheric temperature-pressure (T-P) profile, the location (in terms of pressure) of any
+                cloud layers, the composition of the atmosphere, and opacity data for the atoms and molecules
+                that make up the atmosphere.
+                </p>
+                <p>
+                The code solves the equation of radiative transfer for absorption of starlight passing
+                through the planet's atmosphere as it transits, accounting for the oblique path of light
+                through the planetary atmosphere along an Earth-bound observer's line of sight.  The fraction
+                of light absorbed (or blocked) by the planet plus its atmosphere is calculated as a function
+                of wavelength to produce the wavelength-dependent transmission spectrum.  Funtionality is
+                provided to simulate the presence of atmospheric aerosols in two ways:  (1) an optically
+                thick (gray) cloud deck can be generated at a user-specified height in the atmosphere, and
+                (2) the nominal Rayleigh scattering can be increased by a specified factor.
+                </p>
+
+            </div>
+    <!--<div class="nav">-->
+      <!--<div class="container">-->
+        <!--<ul class="pull-left">-->
+            <!--<li><a href="index">ExoCTK</a></li>-->
+            <!--<li><a href="ldc">Limb Darkening Caluclator</a></li>-->
+            <!--<li><a href="tot">Transit Observation Tools</a></li>-->
+            <!--<li><a href="exotransmit">Exo-Transmit</a></li>-->
+        <!--</ul>-->
+      <!--</div>-->
+    <!--</div>-->
+    <!-- A simple form for changing the graph -->
+    <div>
+        <h3>Parameters</h3>
+        <form name="eos_menu" method='GET'>
+
+            <div>
+            Chemistry Template
+            <select name="eos">
+                {% for fname in eos_files %}
+                    <option {{"selected" if eos|indent(4)|safe == fname }} value={{ fname }}>{{ process_eos(fname) }}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            <div>
+            T-P Profile
+            <select name="tp">
+                {% for fname in tp_files %}
+                    <option {{"selected" if tp|indent(4)|safe == fname }} value={{ fname }}>{{ process_tp(fname) }}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            <div>
+                Planet Surface Gravity (m / s^2)
+                <input type="text" name="g" value="{{ g }}">
+            </div>
+
+            <div>
+                Planet Radius (Jupiter Radii)
+                <input type="text" name="R_p" value="{{ R_p }}">
+            </div>
+
+            <div>
+                Star Radius (Solar Radii)
+                <input type="text" name="R_s" value="{{ R_s }}">
+            </div>
+
+            <div>
+                Pressure of Cloud Layer (bar; use 0.0 for no cloud)
+                <input type="text" name="P" value="{{ P }}">
+            </div>
+
+            <div>
+                Rayleigh Scattering augmentation factor
+                <input type="text" name="Rayleigh" value="{{ Rayleigh }}">
+            </div>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <div>
+        {{ plot_div|indent(4)|safe }}
+    </div>
+
+    <div>
+        <form action="/exotransmit_result" method="post">
+            <input type="hidden" name="data_file" value="{{ table_string }}" />
+            <button type="submit">Save File</button>
+        </form>
+    </div>
+    <div>
+        <h3>References</h3>
+        <p>When publishing results based on usage of Exo-Transmit please cite:</p>
+        <ul style="list-style-type:none">
+        <li><a href="http://adsabs.harvard.edu/abs/2016arXiv161103871K">Kempton, E. M.-R., Lupu, R. E., Owusu-Asare, A., Slough, P., & Cale, B., 2016, arXiv:1611.03871</a></li>
+        </ul>
+
+        <p>If using the opacity data included with Exo-Transmit please additionally cite the following three papers:</p>
+        <ul style="list-style-type:none">
+        <li><a href="http://adsabs.harvard.edu/abs/2008ApJS..174..504F">Freedman, R. S., Marley, M. S., & Lodders, K., 2008, ApJS, 174, 504-513</a></li>
+        <li><a href="http://adsabs.harvard.edu/abs/2014ApJS..214...25F">Freedman, R. S., Lustig-Yaeger, J., Fortney, J. J., et al., 2014, ApJS, 214, 25</a></li>
+        <li><a href="http://adsabs.harvard.edu/abs/2014ApJ...784...27L">Lupu, R. E., Zahnle, K., Marley, M. S., et al., 2014, ApJ, 784, 27</a></li>
+        </ul>
+    </div>
+    <div id="footer"></div>
+    </div>
+  </body>
+</html>
