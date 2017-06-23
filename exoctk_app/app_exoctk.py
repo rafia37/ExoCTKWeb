@@ -335,6 +335,74 @@ def utility_processor():
 
     return dict(process_eos=process_eos, process_tp=process_tp)
 
+def _param_validation(args):
+    invalid = {}
+    eos = args.get('eos', 'eos_0p1Xsolar_cond.dat')
+    try:
+        str(eos)
+        if eos not in os.listdir(os.path.join(exotransmit_dir,'EOS')):
+            invalid['eos'] = "Invalid chemistry template file"
+            eos = 'eos_0p1Xsolar_cond.dat'
+    except ValueError:
+        invalid['eos'] = "Chemistry template file must be a string"
+        eos = 'eos_0p1Xsolar_cond.dat'
+
+    tp = args.get('tp', 't_p_800K.dat')
+    try:
+        str(tp)
+        if eos not in os.listdir(os.path.join(exotransmit_dir,'EOS')):
+            invalid['tp'] = "Invalid TP file"
+            tp = 't_p_800K.dat'
+    except ValueError:
+        invalid['tp'] = "TP file must be a string"
+        tp = 't_p_800K.dat'
+
+    try:
+        g = float(args.get('g', 9.8))
+        if g <= 0:
+            invalid['g'] = "Surface gravity must be greater than zero"
+            g = 9.8
+    except ValueError:
+        invalid['g'] = "Surface gravity must be a float"
+        g = 9.8
+
+    try:
+        R_p = float(args.get('R_p', 0.0915))
+        if R_p <= 0:
+            invalid['R_p'] = "Planet Radius must be greater than zero"
+            R_p = 0.0915
+    except ValueError:
+        invalid['R_p'] = "Planet Radius must be a float"
+        R_p = 0.0915
+
+    try:
+        R_s = float(args.get('R_s', 1.0))
+        if R_s <= 0:
+            invalid['R_s'] = "Star Radius must be greater than zero"
+            R_s = 1.0
+    except ValueError:
+        invalid['R_s'] = "Star Radius must be a float"
+        R_s = 1.0
+
+    try:
+        P = float(args.get('P', 0.0))
+        if P < 0:
+            invalid['P'] = "Cloud Pressure must be greater than or equal to zero"
+            P = 0.0
+    except ValueError:
+        invalid['P'] = "Cloud Pressure must be a float"
+        P = 0.0
+
+    try:
+        Rayleigh = float(args.get('Rayleigh', 1.0))
+        if Rayleigh <= 0:
+            invalid['Rayleigh'] = "Rayleight augmentation must be greater than zero"
+            Rayleigh = 1.0
+    except ValueError:
+        invalid['Rayleigh'] = "Rayleigh augmentation must be a float"
+        Rayleigh = 1.0
+
+    return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
 
 @app_exoctk.route('/exotransmit', methods=['GET','POST'])
 def exotransmit_page():
@@ -346,14 +414,9 @@ def exotransmit_page():
     # Grab the inputs arguments from the URL
     args = flask.request.args
     # Get all the form arguments in the url with defaults
-    eos = args.get('eos', 'eos_0p1Xsolar_cond.dat')
-    tp = args.get('tp', 't_p_800K.dat')
-    g = float(args.get('g', 9.8))
-    R_p = float(args.get('R_p', 0.0915))
-    R_s = float(args.get('R_s', 1.0))
-    P = float(args.get('P', 0.0))
-    Rayleigh = float(args.get('Rayleigh', 1.0))
-
+    eos, tp, g, R_p, R_s, P, Rayleigh, invalid = _param_validation(args)
+    if invalid:
+        return flask.render_template('exotransmit_validation.html', invalid=invalid)
     if args:
         x, y = exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh)
     else:
