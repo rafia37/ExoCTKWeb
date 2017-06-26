@@ -24,6 +24,7 @@ from bokeh.plotting import show
 from bokeh.plotting import save
 from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
+import flask
 from flask import current_app
 from flask import Flask
 from flask import make_response
