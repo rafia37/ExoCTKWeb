@@ -182,6 +182,24 @@ def estimate_blackbody(wavelength, temp):
 
 ## -- SIMPLE LOGIC TIME CALCULATIONS
 
+def calc_groups_from_exp_time(max_exptime_per_int, t_frame):
+    """
+    Given the maximum saturation time, calculates the number
+    of frames per group.
+
+    Parameters
+    ----------
+    max_exptime_per_int : float
+        The maximum number of seconds an integration can last
+        before it's oversaturated. 
+    t_frame : float
+        The time per frame.
+    """
+
+    groups = math.floor(max_exptime_per_int/t_frame)
+    return groups
+
+
 def calc_n_group(ins, countrate, sat_max, t_frame, n_frame, n_skip):
     """Calculates number of groups per integration.
 
@@ -475,6 +493,40 @@ def create_tor_dict(transit_time, n_group, mag, band, temp, sat_max, sat_mode, t
             'n_frame': n_frame, 'n_skip': n_skip, 'obs_time': transit_time, 't_frame': round(t_frame, 3), 't_int': round(t_int, 3), 't_ramp': t_ramp, 
             'n_int': n_int, 't_exp': round(t_exp/3600, 3), 't_duration': round(t_duration/3600, 3), 'obs_eff': obs_eff}
         return tor_dict
+
+
+def interpolate_from_dat(mag, band, t_frame):
+    """
+    Interpolates the precalculated pandeia data to estimate the saturation limit.
+
+    Parameters
+    ----------
+    mag : float
+        The magnitude of the source.
+    band : str
+        The band in which the magnitude is -- only does : 
+    t_frame : float
+        The seconds per frame for the instrument/subarray.
+
+    Returns
+    -------
+    n_group : int
+        The number of groups that won't oversaturate the detector.
+    """
+    
+    # Create the dictionaries for each filter and select out the prerun data
+    dicts = create_band_filter_dicts()
+    mag_dat, exptime = dicts[band]
+
+    # Interpolate the given magnitude
+    func = interpolate.interp1d(exptime, mag_dat)
+    max_exptime = func(mag)
+    
+    # Calculate the conservative number of groups
+    n_group = calc_groups_from_exp_time(max_exptime, t_frame)
+    
+    return n_group
+
 
 ## -- INS CONVERSION THINGS
 
