@@ -1,34 +1,41 @@
 ## -- IMPORTS
 import glob
+from datetime import datetime
 import os
+import shutil
 
+from astropy.extern.six.moves import StringIO
 import astropy.table as at
 import matplotlib.pyplot as plt
 import numpy as np
 
 import bokeh
 from bokeh import mpl
-from bokeh.mpl import to_bokeh
 from bokeh.core.properties import Override
-from bokeh.models import ColumnDataSource
 from bokeh.embed import components
+from bokeh.models import ColumnDataSource
 from bokeh.models import HoverTool
 from bokeh.models import Label
 from bokeh.models import Range1d
+from bokeh.mpl import to_bokeh
 from bokeh.plotting import figure
 from bokeh.plotting import output_file
 from bokeh.plotting import show
 from bokeh.plotting import save
+from bokeh.resources import INLINE
+from bokeh.util.string import encode_utf8
+from flask import current_app
 from flask import Flask
+from flask import make_response
+from flask import redirect
 from flask import render_template
 from flask import request
-from flask import redirect
-from flask import make_response
-from flask import current_app
 from flask_cache import Cache
 
 import ExoCTK
+from ExoCTK.pal import exotransmit
 #from ExoCTK.tor.tor import create_tor_dict
+
 from tor import create_tor_dict
 
 #from ExoCTK.tor import create_tor_dict
@@ -400,6 +407,190 @@ export class LatexLabel extends Label
   default_view: LatexLabelView
 """
 
+exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
+
+def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
+    current_dir = os.path.abspath(os.curdir)
+    now = datetime.now().isoformat()
+    os.chdir(os.path.join(exotransmit_dir, 'runs'))
+    os.mkdir(now)
+    os.chdir(now)
+    output_file = os.path.relpath('result.dat', start=exotransmit_dir)
+    exotransmit.exotransmit(base_dir=exotransmit_dir,
+                            EOS_file=os.path.join('/EOS', eos),
+                            T_P_file=os.path.join('/T_P', tp),
+                            g=g,
+                            R_planet=R_p*69.911e6,
+                            R_star=R_s*695.7e6,
+                            P_cloud=P*100000,
+                            Rayleigh=Rayleigh,
+                            output_file='/'+output_file,
+                            )
+    x, y = np.loadtxt('result.dat', skiprows=2, unpack=True)
+    os.chdir(current_dir)
+    shutil.rmtree(os.path.join(exotransmit_dir, 'runs', now))
+    return x, y
+
+@app_exoctk.context_processor
+def utility_processor():
+    def process_eos(fname):
+        params = fname[:-4].split('_')[1:]
+        if len(params) == 1:
+            params[0] = params[0] + ' Only Atmosphere'
+            return params[0]
+        else:
+            if 'solar' in params[0]:
+                params[0] = params[0].replace('p', '.').replace('X',
+                                                                'x ').replace(
+                    'solar', 'Solar Metallicity')
+            if 'CtoO' in params:
+                params[1] = params[1].replace('p', '.') + ' C:O'
+                params.pop(2)
+            if 'gas' in params:
+                params[params.index('gas')] = 'Gas only'
+            if 'cond' in params:
+                if 'graphite' in params:
+                    params[params.index('cond')] = 'w/ Condensation and rainout'
+                    params[params.index('graphite')] = 'including graphite'
+                else:
+                    params[params.index(
+                        'cond')] = 'w/ Condensation and rainout (no graphite)'
+
+        return ', '.join(params)
+
+    def process_tp(fname):
+        return fname[4:-4] + ' Isothermal'
+
+    return dict(process_eos=process_eos, process_tp=process_tp)
+
+def _param_validation(args):
+    invalid = {}
+    eos = args.get('eos', 'eos_0p1Xsolar_cond.dat')
+    try:
+        str(eos)
+        if eos not in os.listdir(os.path.join(exotransmit_dir,'EOS')):
+            invalid['eos'] = "Invalid chemistry template file"
+            eos = 'eos_0p1Xsolar_cond.dat'
+    except ValueError:
+        invalid['eos'] = "Chemistry template file must be a string"
+        eos = 'eos_0p1Xsolar_cond.dat'
+
+    tp = args.get('tp', 't_p_800K.dat')
+    try:
+        str(tp)
+        if eos not in os.listdir(os.path.join(exotransmit_dir,'EOS')):
+            invalid['tp'] = "Invalid TP file"
+            tp = 't_p_800K.dat'
+    except ValueError:
+        invalid['tp'] = "TP file must be a string"
+        tp = 't_p_800K.dat'
+
+    try:
+        g = float(args.get('g', 9.8))
+        if g <= 0:
+            invalid['g'] = "Surface gravity must be greater than zero"
+            g = 9.8
+    except ValueError:
+        invalid['g'] = "Surface gravity must be a float"
+        g = 9.8
+
+    try:
+        R_p = float(args.get('R_p', 0.0915))
+        if R_p <= 0:
+            invalid['R_p'] = "Planet Radius must be greater than zero"
+            R_p = 0.0915
+    except ValueError:
+        invalid['R_p'] = "Planet Radius must be a float"
+        R_p = 0.0915
+
+    try:
+        R_s = float(args.get('R_s', 1.0))
+        if R_s <= 0:
+            invalid['R_s'] = "Star Radius must be greater than zero"
+            R_s = 1.0
+    except ValueError:
+        invalid['R_s'] = "Star Radius must be a float"
+        R_s = 1.0
+
+    try:
+        P = float(args.get('P', 0.0))
+        if P < 0:
+            invalid['P'] = "Cloud Pressure must be greater than or equal to zero"
+            P = 0.0
+    except ValueError:
+        invalid['P'] = "Cloud Pressure must be a float"
+        P = 0.0
+
+    try:
+        Rayleigh = float(args.get('Rayleigh', 1.0))
+        if Rayleigh <= 0:
+            invalid['Rayleigh'] = "Rayleight augmentation must be greater than zero"
+            Rayleigh = 1.0
+    except ValueError:
+        invalid['Rayleigh'] = "Rayleigh augmentation must be a float"
+        Rayleigh = 1.0
+
+    return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
+
+@app_exoctk.route('/exotransmit', methods=['GET','POST'])
+def exotransmit_page():
+    """ 
+    Run Exo-Transmit taking inputs from the HTML form and plot the results
+    """
+    if exotransmit_dir is None:
+        flask.abort(404)
+    # Grab the inputs arguments from the URL
+    args = flask.request.args
+    # Get all the form arguments in the url with defaults
+    eos, tp, g, R_p, R_s, P, Rayleigh, invalid = _param_validation(args)
+    if invalid:
+        return flask.render_template('exotransmit_validation.html', invalid=invalid)
+    if args:
+        x, y = exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh)
+    else:
+        x, y = np.loadtxt(os.path.join(exotransmit_dir, 'Spectra/default.dat'), skiprows=2, unpack=True)
+
+    tab = at.Table(data=[x/1e-6, y/100])
+    fh = StringIO()
+    tab.write(fh, format='ascii.no_header')
+    table_string = fh.getvalue()
+
+    fig = figure(plot_width=1100, plot_height=400, responsive=False)
+    fig.line(x/1e-6, y/100, color='Black', line_width=0.5)
+    fig.xaxis.axis_label = 'Wavelength (um)'
+    fig.yaxis.axis_label = 'Transit Depth'
+
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    script, div = components(fig)
+
+    html = flask.render_template(
+        'exotransmit.html',
+        plot_script=script,
+        plot_div=div,
+        js_resources=js_resources,
+        css_resources=css_resources,
+        eos_files=os.listdir(os.path.join(exotransmit_dir,'EOS')),
+        tp_files=os.listdir(os.path.join(exotransmit_dir, 'T_P')),
+        tp=tp,
+        eos=eos,
+        g=g,
+        R_p=R_p,
+        R_s=R_s,
+        P=P,
+        Rayleigh=Rayleigh,
+        table_string=table_string
+    )
+    return encode_utf8(html)
+
+
+@app_exoctk.route('/exotransmit_result', methods=['POST'])
+def save_exotransmit_result():
+    table_string = flask.request.form['data_file']
+    return flask.Response(table_string, mimetype="text/dat",
+                          headers={"Content-disposition":
+                                      "attachment; filename=exotransmit.dat"})
 ## -- RUN
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
