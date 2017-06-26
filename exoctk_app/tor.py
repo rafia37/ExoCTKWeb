@@ -31,6 +31,24 @@ def test():
 
 ## -- PHOTOMETRY/THROUHGPUT ESTIMATES
 
+def convert_mag_to_flux(mag):
+    """Converts the magnitude to flux. Assumes ST zeropoints. 
+
+    Parameters
+    ----------
+    mag : float
+        The magnitude at a given lambda.
+    
+    Returns
+    -------
+    flux : float
+        The flux at a given lambda.
+    """
+    
+    flux = 10**((mag + 21.1)/(-2.5))
+    return flux
+
+
 def calc_cr(mag, band, temp, px_size, throughput, filt):
     """Calculates the maximum countrate for one pixel.
 
@@ -56,29 +74,30 @@ def calc_cr(mag, band, temp, px_size, throughput, filt):
     
     # Assign band/filter wavelengths.
     bands, filters = create_band_filter_dicts()
-    band_min, band_max = bands[band]
+    band_min, band_max, band_zpt = bands[band]
     
     filter_min, filter_max = filters[filt]['min_max']
     throughput_factor = filters[filt][throughput]
 
     # Calculate flux through given band -- based on input magnitude
-    band_flux = ((10**((mag + 21.1)/(-2.5)))/px_size)*(1e19)
+    band_flux = ((10**((mag - band_zpt)/(-2.5)))*px_size)*(1e19)*(filter_max-filter_min)
     print('Band Flux : ' + str(band_flux))
     # Assign it a blackbody and transform the flux for the filter at hand.
     I_band = quad(estimate_blackbody, band_min, band_max, args=(temp))[0]
     
     I_filter = quad(estimate_blackbody, filter_min, filter_max, args=(temp))[0]
-    
+    print(I_filter)
+    print(I_band)
     # Calculate the ration of filter to band flux
     I_ratio = I_filter/I_band
     
-#    print('Flux ratio : ' + str(I_ratio))
+    print('Flux ratio : ' + str(I_ratio))
     filter_flux = I_ratio*band_flux
 #    print('Flux through filter : ' + str(filter_flux))
     
     # Find out how much goes through the filter.
     countrate = throughput_factor*filter_flux
-    
+    print(countrate) 
     return countrate
 
 def create_band_filter_dicts():
@@ -97,19 +116,18 @@ def create_band_filter_dicts():
     bands, filters = {}, {}
 
     # Magnitude bands -- in angstrom
-    bands['U'] = (3650-330, 3650+330)
-    bands['B'] = (4450-470, 4450+470)
-    bands['V'] = (5510-440, 5510+440)
-    bands['R'] = (6580-690, 6580+690)
-    bands['I'] = (8060-755, 8060+755)
-    bands['Y'] = (10200-600,10200+600)
-    bands['J'] = (12200-565, 12200+565)
-    bands['H'] = (16300-1535, 16300+1535)
-    bands['K'] = (21900-1950, 21900+1950)
-    bands['L'] = (34500-2360, 34500+2360)
-    bands['M'] = (47500-2300, 47600+2300)
-    bands['N'] = (105000-12500, 105000+12500)
-    bands['Q'] = (210000-24900, 210000+24900)
+    bands['U'] = (3650-330, 3650+330, -20.94)
+    bands['B'] = (4450-470, 4450+470, -20.45)
+    bands['V'] = (5510-440, 5510+440, -21.12)
+    bands['R'] = (6580-690, 6580+690, -21.61)
+    bands['I'] = (8060-755, 8060+755, -22.27)
+    bands['J'] = (12200-565, 12200+565, -23.80)
+    bands['H'] = (16300-1535, 16300+1535, -24.80)
+    bands['K'] = (21900-1950, 21900+1950, -26.00)
+    bands['L'] = (34500-2360, 34500+2360, -27.87)
+#    bands['M'] = (47500-2300, 47600+2300)
+#    bands['N'] = (105000-12500, 105000+12500)
+#    bands['Q'] = (210000-24900, 210000+24900)
     
     ## MIRI filters -- in angstrom
     filters['LRS'] = {'min_max': (50710.4818218, 118739.11626), 'max': 0.602303853487, 'med': 0.552979004444, 'mean': 0.504712002351}
@@ -120,7 +138,7 @@ def create_band_filter_dicts():
     filters['F277W'] = {'min_max': (25402.4048096, 31318.2364729), 'max': 0.41290462156, 'med': 0.321649982683, 'mean': 0.318531860247}
     
     # NIRISS
-    filters['GD700XD'] = {'min_max': (9000, 2350), 'max': 0.35, 'med': 0.31, 'mean': 0.31}
+    filters['GR700XD'] = {'min_max': (9000, 23500), 'max': 0.35, 'med': 0.31, 'mean': 0.31}
 
     # NIRSpec
     filters['G140H'] = {'min_max': (10000.0, 12700.0), 'max': 0.744763372884, 'med': 0.627978608462, 'mean': 0.626210220963}
@@ -153,7 +171,8 @@ def estimate_blackbody(wavelength, temp):
     h = 6.626e-34 # m^2 kg/s 
     k = 1.3806e-23 # m^2kg/s^2K
     c = 3e8 # m/s\
-    # Convert wavelength to frequency
+    # Convert wavelength to m and then frequency
+    wavelength = wavelength*(1e-10)
     nu = c/(wavelength*1e6) # in Hz
     
     # Expression for blackbody
@@ -201,19 +220,25 @@ def calc_n_group(ins, countrate, sat_max, t_frame, n_frame, n_skip):
         n_group = 30 
         while compare_sat(n_group, countrate, sat_max, t_frame, n_frame, n_skip):
             n_group += -1
-        if n_group < 4:
-            n_group = 4
+        if n_group < 1:
+            n_group = 1
             message = 'Your source may be too bright for this filter!'
 
     if ins == 'MIRI':
         n_group = ((sat_max)/(t_frame*countrate) + n_skip)/n_frame
         n_group = math.floor(n_group)
     
-    return n_group + 1
+    return n_group
     
 def compare_sat(n_group, countrate, sat_max, t_frame, n_frame, n_skip):
+    
+    print('Sat max ' + str(sat_max))
+    print('Cr ' + str(countrate))
+    print('frame # ' + str(n_frame))
+    print('frame time ' + str(t_frame))
 
     comp = (n_group*n_frame - n_skip)*(t_frame*countrate) > sat_max
+    print(comp)
     return comp
 
 def calc_n_int(transit_time, n_group, n_reset, t_frame, n_frame):
@@ -285,7 +310,7 @@ def calc_t_duration(n_group, n_int, n_reset, t_frame, n_frame):
     t_duration : float
         Duration time (in seconds).
     """
-
+    
     t_duration = t_frame*(n_group*n_frame + n_reset)*n_int
     return t_duration
 
@@ -326,12 +351,18 @@ def calc_t_frame(n_col, n_row, n_amp, ins):
     t_frame : float
         The frame time (in seconds).
     """
+    print('Dem ints doe.') 
+    n_col, n_amp, n_row = int(n_col), int(n_amp), int(n_row)
+    
     if ins == 'NIRSpec':
         n = 2
     if ins in ['NIRCam', 'NIRISS']:
         n = 1
 
     t_frame = (n_col/n_amp + 12)*(n_row + n)*(1e-5)
+    print(n_row)
+    print(n_col)
+    print(t_frame)
     return t_frame
 
 
@@ -419,11 +450,12 @@ def create_tor_dict(transit_time, n_group, mag, band, temp, sat_max, sat_mode, t
         sat_max = convert_sat(sat_max, sat_mode, ins)
 
         # Calculate countrate and n_groups if it isn't supplied
-        if n_group == 0:
+        if n_group == 'optimize':
             countrate = calc_cr(mag, band, temp, px_size, throughput, filt)
             print('Countrate : ' + str(countrate))
             n_group = calc_n_group(ins, countrate, sat_max, t_frame, n_frame, n_skip)
-    
+        
+        n_group = int(float(n_group))
         # Calculate times/ramps/etc
         t_int = calc_t_int(n_group, t_frame, n_frame, n_skip)
         t_ramp = calc_t_ramp(t_int, n_reset, t_frame)
@@ -440,8 +472,8 @@ def create_tor_dict(transit_time, n_group, mag, band, temp, sat_max, sat_mode, t
 
         # Write out dict
         tor_dict = {'n_col': n_col, 'n_row': n_row, 'n_amp': n_amp, 'n_group': n_group, 'n_reset': n_reset,
-            'n_frame': n_frame, 'n_skip': n_skip, 'obs_time': transit_time, 't_frame': t_frame, 't_int': t_int, 't_ramp': t_ramp, 
-            'n_int': n_int, 't_exp': t_exp, 't_duration': t_duration, 'obs_eff': obs_eff}
+            'n_frame': n_frame, 'n_skip': n_skip, 'obs_time': transit_time, 't_frame': round(t_frame, 3), 't_int': round(t_int, 3), 't_ramp': t_ramp, 
+            'n_int': n_int, 't_exp': round(t_exp/3600, 3), 't_duration': round(t_duration/3600, 3), 'obs_eff': obs_eff}
         return tor_dict
 
 ## -- INS CONVERSION THINGS
@@ -474,7 +506,11 @@ def set_params_from_ins(ins, subarray):
     """
     
     try:
+        n_reset = 1
+ 
         if ins == 'NIRSpec':
+            px_size = (40e-4)**2
+
             if subarray == 'SUB2048':
                 rows, cols = 2048, 32
             if subarray in ['SUB1024A', 'SUB1024B']:
@@ -485,9 +521,11 @@ def set_params_from_ins(ins, subarray):
                 rows, cols = 512, 16
             
             amps = 1 # 4 if not NRSRAPID????
-            ft = calc_t_frame(rows, cols, amps, ins)
- 
+            ft = calc_t_frame(cols, rows, amps, ins)
+  
         if ins == 'NIRCam':
+            px_size = (18e-4)**2
+            
             if subarray == 'FULL':
                 rows, cols, amps = 2048, 2048, 4
             if subarray == 'SUB640':
@@ -500,7 +538,7 @@ def set_params_from_ins(ins, subarray):
                 rows, cols, amps = 400, 400, 1
             if subarray == 'SUB64P':
                 rows, cols, amps = 64, 64, 1
- 
+  
             if subarray == 'SUBGRISM256':
                 rows, cols, amps = 256, 256, 1
             if subarray == 'SUBGRISM128':
@@ -508,9 +546,11 @@ def set_params_from_ins(ins, subarray):
             if subarray == 'SUBGRISM64':
                 rows, cols, amps = 64, 2048, 1
             
-            ft = calc_t_frame(rows, cols, amps, ins)
- 
+            ft = calc_t_frame(cols, rows, amps, ins)
+  
         if ins == 'MIRI':
+            px_size = (25e-4)**2
+            
             if subarray == 'SLITLESSPRISM':
                 rows, cols, ft = 416, 72, .159
             if subarray == 'FULL':
@@ -520,16 +560,16 @@ def set_params_from_ins(ins, subarray):
             n_reset = 0 
             
         if ins == 'NIRISS':
+            px_size = (40e-4)**2
+            
             if subarray == 'SUBSTRIP96':
                 rows, cols = 2048, 96
             if subarray == 'SUBSTRIP256':
                 rows, cols = 2048, 256
             
             amps = 1
-            ft = calc_t_frame(rows, cols, amps, ins)
-            
-        px_size = 52488./25.
-        print('amps now : ' + str(amps))
+            ft = calc_t_frame(cols, rows, amps, ins)
+        
         return rows, cols, amps, px_size, ft, n_reset
     
     except NameError:

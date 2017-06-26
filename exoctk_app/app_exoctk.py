@@ -16,7 +16,9 @@ from bokeh.models import HoverTool
 from bokeh.models import Label
 from bokeh.models import Range1d
 from bokeh.plotting import figure
+from bokeh.plotting import output_file
 from bokeh.plotting import show
+from bokeh.plotting import save
 from flask import Flask
 from flask import render_template
 from flask import request
@@ -26,6 +28,7 @@ from flask import current_app
 from flask_cache import Cache
 
 import ExoCTK
+#from ExoCTK.tor.tor import create_tor_dict
 from tor import create_tor_dict
 
 #from ExoCTK.tor import create_tor_dict
@@ -200,13 +203,16 @@ def exoctk_tot_results():
     
     # Make the matplotlib plot into a Bokeh plot
     plt.savefig('static/plots/sim.png')
-    p = mpl.to_bokeh(plt.gcf())
+    sim_plot = mpl.to_bokeh(plt.gcf())
+    output_file('test_sim.html')
+    save(sim_plot)
     plt.close()
     xmin, xmax = (1.125,1.650)
     ymin, ymax = (np.min(binspec)-2*deptherr, np.max(binspec)+2*deptherr)
-    p.y_range = Range1d(ymin, ymax)
-    p.x_range = Range1d(xmin, xmax)
-    sim_script, sim_plot = components(p)
+    sim_plot.y_range = Range1d(ymin, ymax)
+    sim_plot.x_range = Range1d(xmin, 6)
+#    sim_plot.y_axis_label = 'Wavelength (micron)'
+    sim_script, sim_plot = components(sim_plot)
     
     # Plot the transit curves
     numorbits = exo_dict['observation']['norbits']
@@ -220,25 +226,27 @@ def exoctk_tot_results():
                                               
     # Make the matplotlib plot into a Bokeh plot
     plt.savefig('static/plots/obs.png')
-    p = mpl.to_bokeh(plt.gcf())
+    obs_plot = mpl.to_bokeh(plt.gcf())
+    output_file('test_obs.html')
+    save(obs_plot)
     plt.close()
-    obs_script, obs_plot = components(p)
+    obs_script, obs_plot = components(obs_plot)
     
     exo_dict['minphase'] = round(minphase, 4)
     exo_dict['maxphase'] = round(maxphase, 4)
 
-    script_dict = {'sim_script': sim_script, 'obs_script': obs_script}
-    plot_dict = {'sim_plot': sim_plot, 'obs_plot': obs_plot}
-    print('----------------------------SIM SCRIPT--------------------------------------------------------------------------------------------------')
-    print(sim_script)
-    print('----------------------------SIM PLOT--------------------------------------------------------------------------------------------------')
-    print(obs_script)
+    sim = open('test_sim.html')
+    lines = sim.readlines()
+    sim_html = "".join(lines)
+    sim.close()
+
+    obs = open('test_obs.html')
+    lines = obs.readlines()
+    obs_html = "".join(lines)
+    print(obs_html)
+    html_dict = {'sim': sim_html, 'obs': obs_html}
     
-    print('----------------------------OBS SCRIPT--------------------------------------------------------------------------------------------------')
-    print(sim_plot)
-    print('----------------------------OBS PLOT--------------------------------------------------------------------------------------------------')
-    print(obs_plot)
-    return render_template('tot_results.html', exo_dict=exo_dict, script_dict=script_dict, plot_dict=plot_dict)
+    return render_template('tot_results.html', exo_dict=exo_dict, html_dict=html_dict)
 
 # Load the WIP page
 @app_exoctk.route('/wip')
@@ -258,7 +266,7 @@ def exoctk_tor():
 @app_exoctk.route('/tor_results', methods=['GET', 'POST'])
 def exoctk_tor_results():
     
-    n_group = int(request.form['groups']) 
+    n_group = request.form['groups']
     mag = float(request.form['mag'])
     band = request.form['band']
     obs_time = float(request.form['T'])

@@ -37,13 +37,12 @@
             
             <br></br>
             <img src="../static/plots/sim.png">
-            <!--    {{ script_dict['sim_script']|safe}}    --!>
-            <!--    {{ plot_dict['sim_plot']|safe}}        --!>      
-            <br></br>
-            <img src="../static/plots/obs.png">
-            <!-- {{ script_dict['obs_script']|safe}}  --!>
-            <!-- {{ plot_dict['obs_plot']|safe}}      --!>
+            {{ html_dict['sim']|safe}}      
             
+            <br></br>
+
+            <img src="../static/plots/obs.png">
+            {{html_dict['obs']|safe}}
             <br></br>
             <form id='formatselect' method='post' action='savefile' >
                 <p><input class="btn" type='submit' value='Save'> to a file of either format: </p>
