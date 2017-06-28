@@ -54,9 +54,9 @@
             <form id='searchform' method='post' action='ldc_results' >
                 
                 <h3>Step 1: Choose a Model Grid</h3>
-                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ACES/default/"/> Phoenix ACES<br>
-                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ATLAS9/default/" /> Kurucz ATLAS9<br>
-                <input type="radio" name="modeldir" value="" checked/> Local files: <input type="text" name="local_files" size="80" rows="1" value="/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/"/>​​​​​​​​​​​​​​​​​​​​​​<br>
+                <input type="radio" name="modeldir" value="default" checked/> Phoenix ACES<br>
+                <!-- <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ATLAS9/default/" /> Kurucz ATLAS9<br>
+                <input type="radio" name="modeldir" value="" checked/> Local files: <input type="text" name="local_files" size="80" rows="1" value="/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/"/>​​​​​​​​​​​​​​​​​​​​​​<br> -->
 
                 <h3>Step 2: Choose a Filter</h3>
                 
@@ -64,7 +64,7 @@
                     <option value="tophat"> Top Hat</option>
                     {{filters|safe}}
                 </select>
-                <table id='n_bins'>
+                <table id='n_bins' style='display:none'>
                     <tr>
                         <td>Wavelength min [\(\mu\)m]:</td>
                         <td><input type="text" name="wave_min" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
@@ -99,19 +99,19 @@
                 <p><table>
                     <tr>
                         <td>Teff value [K]</td>
-                        <td><input type="text" name="teff" size="10" rows="1" value="2553" /></td>
+                        <td><input type="text" name="teff" size="10" rows="1" value="2553" placeholder="3500 - 6000"/></td>
                     </tr>
                     <tr>
                         <td>Log(g) value [dex]</td>
-                        <td><input type="text" name="logg" size="10" rows="1" value="5.22" /></td>
+                        <td><input type="text" name="logg" size="10" rows="1" value="5.22" placeholder="3 - 6"/></td>
                     </tr>
                     <tr>
                         <td>Fe/H value [dex]</td>
-                        <td><input type="text" name="feh" size="10" rows="1" value="0.0" /></td>
+                        <td><input type="text" name="feh" size="10" rows="1" value="0.0" placeholder="-0.5 - 0.5"/></td>
                     </tr>
                     <tr>
                         <td>Minimum \(\mu\) to fit</td>
-                        <td><input type="text" name="mu_min" size="10" rows="1" value="0.05" /></td>
+                        <td><input type="text" name="mu_min" size="10" rows="1" value="0.05" placeholder="0 - 1"/></td>
                     </tr>
                 </table></p>
     

@@ -32,6 +32,9 @@ from bokeh.models.widgets import Panel, Tabs
 # define the cache config keys, remember that it can be done in a settings file
 app_exoctk.config['CACHE_TYPE'] = 'null'
 
+exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
+modelgrid_dir = os.environ.get('MODELGRID_DIR')
+
 # register the cache instance and binds it on to your app
 # cache = Cache(app_exoctk)
 
@@ -61,7 +64,7 @@ def exoctk_ldc():
     
     # Make HTML for filters
     filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
-                ' checked' if b=='Kepler.K' else '') for b in filters])
+                ' selected' if b=='Kepler.K' else '') for b in filters])
     
     return render_template('ldc.html', filters=filt_list)
     
@@ -75,8 +78,10 @@ def exoctk_ldc_results():
     bandpass = request.form['bandpass']
     
     # Get models from local directory if necessary
-    if not modeldir:
-        modeldir = request.form['local_files']
+    if modeldir=='default':
+        modeldir = modelgrid_dir
+    # elif not modeldir:
+    #     modeldir = request.form['local_files']
     
     try:
         teff = int(request.form['teff'])
@@ -391,8 +396,6 @@ def exoctk_savefile():
     response.headers["Content-type"] = 'text; charset=utf-8'
     response.headers["Content-Disposition"] = "attachment; filename=ExoXTK_results.txt"
     return response
-
-exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
 
 def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
     current_dir = os.path.abspath(os.curdir)
