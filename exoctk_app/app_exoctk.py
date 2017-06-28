@@ -17,6 +17,7 @@ from bokeh.embed import components
 from bokeh.models import ColumnDataSource
 from bokeh.models import HoverTool
 from bokeh.models import Label
+from bokeh.models import LinearScale
 from bokeh.models import Range1d
 from bokeh.models.widgets import Panel
 from bokeh.models.widgets import Tabs
@@ -75,7 +76,6 @@ modelgrid_dir = os.environ.get('MODELGRID_DIR')
 def exoctk_ldc():
     # Get all the available filters
     filters = ExoCTK.svo.filters()['Band']
-    
     # Make HTML for filters
     filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
                 ' selected' if b=='Kepler.K' else '') for b in filters])
@@ -279,10 +279,10 @@ def exoctk_ldc_results():
         
         # Add the results to the lists
         html_table = '\n'.join(table.pformat(max_width=500, html=True))\
-                     .replace('<table','<table class="results"')
+                     .replace('<table','<table id="myTable"')
         
         # Add the table title
-        header = '<strong>{}</strong><br><p>\(I(\mu)/I(\mu=1)\) = {}</p>'.format(profile,poly)
+        header = '<br></br><strong>{}</strong><br><p>\(I(\mu)/I(\mu=1)\) = {}</p><br></br>'.format(profile,poly)
         html_table = header+html_table
         
         profile_tables.append(html_table)

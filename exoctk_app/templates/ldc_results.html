@@ -5,21 +5,16 @@
         
         {{ script|safe }}
         {{ filt_script|safe }}
-
-        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.css" type="text/css" />
-        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.js"></script>
-        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.js"></script>
+        <link rel="sytlesheet" href="/static/css/stylec.css" type="text/css" />
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" type="text/css" />
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" type="text/css" />
+         <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script>
+         <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" type="text/css" />
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script>
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
     
-            <h1>Limb Darkening Calculator</h1>
-
-            <div class=metanav>
-                <p>
-                    Here is a bunch of stuff about the LDC.
-                </p>
-
-            </div>
             
-            <h3>Input</h3>
             <div style='float:left; width:500px;'>
             <h3>Input</h3>
                 
@@ -79,13 +74,13 @@
 
                 <form id='exportform' method='post' action='download' >
                     <div style='display:none;'><input name='file_as_string' type='text' value="{{file_as_string|safe}}"></div>
-                    <input type='submit' value='Download Coefficient Tables' />
+                    <input class="btn" type='submit' value='Download Coefficient Tables' />
                 </form>
 
             </div>
             
-            <br>
-            
+            <br></br>
+
             {% for tab in table %}
                 {{ tab|safe }}
             <br>
