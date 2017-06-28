@@ -11,7 +11,6 @@ import astropy.table as at
 import astropy.units as q
 import bokeh
 import os
-from svo_filters import svo
 from bokeh import mpl
 from bokeh.core.properties import Override
 from bokeh.embed import components
@@ -50,7 +49,7 @@ def index():
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
 def exoctk_ldc():
     # Get all the available filters
-    filters = svo.filters()['Band']
+    filters = ExoCTK.svo.filters()['Band']
     
     # Make HTML for filters
     filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
@@ -123,7 +122,7 @@ def exoctk_ldc_results():
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
-    if bandpass in svo.filters()['Band'] or bandpass=='tophat':
+    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass=='tophat':
         
         try:
             
@@ -134,7 +133,7 @@ def exoctk_ldc_results():
                 kwargs['wl_min'] = float(wl_min)*q.um
                 kwargs['wl_max'] = float(wl_max)*q.um
             
-            bandpass = svo.Filter(bandpass, **kwargs)
+            bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
             min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
             n_bins = bandpass.n_bins
             bp_name = bandpass.filterID
