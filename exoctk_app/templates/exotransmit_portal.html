@@ -1,26 +1,13 @@
 {% extends "base.html" %}
+
 {% block content %}
 
-<head>
-    <!--<link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">-->
-
-    <!--<link rel="stylesheet" href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/bootstrap.css">-->
-    <link rel="stylesheet" href="/static/style.css">
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
-
-    <meta charset='utf-8' />
-    <meta http-equiv='content-type' content='text/html; charset=utf-8' />
-
-    <title>Exo-Transmit</title>
-
+  <body>
     {{ js_resources|indent(4)|safe }}
 
     {{ css_resources|indent(4)|safe }}
 
     {{ plot_script|indent(4)|safe }}
-
-  </head>
-  <body>
     {{sim_script|safe}}
     {{obs_script|safe}}
 
@@ -66,7 +53,6 @@
       <!--</div>-->
     <!--</div>-->
     <!-- A simple form for changing the graph -->
-    {% extends base %}
     
     <div>
         <h3>Parameters</h3>
@@ -115,7 +101,7 @@
                 <input type="text" name="Rayleigh" value="{{ Rayleigh }}">
             </div>
 
-            <button type="submit">Submit</button>
+            <input class="btn" type='submit' value='Submit'></p>
         </form>
     </div>
 
@@ -126,7 +112,7 @@
     <div>
         <form action="/exotransmit_result" method="post">
             <input type="hidden" name="data_file" value="{{ table_string }}" />
-            <button type="submit">Save File</button>
+            <input class="btn" type='submit' value='Save File'></p>
         </form>
     </div>
     <div>
@@ -142,9 +128,6 @@
         <li><a href="http://adsabs.harvard.edu/abs/2014ApJS..214...25F">Freedman, R. S., Lustig-Yaeger, J., Fortney, J. J., et al., 2014, ApJS, 214, 25</a></li>
         <li><a href="http://adsabs.harvard.edu/abs/2014ApJ...784...27L">Lupu, R. E., Zahnle, K., Marley, M. S., et al., 2014, ApJ, 784, 27</a></li>
         </ul>
-    </div>
-    <div id="footer"></div>
-    </div>
   </body>
 
 {% endblock%}

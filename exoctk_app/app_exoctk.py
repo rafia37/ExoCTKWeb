@@ -35,9 +35,9 @@ from flask_cache import Cache
 
 import ExoCTK
 from ExoCTK.pal import exotransmit
-#from ExoCTK.tor.tor import create_tor_dict
+from ExoCTK.tor.tor import create_tor_dict
 
-from tor import create_tor_dict
+#from tor import create_tor_dict
 
 #from ExoCTK.tor import create_tor_dict
 
@@ -275,56 +275,57 @@ def exoctk_tor():
 def exoctk_tor_results():
     
     
-    try:
-        n_group = request.form['groups']
-        mag = float(request.form['mag'])
-        band = request.form['band']
-        obs_time = float(request.form['T'])
-        temp = float(request.form['temp'])
-        sat_max = float(request.form['sat_lvl'])
-        sat_mode = request.form['sat']
-        throughput = request.form['tp']
-        filt = request.form['filt']
-        ins = request.form['ins']
-        subarray = request.form['subarray']
-        n_reset = int(request.form['n_reset'])
+#    try:
+    n_group = request.form['groups']
+    mag = float(request.form['mag'])
+    band = request.form['band']
+    obs_time = float(request.form['T'])
+#        temp = float(request.form['temp'])
+    sat_max = float(request.form['sat_lvl'])
+    sat_mode = request.form['sat']
+#        throughput = request.form['tp']
+    filt = request.form['filt']
+    ins = request.form['ins']
+    subarray = request.form['subarray']
+    n_reset = int(request.form['n_reset'])
     
-        tor_err = 0
-        # Specific error catching
-        if n_group.isdigit():
-            if n_group <= 1:
-                tor_err = 'Please try again with at least one group.'
-        else:
-            if n_group != 'optimize':
-                tor_err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
-        if (mag > 12) or (mag < 5.5):
-            tor_err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12 in a different band?'
-        if obs_time <= 0:
-            tor_err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
-        if temp <= 0:
-            tor_err = 'You have a negative temperature -- DOES THIS LOOK LIKE A MASER TO YOU?'
-        if sat_max <= 0:
-            tor_err = 'You put in an underwhelming saturation level. There is something to be said for being too careful...'
-        if (sat_mode == 'well') and sat_max > 1:
-            tor_err = 'You are saturating past the full well. Is that a good idea?'
-        if n_reset < 1:
-            tor_err = 'You have no or negative resets. That is not allowed!'
+    tor_err = 0
+    # Specific error catching
+    if n_group.isdigit():
+        if n_group <= 1:
+            tor_err = 'Please try again with at least one group.'
+    else:
+        if n_group != 'optimize':
+            tor_err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
+    if (mag > 12) or (mag < 5.5):
+        tor_err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12 in a different band?'
+    if obs_time <= 0:
+        tor_err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
+#    if temp <= 0:
+#        tor_err = 'You have a negative temperature -- DOES THIS LOOK LIKE A MASER TO YOU?'
+    if sat_max <= 0:
+        tor_err = 'You put in an underwhelming saturation level. There is something to be said for being too careful...'
+    if (sat_mode == 'well') and sat_max > 1:
+        tor_err = 'You are saturating past the full well. Is that a good idea?'
+    if n_reset < 1:
+        tor_err = 'You have no or negative resets. That is not allowed!'
 
-        if type(tor_err) == str:
-            return render_template('tor_error.html', tor_err=tor_err)
-        
-        # Only create the dict if the form input looks okay.
-        tor_output = create_tor_dict(obs_time, n_group, mag, band, temp, sat_max, sat_mode, throughput, filt, ins, subarray, n_reset)
-        if type(tor_output) == dict:
-            tor_dict = tor_output
-            return render_template('tor_results.html', tor_dict=tor_dict)
-        else:
-            tor_err = tor_output
-            return render_template('tor_error.html', tor_err=tor_err)
-    
-    except (ValueError, TypeError) as e:
-        tor_err = 'One of you numbers is NOT a number! Please try again!'
+    if type(tor_err) == str:
         return render_template('tor_error.html', tor_err=tor_err)
+    
+    # Only create the dict if the form input looks okay.
+    tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode), float(sat_max), int(n_reset))
+    if type(tor_output) == dict:
+        tor_dict = tor_output
+        return render_template('tor_results.html', tor_dict=tor_dict)
+    else:
+        tor_err = tor_output
+        return render_template('tor_error.html', tor_err=tor_err)
+    
+#    except (ValueError, TypeError) as e:
+    print(e)
+    tor_err = 'One of you numbers is NOT a number! Please try again!'
+    return render_template('tor_error.html', tor_err=tor_err)
 
 # Load the TOR background
 @app_exoctk.route('/tor_background')
@@ -562,8 +563,8 @@ def _param_validation(args):
 
     return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
 
-@app_exoctk.route('/exotransmit', methods=['GET','POST'])
-def exotransmit():
+@app_exoctk.route('/exotransmit_portal', methods=['GET','POST'])
+def exotransmit_portal():
     """ 
     Run Exo-Transmit taking inputs from the HTML form and plot the results
     """
@@ -597,7 +598,7 @@ def exotransmit():
     script, div = components(fig)
     
     html = flask.render_template(
-        'exotransmit.html',
+        'exotransmit_portal.html',
         plot_script=script,
         plot_div=div,
         js_resources=js_resources,
