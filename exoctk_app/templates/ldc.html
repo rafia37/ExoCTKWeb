@@ -9,9 +9,6 @@
         <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
         <script>
             $(document).ready(function(){
-
-                $("#header").load('{{ url_for('static',filename='header.html')}}');
-                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
             
                 $('#filterselect').on('change', function() {
                   if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141' )
@@ -47,15 +44,6 @@
         <div id="header"></div>
 
         <div class=page>
-
-            <h1>Limb Darkening Calculator</h1>
-
-            <div class=metanav>
-                <p>
-                    Here is a bunch of stuff about the LDC.
-                </p>
-
-            </div>
     
             <form id='searchform' method='post' action='ldc_results' >
                 

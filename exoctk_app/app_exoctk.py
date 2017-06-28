@@ -8,8 +8,9 @@ import astropy.table as at
 import astropy.units as q
 import matplotlib.pyplot as plt
 import numpy as np
-import bokeh
 import os
+
+import bokeh
 from bokeh import mpl
 from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
@@ -26,8 +27,7 @@ from bokeh.plotting import figure
 from bokeh.plotting import output_file
 from bokeh.plotting import show
 from bokeh.plotting import save
-from bokeh.resources import INLINE
-from bokeh.util.string import encode_utf8
+
 import flask
 from flask import current_app
 from flask import Flask
@@ -664,14 +664,13 @@ def exotransmit_portal():
     )
     return encode_utf8(html)
 
-
 @app_exoctk.route('/exotransmit_result', methods=['POST'])
 def save_exotransmit_result():
     table_string = flask.request.form['data_file']
     return flask.Response(table_string, mimetype="text/dat",
                           headers={"Content-disposition":
                                       "attachment; filename=exotransmit.dat"})
-
+                                      
 ## -- RUN
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
