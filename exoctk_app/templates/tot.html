@@ -1,28 +1,16 @@
+{%extends "base.html" %}
+
+{% block content %}
 <!doctype html>
-<html>
-    <head>
-        <title>ExoCTK: Transit Observation Tools</title>
-        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
-    </head>
-    <body>
-
-        <script>
-            $(document).ready(function(){
-                $("#header").load('{{ url_for('static',filename='header.html')}}');
-                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
-            });
-        </script>
-    
-        <div id="header"></div>
-
-        <div class=page>
 
             <h1>Transit Observation Tools</h1>
 
             <div class=metanav>
                 <p>
-                    Here is a bunch of stuff about the TOT.
+                The TOT is a transiting exoplanet noise simulatior. The current implementation scales the measured flux, variance, and exposure time
+                values from previously-observed systems, computes the expected rms per spectrophotometric channel, and estimates the transit/eclipse
+                depth error based on the anticiapted number of valid in-and-out-of-transit data points. The uncertainty estimates depend on the
+                orbital properites of the system, instrument configuration, and observation duration. 
                 </p>
 
             </div>
@@ -76,16 +64,13 @@
                 <h3>Step 3: Detector and Observation Inputs</h3>
     
                 <br>
-                <p>
-                    <input type='submit' value='Calculate Transit Curves' />
+               <p>
+                    <input class="btn" type='submit' value='Calculate Transit Curves'></p>
                       (This can take up to 20 seconds.)
                 </p>
             
             </form>
 
         </div>
-    
-        <div id="footer"></div>
 
-    </body>
-</html>
+{% endblock %}

@@ -1,0 +1,61 @@
+
+#myTable{
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10pt;
+    border-collapse: collapse;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1cm;
+}
+
+#myTable th, #myTable td{
+    border: 1px solid black;
+    text-align: left;
+    padding: 8px;
+}
+
+
+#myTable tr.header{
+    background-color: #B6EDFF;
+}
+
+#myTitle {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 20pt;
+    text-align; center;
+}
+
+
+#myBody {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10pt;
+    text-align: center;
+    width: 600px;
+}
+
+#myHeader {
+    margin-top: .5cm;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 15pt;
+    text-align: center;
+    width: 600px;
+    margin-bottom: 1cm;
+}
+
+#myImage {
+    width: 500px;
+    margin-bottom: 1cm
+}
+
+#mySmollImage {
+    width: 300px;
+    margin-bottom: 1cm
+}
+
+#myTableTitle {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 12pt;
+    text-align: center;
+    margin-bottom: .3cm;
+}
+

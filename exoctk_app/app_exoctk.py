@@ -1,20 +1,13 @@
-import flask
-from flask import Flask, render_template, request, redirect, make_response, current_app
-from flask_cache import Cache
-
-app_exoctk = Flask(__name__)
-
-import shutil
-import os
+## -- IMPORTS
+import glob
 from datetime import datetime
-
-import ExoCTK
-from ExoCTK.pal import exotransmit
-import numpy as np
-import matplotlib.pyplot as plt
+import os
+import shutil
+from astropy.extern.six.moves import StringIO
 import astropy.table as at
 import astropy.units as q
-from astropy.extern.six.moves import StringIO
+import matplotlib.pyplot as plt
+import numpy as np
 import bokeh
 import os
 from bokeh import mpl
@@ -22,12 +15,34 @@ from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
 from bokeh.core.properties import Override
 from bokeh.embed import components
-from bokeh.models import Range1d
-from bokeh.models import Label
-from bokeh.models import HoverTool
 from bokeh.models import ColumnDataSource
-from bokeh.plotting import figure, show
-from bokeh.models.widgets import Panel, Tabs
+from bokeh.models import HoverTool
+from bokeh.models import Label
+from bokeh.models import Range1d
+from bokeh.models.widgets import Panel
+from bokeh.models.widgets import Tabs
+from bokeh.mpl import to_bokeh
+from bokeh.plotting import figure
+from bokeh.plotting import output_file
+from bokeh.plotting import show
+from bokeh.plotting import save
+from bokeh.resources import INLINE
+from bokeh.util.string import encode_utf8
+import flask
+from flask import current_app
+from flask import Flask
+from flask import make_response
+from flask import redirect
+from flask import render_template
+from flask import request
+#from flask_cache import Cache
+
+import ExoCTK
+from ExoCTK.pal import exotransmit
+from ExoCTK.tor.tor import create_tor_dict
+
+## -- FLASK SET UP (?)
+app_exoctk = Flask(__name__)
 
 # define the cache config keys, remember that it can be done in a settings file
 app_exoctk.config['CACHE_TYPE'] = 'null'
@@ -284,11 +299,6 @@ def exoctk_ldc_results():
 def exoctk_ldc_error():
     return render_template('ldc_error.html')
 
-# Load the TOT page
-@app_exoctk.route('/tot', methods=['GET', 'POST'])
-def exoctk_tot():
-    return render_template('tot.html')
-
 # Load the TOT results page
 @app_exoctk.route('/tot_results', methods=['GET', 'POST'])
 def exoctk_tot_results():
@@ -330,13 +340,17 @@ def exoctk_tot_results():
                      labels=['Model Spectrum', 'Simulated Obs.'])
     
     # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
+    plt.savefig('static/plots/sim.png')
+    sim_plot = mpl.to_bokeh(plt.gcf())
+    output_file('test_sim.html')
+    save(sim_plot)
     plt.close()
     xmin, xmax = (1.125,1.650)
     ymin, ymax = (np.min(binspec)-2*deptherr, np.max(binspec)+2*deptherr)
-    p.y_range = Range1d(ymin, ymax)
-    p.x_range = Range1d(xmin, xmax)
-    sim_script, sim_plot = components(p)
+    sim_plot.y_range = Range1d(ymin, ymax)
+    sim_plot.x_range = Range1d(xmin, 6)
+#    sim_plot.y_axis_label = 'Wavelength (micron)'
+    sim_script, sim_plot = components(sim_plot)
     
     # Plot the transit curves
     numorbits = exo_dict['observation']['norbits']
@@ -349,44 +363,121 @@ def exoctk_tot_results():
                                               aRs, period, windowSize, ecc=0, w=90.)
                                               
     # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
+    plt.savefig('static/plots/obs.png')
+    obs_plot = mpl.to_bokeh(plt.gcf())
+    output_file('test_obs.html')
+    save(obs_plot)
     plt.close()
-    obs_script, obs_plot = components(p)
+    obs_script, obs_plot = components(obs_plot)
     
-    # Make some HTML for the input summary
-    summary = """<h3>Input</h3>
-    <table>
-        <tr>
-            <td>H-band magnitude of the system</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Orbital inclination [degrees]</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Semi-major axis [R*]</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Orbital period [days]</td>
-            <td>{}</td>
-        </tr>
-    </table>
-    
-    <h3>Result</h3>
-    <table>
-        <tr>
-            <td>Start observations between orbital phases:</td>
-            <td>{:.4f} - {:.4f}</td>
-        </tr>
-    </table>
-    """.format(exo_dict['star']['hmag'], exo_dict['planet']['i'], exo_dict['planet']['ars'], exo_dict['planet']['period'],
-               minphase, maxphase)
-    
-    return render_template('tot_results.html', summary=summary, sim_script=sim_script, sim_plot=sim_plot, 
-                           obs_script=obs_script, obs_plot=obs_plot)
+    exo_dict['minphase'] = round(minphase, 4)
+    exo_dict['maxphase'] = round(maxphase, 4)
 
+    sim = open('test_sim.html')
+    lines = sim.readlines()
+    sim_html = "".join(lines)
+    sim.close()
+
+    obs = open('test_obs.html')
+    lines = obs.readlines()
+    obs_html = "".join(lines)
+    print(obs_html)
+    html_dict = {'sim': sim_html, 'obs': obs_html}
+    
+    return render_template('tot_results.html', exo_dict=exo_dict, html_dict=html_dict)
+
+# Load the WIP page
+@app_exoctk.route('/wip')
+def exoctk_wip():
+    return render_template('wip.html')
+
+# Load the TOR page
+@app_exoctk.route('/tor', methods=['GET', 'POST'])
+def exoctk_tor():
+
+    ins = glob.glob('static/filter_dat/*')
+    button_ins = [this_ins[18:] for this_ins in ins]
+
+    return render_template('tor.html', button_ins=button_ins)
+
+# Load the TOR results
+@app_exoctk.route('/tor_results', methods=['GET', 'POST'])
+def exoctk_tor_results():
+    
+    
+    try:
+        n_group = request.form['groups']
+        mag = float(request.form['mag'])
+        band = request.form['band']
+        obs_time = float(request.form['T'])
+#        temp = float(request.form['temp'])
+        sat_max = float(request.form['sat_lvl'])
+        sat_mode = request.form['sat']
+#        throughput = request.form['tp']
+        filt = request.form['filt']
+        ins = request.form['ins']
+        subarray = request.form['subarray']
+        n_reset = int(request.form['n_reset'])
+        infile = os.environ['tor_pandeia_path'] 
+
+        tor_err = 0
+        # Specific error catching
+        if n_group.isdigit():
+           if n_group <= 1:
+               tor_err = 'Please try again with at least one group.'
+        else:
+            if n_group != 'optimize':
+             tor_err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
+        if (mag > 12) or (mag < 5.5):
+            tor_err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12 in a different band?'
+        if obs_time <= 0:
+            tor_err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
+#    if temp <= 0:
+#        tor_err = 'You have a negative temperature -- DOES THIS LOOK LIKE A MASER TO YOU?'
+        if sat_max <= 0:
+            tor_err = 'You put in an underwhelming saturation level. There is something to be said for being too careful...'
+        if (sat_mode == 'well') and sat_max > 1:
+            tor_err = 'You are saturating past the full well. Is that a good idea?'
+        if n_reset < 1:
+            tor_err = 'You have no or negative resets. That is not allowed!'
+
+        if type(tor_err) == str:
+            return render_template('tor_error.html', tor_err=tor_err)
+    
+    # Only create the dict if the form input looks okay.
+        tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode), float(sat_max), int(n_reset), infile)
+        if type(tor_output) == dict:
+            tor_dict = tor_output
+            if tor_dict['n_group'] == 1:
+                one_group_error = 'Be careful! This only predicts one group, and you may be in danger of oversaturating!'
+            else:
+                one_group_error = ""
+            return render_template('tor_results.html', tor_dict=tor_dict, one_group_error=one_group_error)
+        else:
+            tor_err = tor_output
+            return render_template('tor_error.html', tor_err=tor_err)
+    
+    except (IOError) as e:
+        print(e)
+        tor_err = 'One of you numbers is NOT a number! Please try again!'
+        return render_template('tor_error.html', tor_err=tor_err)
+
+# Load the TOR background
+@app_exoctk.route('/tor_background')
+def exoctk_tor_background():
+    return render_template('tor_background.html')
+
+# Load filter profiles pages
+@app_exoctk.route('/filter_profile_<ins>')
+def exoctk_filter_profile(ins):
+
+    filt_imgs = glob.glob('static/filter_dat/' + ins + '/' + ins + '*')
+    names = [filt_img[19+len(ins):-4] for filt_img in filt_imgs]
+    print(filt_imgs)
+    filt_imgs = ['../' + filt_img for filt_img in filt_imgs]
+
+    return render_template('tor_filter_profile.html', names=names, filt_imgs=filt_imgs, ins=ins)
+    
 # Save the results to file
 @app_exoctk.route('/download', methods=['POST'])
 def exoctk_savefile():
@@ -520,13 +611,14 @@ def _param_validation(args):
 
     return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
 
-@app_exoctk.route('/exotransmit', methods=['GET','POST'])
-def exotransmit_page():
+@app_exoctk.route('/exotransmit_portal', methods=['GET','POST'])
+def exotransmit_portal():
     """ 
     Run Exo-Transmit taking inputs from the HTML form and plot the results
     """
     if exotransmit_dir is None:
-        flask.abort(404)
+        return render_template('tor_error.html', tor_err="There seems to be no directory in place for exo-transmit...")
+
     # Grab the inputs arguments from the URL
     args = flask.request.args
     # Get all the form arguments in the url with defaults
@@ -552,9 +644,9 @@ def exotransmit_page():
     css_resources = INLINE.render_css()
 
     script, div = components(fig)
-
+    
     html = flask.render_template(
-        'exotransmit.html',
+        'exotransmit_portal.html',
         plot_script=script,
         plot_div=div,
         js_resources=js_resources,
@@ -579,3 +671,8 @@ def save_exotransmit_result():
     return flask.Response(table_string, mimetype="text/dat",
                           headers={"Content-disposition":
                                       "attachment; filename=exotransmit.dat"})
+
+## -- RUN
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app_exoctk.run(host='0.0.0.0', port=port, debug=True)

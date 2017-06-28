@@ -2,3 +2,5 @@ astropy>=1.1.1
 numpy>=1.10.4
 flask>=0.10.1
 bokeh>=0.11.0
+flask_chache -- of some version?
+installed ExoCTK

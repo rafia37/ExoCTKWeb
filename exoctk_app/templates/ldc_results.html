@@ -1,38 +1,10 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <title>ExoCTK: Limb Darkening Calculator</title>
-        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
-        <script src="{{ url_for('static', filename='jquery-1.12.0.min.js')}} "></script>
-        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.js"></script>
+{% extends "base.html" %}
 
-        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.css" type="text/css" />
-        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.css" type="text/css" />
-        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.js"></script>
-        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.js"></script>
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
-        
-        <script type="text/javascript" async
-            src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
-        </script>
-
-    </head>
-    <body>
+{% block content %}
         
         {{ script|safe }}
         {{ filt_script|safe }}
-
-        <script>
-            $(document).ready(function(){
-                $("#header").load('{{ url_for('static',filename='header.html')}}');
-                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
-            });
-        </script>
-    
-        <div id="header"></div>
-
-        <div class=page>
-
+ 
             <h1>Limb Darkening Calculator</h1>
 
             <div class=metanav>
@@ -85,18 +57,9 @@
             </div>
             <div style="clear:both;"></div>
             <br>
-            <!-- <table>
-            <tr>
-                <td>\(\mu\)</td>
-                <td>{{mu|safe}}</td>
-            </tr>
-            <tr>
-                <td>Effective Radius</td>
-                <td>\({{r|safe}}\)</td>
-            </tr>
 
             </table> -->
-                
+
             <div>
 
                 <form id='exportform' method='post' action='download' >
@@ -125,7 +88,4 @@
 
         </div>
 
-        <div id="footer"></div>
-        
-    </body>
-</html>
+{% endblock %}
