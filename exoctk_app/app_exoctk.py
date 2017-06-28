@@ -34,7 +34,7 @@ from flask import make_response
 from flask import redirect
 from flask import render_template
 from flask import request
-from flask_cache import Cache
+#from flask_cache import Cache
 
 import ExoCTK
 from ExoCTK.pal import exotransmit
@@ -46,8 +46,9 @@ app_exoctk = Flask(__name__)
 # define the cache config keys, remember that it can be done in a settings file
 app_exoctk.config['CACHE_TYPE'] = 'simple'
 
+
 # register the cache instance and binds it on to your app
-cache = Cache(app_exoctk)
+#cache = Cache(app_exoctk)
 
 # Nice colors for plotting
 COLORS = ['blue', 'red', 'green', 'orange', 
@@ -67,15 +68,17 @@ VERSION = ExoCTK.__version__
 def index():
     return render_template('index.html')
 
+modelgrid_dir = os.environ.get('MODELGRID_DIR')
+
 # Load the LDC page
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
 def exoctk_ldc():
     # Get all the available filters
-    filters = ExoCTK.svo.filters()['Band']
+    filters = ExoCTK.svo.filters()['Band'] 
     
     # Make HTML for filters
     filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
-                ' checked' if b=='Kepler.K' else '') for b in filters])
+        ' selected' if b=='Kepler.K' else '') for b in filters])        
     
     return render_template('ldc.html', filters=filt_list)
     
@@ -89,9 +92,10 @@ def exoctk_ldc_results():
     bandpass = request.form['bandpass']
     
     # Get models from local directory if necessary
-    if not modeldir:
+    if modeldir=='default':
+        modeldir = modelgrid_dir
+        # elif not modeldir:
         modeldir = request.form['local_files']
-    
     try:
         teff = int(request.form['teff'])
         logg = float(request.form['logg'])
@@ -281,13 +285,15 @@ def exoctk_ldc_results():
         html_table = header+html_table
         
         profile_tables.append(html_table)
-        
+   
+    return render_template('tor_error.html', tor_err='TEST')
+    """ 
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
                 band=bp_name, mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \
                 script=script, plot=div, file_as_string=repr(file_as_string), \
                 filt_plot=filt_plot, filt_script=filt_script)
-
+    """
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
@@ -419,7 +425,8 @@ def exoctk_tor_results():
         ins = request.form['ins']
         subarray = request.form['subarray']
         n_reset = int(request.form['n_reset'])
-    
+        infile = os.environ['tor_pandeia_path'] 
+
         tor_err = 0
         # Specific error catching
         if n_group.isdigit():
@@ -445,7 +452,7 @@ def exoctk_tor_results():
             return render_template('tor_error.html', tor_err=tor_err)
     
     # Only create the dict if the form input looks okay.
-        tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode), float(sat_max), int(n_reset))
+        tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode), float(sat_max), int(n_reset), infile)
         if type(tor_output) == dict:
             tor_dict = tor_output
             if tor_dict['n_group'] == 1:
@@ -457,7 +464,7 @@ def exoctk_tor_results():
             tor_err = tor_output
             return render_template('tor_error.html', tor_err=tor_err)
     
-    except (ValueError, TypeError) as e:
+    except (IOError) as e:
         print(e)
         tor_err = 'One of you numbers is NOT a number! Please try again!'
         return render_template('tor_error.html', tor_err=tor_err)
