@@ -74,11 +74,11 @@ modelgrid_dir = os.environ.get('MODELGRID_DIR')
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
 def exoctk_ldc():
     # Get all the available filters
-    filters = ExoCTK.svo.filters()['Band'] 
+    filters = ExoCTK.svo.filters()['Band']
     
     # Make HTML for filters
     filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
-        ' selected' if b=='Kepler.K' else '') for b in filters])        
+                ' selected' if b=='Kepler.K' else '') for b in filters])
     
     return render_template('ldc.html', filters=filt_list)
     
@@ -94,8 +94,9 @@ def exoctk_ldc_results():
     # Get models from local directory if necessary
     if modeldir=='default':
         modeldir = modelgrid_dir
-        # elif not modeldir:
-        modeldir = request.form['local_files']
+    # elif not modeldir:
+    #     modeldir = request.form['local_files']
+    
     try:
         teff = int(request.form['teff'])
         logg = float(request.form['logg'])
@@ -148,7 +149,7 @@ def exoctk_ldc_results():
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
-    if bandpass in ExoCTK.svo.filters()['Band']  or bandpass=='tophat':
+    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass=='tophat':
         
         try:
             
@@ -159,7 +160,7 @@ def exoctk_ldc_results():
                 kwargs['wl_min'] = float(wl_min)*q.um
                 kwargs['wl_max'] = float(wl_max)*q.um
             
-            bandpass = svo.Filter(bandpass, **kwargs)
+            bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
             min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
             n_bins = bandpass.n_bins
             bp_name = bandpass.filterID
@@ -285,25 +286,18 @@ def exoctk_ldc_results():
         html_table = header+html_table
         
         profile_tables.append(html_table)
-   
-    return render_template('tor_error.html', tor_err='TEST')
-    """ 
+        
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
                 band=bp_name, mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \
                 script=script, plot=div, file_as_string=repr(file_as_string), \
                 filt_plot=filt_plot, filt_script=filt_script)
-    """
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
 def exoctk_ldc_error():
     return render_template('ldc_error.html')
 
-# Load the TOT page
-@app_exoctk.route('/tot', methods=['GET', 'POST'])
-def exoctk_tot():
-    return render_template('tot.html')
 
 
 # Load the TOT results page
