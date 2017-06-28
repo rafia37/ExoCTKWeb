@@ -66,18 +66,27 @@ def exoctk_ldc_results():
     modeldir = request.form['modeldir']
     profiles = list(filter(None,[request.form.get(pf) for pf in PROFILES]))
     bandpass = request.form['bandpass']
-    teff = int(request.form['teff'])
-    logg = float(request.form['logg'])
-    feh = float(request.form['feh'])
-    mu_min = float(request.form['mu_min'])
-    n_bins = request.form.get('n_bins')
-    pixels_per_bin = request.form.get('pixels_per_bin')
-    wl_min = request.form.get('wave_min')
-    wl_max = request.form.get('wave_max')
     
     # Get models from local directory if necessary
     if not modeldir:
         modeldir = request.form['local_files']
+    
+    try:
+        teff = int(request.form['teff'])
+        logg = float(request.form['logg'])
+        feh = float(request.form['feh'])
+        mu_min = float(request.form['mu_min'])
+    except:
+        message = 'Could not calculate limb darkening with the above input parameters.'
+        
+        return render_template('ldc_error.html', teff=request.form['teff'], logg=request.form['logg'], feh=request.form['feh'], \
+                    band=bandpass or 'None', profile=', '.join(profiles), models=modeldir, \
+                    message=message)
+                    
+    n_bins = request.form.get('n_bins')
+    pixels_per_bin = request.form.get('pixels_per_bin')
+    wl_min = request.form.get('wave_min')
+    wl_max = request.form.get('wave_max')
     
     # # Make the model grid, caching if necessary
     # cached = cache.get(modeldir)
@@ -94,50 +103,103 @@ def exoctk_ldc_results():
     model_grid = ExoCTK.core.ModelGrid(modeldir, resolution=500)
     
     # No data, redirect to the error page
-    if len(model_grid.data)==0:
-        
+    if not hasattr(model_grid, 'data'):
+        message = 'Could not find a model grid to load. Please check your path.'
+    
         return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
-                    band=bandpass or 'None', profile=profile, models=model_grid.path, \
-                    script=script)
+                    band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
+                    message=message)
+        
+    else:
+        
+        if len(model_grid.data)==0:
+        
+            message = 'Could not calculate limb darkening with the above input parameters.'
+        
+            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                        band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
+                        message=message)
                     
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
     if bandpass in svo.filters()['Band'] or bandpass=='tophat':
-        kwargs = {'n_bins':int(n_bins)} if n_bins else \
-                 {'pixels_per_bin':int(pixels_per_bin)} if pixels_per_bin else {}
-                 
-        if wl_min and wl_max:
-            kwargs['wl_min'] = float(wl_min)*q.um
-            kwargs['wl_max'] = float(wl_max)*q.um
+        
+        try:
             
-        bandpass = svo.Filter(bandpass, **kwargs)
-        min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
-        n_bins = bandpass.n_bins
+            kwargs = {'n_bins':int(n_bins)} if n_bins else \
+                     {'pixels_per_bin':int(pixels_per_bin)} if pixels_per_bin else {}
+                 
+            if wl_min and wl_max:
+                kwargs['wl_min'] = float(wl_min)*q.um
+                kwargs['wl_max'] = float(wl_max)*q.um
+            
+            bandpass = svo.Filter(bandpass, **kwargs)
+            min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
+            n_bins = bandpass.n_bins
+            bp_name = bandpass.filterID
         
-        # Get the filter plot
-        TOOLS = 'box_zoom,resize,reset'
-        bk_plot = figure(tools=TOOLS, title=bandpass.filterID, plot_width=400, plot_height=300,
-                         x_range=Range1d(bandpass.WavelengthMin,bandpass.WavelengthMax))
-        if n_bins>1:
+            # Get the filter plot
+            TOOLS = 'box_zoom,resize,reset'
+            bk_plot = figure(tools=TOOLS, title=bp_name, plot_width=400, plot_height=300,
+                             x_range=Range1d(bandpass.WavelengthMin,bandpass.WavelengthMax))
+                         
             bk_plot.line(*bandpass.raw, line_width=5, color='black', alpha=0.1)
-            for i,(x,y) in enumerate(bandpass.rsr):
-                bk_plot.line(x, y, color=(COLORS*5)[i])
-        else:
-            bk_plot.line(*bandpass.rsr)
-        bk_plot.xaxis.axis_label = 'Wavelength [um]'
-        bk_plot.yaxis.axis_label = 'Throughput'
-        filt_script, filt_plot = components(bk_plot)
+            try:
+                for i,(x,y) in enumerate(bandpass.rsr):
+                    bk_plot.line(x, y, color=(COLORS*5)[i])
+            except:
+                bk_plot.line(*bandpass.raw)
+            
+            bk_plot.xaxis.axis_label = 'Wavelength [um]'
+            bk_plot.yaxis.axis_label = 'Throughput'
+            filt_script, filt_plot = components(bk_plot)
         
-        plt.close()
+            plt.close()
+        except:
+            message = 'Insufficient filter information. Please complete the form and try again!'
+        
+            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                        band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
+                        message=message)
+    else:
+        bp_name = bandpass or '-'
+        filt_plot = filt_script = ''
         
     # Trim the grid to nearby grid points to speed up calculation
     full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
     trim_rng = ExoCTK.core.find_closest(full_rng, [teff,logg,feh], 
                                         n=1, values=True)
                                         
-    model_grid.customize(Teff_rng=trim_rng[0], logg_rng=trim_rng[1], 
+    if not trim_rng:
+        
+        message = 'Insufficient models grid points to calculate coefficients.'
+        
+        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
+                message=message)
+    
+    elif not profiles:
+        
+        message = 'No limb darkening profiles have been selected. Please select at least one.'
+        
+        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
+                message=message)
+    
+    else:
+        
+        try:
+            model_grid.customize(Teff_rng=trim_rng[0], logg_rng=trim_rng[1], 
                          FeH_rng=trim_rng[2], wave_rng=min_max)
+                         
+        except:
+            
+            message = 'Insufficient wavelength coverage to calculate coefficients.'
+        
+            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                    band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
+                    message=message)
                          
     # Calculate the coefficients for each profile
     grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
@@ -200,7 +262,7 @@ def exoctk_ldc_results():
         profile_tables.append(html_table)
         
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
-                band=bandpass.filterID or '-', mu=mu_eff, profile=', '.join(profiles), \
+                band=bp_name, mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \
                 script=script, plot=div, file_as_string=repr(file_as_string), \
                 filt_plot=filt_plot, filt_script=filt_script)

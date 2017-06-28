@@ -17,8 +17,6 @@
     </head>
     <body>
         
-        {{ script|safe }}
-
         <script>
             $(document).ready(function(){
                 $("#header").load('{{ url_for('static',filename='header.html')}}');
@@ -68,7 +66,7 @@
             </table>
             
             <h3>Result</h3>
-            <p>Could not calculate limb darkening with the above input parameters.</p>
+            <p style='color:red;'><strong>{{message | safe}}</strong></p>
             
             <br>
 
