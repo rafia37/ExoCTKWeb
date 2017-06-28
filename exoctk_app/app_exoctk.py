@@ -3,21 +3,22 @@ import glob
 from datetime import datetime
 import os
 import shutil
-
 from astropy.extern.six.moves import StringIO
 import astropy.table as at
 import astropy.units as q
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 import bokeh
 from bokeh import mpl
+from bokeh.resources import INLINE
+from bokeh.util.string import encode_utf8
 from bokeh.core.properties import Override
 from bokeh.embed import components
 from bokeh.models import ColumnDataSource
 from bokeh.models import HoverTool
 from bokeh.models import Label
-from bokeh.models import LinearScale
 from bokeh.models import Range1d
 from bokeh.models.widgets import Panel
 from bokeh.models.widgets import Tabs
@@ -26,8 +27,7 @@ from bokeh.plotting import figure
 from bokeh.plotting import output_file
 from bokeh.plotting import show
 from bokeh.plotting import save
-from bokeh.resources import INLINE
-from bokeh.util.string import encode_utf8
+
 import flask
 from flask import current_app
 from flask import Flask
@@ -45,11 +45,13 @@ from ExoCTK.tor.tor import create_tor_dict
 app_exoctk = Flask(__name__)
 
 # define the cache config keys, remember that it can be done in a settings file
-app_exoctk.config['CACHE_TYPE'] = 'simple'
+app_exoctk.config['CACHE_TYPE'] = 'null'
 
+exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
+modelgrid_dir = os.environ.get('MODELGRID_DIR')
 
 # register the cache instance and binds it on to your app
-#cache = Cache(app_exoctk)
+# cache = Cache(app_exoctk)
 
 # Nice colors for plotting
 COLORS = ['blue', 'red', 'green', 'orange', 
@@ -69,13 +71,12 @@ VERSION = ExoCTK.__version__
 def index():
     return render_template('index.html')
 
-modelgrid_dir = os.environ.get('MODELGRID_DIR')
-
 # Load the LDC page
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
 def exoctk_ldc():
     # Get all the available filters
     filters = ExoCTK.svo.filters()['Band']
+    
     # Make HTML for filters
     filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
                 ' selected' if b=='Kepler.K' else '') for b in filters])
@@ -284,7 +285,7 @@ def exoctk_ldc_results():
         # Add the table title
         header = '<br></br><strong>{}</strong><br><p>\(I(\mu)/I(\mu=1)\) = {}</p><br></br>'.format(profile,poly)
         html_table = header+html_table
-        
+
         profile_tables.append(html_table)
         
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
@@ -297,8 +298,6 @@ def exoctk_ldc_results():
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
 def exoctk_ldc_error():
     return render_template('ldc_error.html')
-
-
 
 # Load the TOT results page
 @app_exoctk.route('/tot_results', methods=['GET', 'POST'])
@@ -479,7 +478,6 @@ def exoctk_filter_profile(ins):
 
     return render_template('tor_filter_profile.html', names=names, filt_imgs=filt_imgs, ins=ins)
     
-
 # Save the results to file
 @app_exoctk.route('/download', methods=['POST'])
 def exoctk_savefile():
@@ -489,106 +487,6 @@ def exoctk_savefile():
     response.headers["Content-type"] = 'text; charset=utf-8'
     response.headers["Content-Disposition"] = "attachment; filename=ExoXTK_results.txt"
     return response
-
-# @app_exoctk.route('/export', methods=['POST'])
-# def exoctk_export():
-#
-#     # Get all the checked rows
-#     checked = request.form
-#
-#     # Get column names
-#     results = [list(eval(checked.get('cols')))]
-#
-#     for k in sorted(checked):
-#         if k.isdigit():
-#
-#             # Convert string to list and strip HTML
-#             vals = eval(checked[k])
-#             for i,v in enumerate(vals):
-#                 try:
-#                     vals[i] = str(v).split('>')[1].split('<')[0]
-#                 except:
-#                     pass
-#
-#             results.append(vals)
-#
-#     # Make an array to export
-#     results = np.array(results, dtype=str)
-#     filename = 'ONCdb_results.txt'
-#     np.savetxt(filename, results, delimiter='|', fmt='%s')
-#
-#     with open(filename, 'r') as f:
-#         file_as_string = f.read()
-#     os.remove(filename)  # Delete the file after it's read
-#
-#     response = make_response(str(file_as_string))
-#     response.headers["Content-type"] = 'text; charset=utf-8'
-#     response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
-#     return response
-
-class LatexLabel(Label):
-    """A subclass of the Bokeh built-in `Label` that supports rendering
-    LaTex using the KaTex typesetting library.
-
-    Only the render method of LabelView is overloaded to perform the
-    text -> latex (via katex) conversion. Note: ``render_mode="canvas``
-    isn't supported and certain DOM manipulation happens in the Label
-    superclass implementation that requires explicitly setting
-    `render_mode='css'`).
-    """
-    __javascript__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js"]
-    __css__ = ["https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css"]
-    __implementation__ = """
-import {Label, LabelView} from "models/annotations/label"
-
-export class LatexLabelView extends LabelView
-  render: () ->
-
-    #--- Start of copied section from ``Label.render`` implementation
-
-    ctx = @plot_view.canvas_view.ctx
-
-    # Here because AngleSpec does units tranform and label doesn't support specs
-    switch @model.angle_units
-      when "rad" then angle = -1 * @model.angle
-      when "deg" then angle = -1 * @model.angle * Math.PI/180.0
-
-    if @model.x_units == "data"
-      vx = @xmapper.map_to_target(@model.x)
-    else
-      vx = @model.x
-    sx = @canvas.vx_to_sx(vx)
-
-    if @model.y_units == "data"
-      vy = @ymapper.map_to_target(@model.y)
-    else
-      vy = @model.y
-    sy = @canvas.vy_to_sy(vy)
-
-    if @model.panel?
-      panel_offset = @_get_panel_offset()
-      sx += panel_offset.x
-      sy += panel_offset.y
-      
-    if @model.orientation == 'v'
-      angle = angle + 90
-
-    #--- End of copied section from ``Label.render`` implementation
-
-    # ``katex`` is loaded into the global window at runtime
-    # katex.renderToString returns a html ``span`` element
-    latex = katex.renderToString(@model.text, {displayMode: true})
-
-    # Must render as superpositioned div (not on canvas) so that KaTex
-    # css can properly style the text
-    @_css_text(ctx, latex, sx + @model.x_offset, sy - @model.y_offset, angle)
-
-export class LatexLabel extends Label
-  type: 'LatexLabel'
-  default_view: LatexLabelView
-"""
-
-exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
 
 def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
     current_dir = os.path.abspath(os.curdir)
@@ -720,7 +618,7 @@ def exotransmit_portal():
     """
     if exotransmit_dir is None:
         return render_template('tor_error.html', tor_err="There seems to be no directory in place for exo-transmit...")
-        flask.abort(404)
+
     # Grab the inputs arguments from the URL
     args = flask.request.args
     # Get all the form arguments in the url with defaults
@@ -764,28 +662,7 @@ def exotransmit_portal():
         Rayleigh=Rayleigh,
         table_string=table_string
     )
-    """
-    
-    return render_template(
-        'exotransmit.html',
-        plot_script=script,
-        plot_div=div,
-        js_resources=js_resources,
-        css_resources=css_resources,
-        eos_files=os.listdir(os.path.join(exotransmit_dir,'EOS')),
-        tp_files=os.listdir(os.path.join(exotransmit_dir, 'T_P')),
-        tp=tp,
-        eos=eos,
-        g=g,
-        R_p=R_p,
-        R_s=R_s,
-        P=P,
-        Rayleigh=Rayleigh,
-        table_string=table_string
-    )
-    """
     return encode_utf8(html)
-
 
 @app_exoctk.route('/exotransmit_result', methods=['POST'])
 def save_exotransmit_result():
@@ -793,6 +670,7 @@ def save_exotransmit_result():
     return flask.Response(table_string, mimetype="text/dat",
                           headers={"Content-disposition":
                                       "attachment; filename=exotransmit.dat"})
+                                      
 ## -- RUN
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

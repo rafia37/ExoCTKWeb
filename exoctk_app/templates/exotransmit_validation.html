@@ -1,6 +1,8 @@
 {% extends "base.html" %}
+
 {% block content %}
 
+<title>Invalid Parameters</title>
 <body>
 {% for params, message in invalid.items() %}
     <p>{{ message }}</p>
