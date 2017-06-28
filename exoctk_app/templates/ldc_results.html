@@ -4,7 +4,11 @@
 <!doctype html>
         
         {{ script|safe }}
+        {{ filt_script|safe }}
 
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.css" type="text/css" />
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.js"></script>
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.js"></script>
         <script>
             $(document).ready(function(){
                 $("#header").load('{{ url_for('static',filename='header.html')}}');
@@ -22,35 +26,50 @@
             </div>
             
             <h3>Input</h3>
-            <table>
-            <tr>
-                <td>Teff</td>
-                <td>{{teff|safe}}</td>
-            </tr>
-            <tr>
-                <td>log(g)</td>
-                <td>{{logg|safe}}</td>
-            </tr>
-            <tr>
-                <td>Fe/H</td>
-                <td>{{feh|safe}}</td>
-            </tr>
-            <tr>
-                <td>Bandpass</td>
-                <td>{{band|safe}}</td>
-            </tr>
-            <tr>
-                <td>Profiles</td>
-                <td>{{profile|safe}}</td>
-            </tr>
-            <tr>
-                <td>Models</td>
-                <td>{{models|safe}}</td>
-            </tr>
-            </table>
+            <div style='float:left; width:500px;'>
+            <h3>Input</h3>
+                
+                <table>
+                    <tr>
+                        <td>Teff</td>
+                        <td>{{teff|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>log(g)</td>
+                        <td>{{logg|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Fe/H</td>
+                        <td>{{feh|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Bandpass</td>
+                        <td>{{band|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Profiles</td>
+                        <td>{{profile|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Models</td>
+                        <td>{{models|safe}}</td>
+                    </tr>
+                </table>
+            </div>
+            <div style='float:right; width:450px;margin-top:10px;'>
+                {{filt_plot|safe}}
+            </div>
+            <div class='clearfix'></div>
+            <br>
             
             <h3>Result</h3>
-            <table>
+            
+            <div style='clear:both;'>
+                {{ plot|safe }}
+            </div>
+            <div style="clear:both;"></div>
+            <br>
+            <!-- <table> 
             <tr>
                 <td>\(\mu\)</td>
                 <td>{{mu|safe}}</td>
@@ -60,15 +79,23 @@
                 <td>\({{r|safe}}\)</td>
             </tr>
     
-            </table>
+            </table> --!>
+        
+            <div>
+
+                <form id='exportform' method='post' action='download' >
+                    <div style='display:none;'><input name='file_as_string' type='text' value="{{file_as_string|safe}}"></div>
+                    <input type='submit' value='Download Coefficient Tables' />
+                </form>
+
+            </div>
             
             <br>
             
-            {{table|safe}}
-            
+            {% for tab in table %}
+                {{ tab|safe }}
             <br>
-    
-            {{ plot|safe }}
+            {% endfor %}
 
             <!-- <form id='formatselect' method='post' action='savefile' >
                 <p>Save to a file:
