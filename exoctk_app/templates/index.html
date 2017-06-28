@@ -1,37 +1,47 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>ExoCTK</title>
-        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>    
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
-    </head>
-    <body>
-        <script>
-            $(document).ready(function(){
-                $("#header").load('{{ url_for('static',filename='header.html')}}');
-                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
-            });
-        </script>
-            
-        <div id="header"></div>
+{% extends "base.html" %}
+{% block content %}
 
-        <div class=page>
 
-            <h1>Exoplanet Characterization Tool Kit</h1>
+                <p  style="WIDTH:750px">
+                    
+                    ExoCTK is an open-source, modular, data analysis software pakcage focused primarily on atompspheric characterization
+                    of exoplanets and observation planning. This web application serves as your shortcut to using this software. 
+                    Here we fold the functionality of the ExoCTK code into a lovely interface -- and it's yours for the using! 
 
-            <div class=metanav>
-                <p>
-                    Here is a description of what this Web app can do.
-                </p>
-                <p>
-                    Here is a link to the Github package if you want the full functionality.
-                </p>
+                    <br></br>
 
-            </div>
+                    Among our weaponry are such diverse elements as :
+                    <ul>
+                        <li style="color:#808080">Transit Light-Curve fitting tools (TLC)</li>
+                        <li>Limb-Darkening Calculator (LDC)</li>
+                        <li style="color:#808080">IFS exoplanet spectra extraction (IFS)</li>
+                        <li style="color:#808080">Atomospheric Forward Models (AFM)</li>
+                        <li style="color:#808080">Bayesian Atmospheric Retrieval (BAR)</li>
+                        <li style="color:#808080">Planetary Atmospheres Libraries and tools (PAL)</li>
+                        <li>Transit Observation Tools (TOT)</li>
+                        <li>Time-series Observation and Reduction tools (TOR)</li>
+                    </ul>
+                    (<a style="color:#808080"> Grey</a> indicates that we are working on incorporating this tool AS YOU READ THIS VERY LINE.)
+                    <br></br>
 
-        </div>
-        
-        <div id="footer"></div>
-        
-    </body>
-</html>
+                    Following are links to our GitHub packages : 
+                    <ul>
+                        <li><a href="https://github.com/ExoCTK/ExoCTK">ExoCTK</a> is the computing package behind the website.</li>
+                        <li><a href="https://github.com/ExoCTK/ExoCTKWeb">ExoCTKWeb</a> is the literal soure code of this website.</li>
+                        <li><a href="https://github.com/ExoCTK/PandExo_HST">PandExo_HST</a> is our counterpart for HST observations.</li>
+                        <li>And <a href="https://github.com/ExoCTK/chimera">chimera</a> is a spooky monster or something, I guess. Tbh, idk...</li>
+                    </ul>
+<script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
+<script src="//cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/2/dataTables.bootstrap.js"></script>
+
+<script>
+$(document).ready(function(){
+    $('#scriptstatus').DataTable( {
+        "paging":   false,
+        "bFilter": false,
+        stateSave: true
+    } );
+});
+</script>
+
+{% endblock%}

@@ -4,3 +4,4 @@ exoctk_app/__pycache__/
 exoctk_app/.DS_Store
 .DS_Store
 *.p
+*.swp

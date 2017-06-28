@@ -1,74 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
 <!doctype html>
-<html lang="en">
-    <head>
-        <title>ExoCTK: Limb Darkening Calculator</title>
-        <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>
-        <script src="{{ url_for('static', filename='jquery-1.12.0.min.js')}} "></script>
-        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.js"></script>
-
-        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.css" type="text/css" />
-        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.js"></script>
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
-        
-        <script type="text/javascript" async
-            src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
-        </script>
-
-    </head>
-    <body>
         
         {{ script|safe }}
-
-        <script>
-            $(document).ready(function(){
-                $("#header").load('{{ url_for('static',filename='header.html')}}');
-                $("#footer").load('{{ url_for('static',filename='footer.html')}}');
-            });
-        </script>
+        {{ filt_script|safe }}
+        <link rel="sytlesheet" href="/static/css/stylec.css" type="text/css" />
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" type="text/css" />
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" type="text/css" />
+         <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script>
+         <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" type="text/css" />
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script>
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
     
-        <div id="header"></div>
-
-        <div class=page>
-
-            <h1>Limb Darkening Calculator</h1>
-
-            <div class=metanav>
-                <p>
-                    Here is a bunch of stuff about the LDC.
-                </p>
-
-            </div>
             
+            <div style='float:left; width:500px;'>
             <h3>Input</h3>
-            <table>
-            <tr>
-                <td>Teff</td>
-                <td>{{teff|safe}}</td>
-            </tr>
-            <tr>
-                <td>log(g)</td>
-                <td>{{logg|safe}}</td>
-            </tr>
-            <tr>
-                <td>Fe/H</td>
-                <td>{{feh|safe}}</td>
-            </tr>
-            <tr>
-                <td>Bandpass</td>
-                <td>{{band|safe}}</td>
-            </tr>
-            <tr>
-                <td>Profiles</td>
-                <td>{{profile|safe}}</td>
-            </tr>
-            <tr>
-                <td>Models</td>
-                <td>{{models|safe}}</td>
-            </tr>
-            </table>
+                
+                <table>
+                    <tr>
+                        <td>Teff</td>
+                        <td>{{teff|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>log(g)</td>
+                        <td>{{logg|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Fe/H</td>
+                        <td>{{feh|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Bandpass</td>
+                        <td>{{band|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Profiles</td>
+                        <td>{{profile|safe}}</td>
+                    </tr>
+                    <tr>
+                        <td>Models</td>
+                        <td>{{models|safe}}</td>
+                    </tr>
+                </table>
+            </div>
+            <div style='float:right; width:450px;margin-top:10px;'>
+                {{filt_plot|safe}}
+            </div>
+            <div class='clearfix'></div>
+            <br>
             
             <h3>Result</h3>
-            <table>
+            
+            <div style='clear:both;'>
+                {{ plot|safe }}
+            </div>
+            <div style="clear:both;"></div>
+            <br>
+            <!-- <table> 
             <tr>
                 <td>\(\mu\)</td>
                 <td>{{mu|safe}}</td>
@@ -78,15 +68,23 @@
                 <td>\({{r|safe}}\)</td>
             </tr>
     
-            </table>
+            </table> --!>
+        
+            <div>
+
+                <form id='exportform' method='post' action='download' >
+                    <div style='display:none;'><input name='file_as_string' type='text' value="{{file_as_string|safe}}"></div>
+                    <input class="btn" type='submit' value='Download Coefficient Tables' />
+                </form>
+
+            </div>
             
+            <br></br>
+
+            {% for tab in table %}
+                {{ tab|safe }}
             <br>
-            
-            {{table|safe}}
-            
-            <br>
-    
-            {{ plot|safe }}
+            {% endfor %}
 
             <!-- <form id='formatselect' method='post' action='savefile' >
                 <p>Save to a file:
@@ -100,7 +98,4 @@
 
         </div>
 
-        <div id="footer"></div>
-        
-    </body>
-</html>
+{% endblock %}

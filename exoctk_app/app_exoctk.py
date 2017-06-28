@@ -1,19 +1,14 @@
-import flask
-from flask import Flask, render_template, request, redirect, make_response, current_app
-from flask_cache import Cache
-
-app_exoctk = Flask(__name__)
-
-import shutil
-import os
+## -- IMPORTS
+import glob
 from datetime import datetime
-
-import ExoCTK
-from ExoCTK.pal import exotransmit
-import numpy as np
-import matplotlib.pyplot as plt
-import astropy.table as at
+import os
+import shutil
 from astropy.extern.six.moves import StringIO
+import astropy.table as at
+import astropy.units as q
+import matplotlib.pyplot as plt
+import numpy as np
+import os
 
 import bokeh
 from bokeh import mpl
@@ -21,17 +16,51 @@ from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
 from bokeh.core.properties import Override
 from bokeh.embed import components
-from bokeh.models import Range1d
-from bokeh.models import Label
-from bokeh.models import HoverTool
 from bokeh.models import ColumnDataSource
-from bokeh.plotting import figure, show
+from bokeh.models import HoverTool
+from bokeh.models import Label
+from bokeh.models import Range1d
+from bokeh.models.widgets import Panel
+from bokeh.models.widgets import Tabs
+from bokeh.mpl import to_bokeh
+from bokeh.plotting import figure
+from bokeh.plotting import output_file
+from bokeh.plotting import show
+from bokeh.plotting import save
+
+import flask
+from flask import current_app
+from flask import Flask
+from flask import make_response
+from flask import redirect
+from flask import render_template
+from flask import request
+#from flask_cache import Cache
+
+import ExoCTK
+from ExoCTK.pal import exotransmit
+from ExoCTK.tor.tor import create_tor_dict
+
+## -- FLASK SET UP (?)
+app_exoctk = Flask(__name__)
 
 # define the cache config keys, remember that it can be done in a settings file
-app_exoctk.config['CACHE_TYPE'] = 'simple'
+app_exoctk.config['CACHE_TYPE'] = 'null'
+
+exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
+modelgrid_dir = os.environ.get('MODELGRID_DIR')
 
 # register the cache instance and binds it on to your app
-cache = Cache(app_exoctk)
+# cache = Cache(app_exoctk)
+
+# Nice colors for plotting
+COLORS = ['blue', 'red', 'green', 'orange', 
+          'cyan', 'magenta', 'pink', 'purple']
+
+# Supported profiles
+PROFILES = ['uniform', 'linear', 'quadratic', 
+            'square-root', 'logarithmic', 'exponential', 
+            '3-parameter', '4-parameter']
 
 # Redirect to the index
 VERSION = ExoCTK.__version__
@@ -46,10 +75,11 @@ def index():
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
 def exoctk_ldc():
     # Get all the available filters
-    filters = ExoCTK.core.filter_list()['bands']
+    filters = ExoCTK.svo.filters()['Band']
     
     # Make HTML for filters
-    filt_list = '\n'.join(['<option value="{0}"> {0}</option>'.format(b) for b in filters])
+    filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
+                ' selected' if b=='Kepler.K' else '') for b in filters])
     
     return render_template('ldc.html', filters=filt_list)
     
@@ -59,95 +89,215 @@ def exoctk_ldc_results():
         
     # Get the input from the form
     modeldir = request.form['modeldir']
-    profiles = list(filter(None,[request.form.get(pf) for pf in ['uniform', 'linear', 'quadratic', 'square-root', 'logarithmic', 'exponential', '3-parameter', '4-parameter']]))
+    profiles = list(filter(None,[request.form.get(pf) for pf in PROFILES]))
     bandpass = request.form['bandpass']
-    teff = int(request.form['teff'])
-    logg = float(request.form['logg'])
-    feh = float(request.form['feh'])
     
     # Get models from local directory if necessary
-    if not modeldir:
-        modeldir = request.form['local_files']
+    if modeldir=='default':
+        modeldir = modelgrid_dir
+    # elif not modeldir:
+    #     modeldir = request.form['local_files']
     
-    # Make the model grid, caching if necessary
-    cached = cache.get(modeldir)
-    if cached:
-        model_grid = cached
-        print('Fetching grid from cache:',modeldir)
-    else:
-        print('Not cached:',modeldir)
-        model_grid = ExoCTK.core.ModelGrid(modeldir)
-    
-        if len(model_grid.data)>0:
-            cache.set(modeldir, model_grid, timeout=300)
+    try:
+        teff = int(request.form['teff'])
+        logg = float(request.form['logg'])
+        feh = float(request.form['feh'])
+        mu_min = float(request.form['mu_min'])
+    except:
+        message = 'Could not calculate limb darkening with the above input parameters.'
         
-    if len(model_grid.data)==0:
+        return render_template('ldc_error.html', teff=request.form['teff'], logg=request.form['logg'], feh=request.form['feh'], \
+                    band=bandpass or 'None', profile=', '.join(profiles), models=modeldir, \
+                    message=message)
+                    
+    n_bins = request.form.get('n_bins')
+    pixels_per_bin = request.form.get('pixels_per_bin')
+    wl_min = request.form.get('wave_min')
+    wl_max = request.form.get('wave_max')
+    
+    # # Make the model grid, caching if necessary
+    # cached = cache.get(modeldir)
+    # if cached:
+    #     model_grid = cached
+    #     print('Fetching grid from cache:',modeldir)
+    # else:
+    #     print('Not cached:',modeldir)
+    #     model_grid = ExoCTK.core.ModelGrid(modeldir, resolution=500)
+    #
+    #     if len(model_grid.data)>0:
+    #         cache.set(modeldir, model_grid, timeout=300)
+    
+    model_grid = ExoCTK.core.ModelGrid(modeldir, resolution=500)
+    
+    # No data, redirect to the error page
+    if not hasattr(model_grid, 'data'):
+        message = 'Could not find a model grid to load. Please check your path.'
+    
+        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                    band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
+                    message=message)
+        
+    else:
+        
+        if len(model_grid.data)==0:
+        
+            message = 'Could not calculate limb darkening with the above input parameters.'
+        
+            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                        band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
+                        message=message)
+                    
+    # Trim the grid to the correct wavelength
+    # to speed up calculations, if a bandpass is given
+    min_max = model_grid.wave_rng
+    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass=='tophat':
+        
+        try:
+            
+            kwargs = {'n_bins':int(n_bins)} if n_bins else \
+                     {'pixels_per_bin':int(pixels_per_bin)} if pixels_per_bin else {}
+                 
+            if wl_min and wl_max:
+                kwargs['wl_min'] = float(wl_min)*q.um
+                kwargs['wl_max'] = float(wl_max)*q.um
+            
+            bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
+            min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
+            n_bins = bandpass.n_bins
+            bp_name = bandpass.filterID
+        
+            # Get the filter plot
+            TOOLS = 'box_zoom,resize,reset'
+            bk_plot = figure(tools=TOOLS, title=bp_name, plot_width=400, plot_height=300,
+                             x_range=Range1d(bandpass.WavelengthMin,bandpass.WavelengthMax))
+                         
+            bk_plot.line(*bandpass.raw, line_width=5, color='black', alpha=0.1)
+            try:
+                for i,(x,y) in enumerate(bandpass.rsr):
+                    bk_plot.line(x, y, color=(COLORS*5)[i])
+            except:
+                bk_plot.line(*bandpass.raw)
+            
+            bk_plot.xaxis.axis_label = 'Wavelength [um]'
+            bk_plot.yaxis.axis_label = 'Throughput'
+            filt_script, filt_plot = components(bk_plot)
+        
+            plt.close()
+        except:
+            message = 'Insufficient filter information. Please complete the form and try again!'
+        
+            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                        band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
+                        message=message)
+    else:
+        bp_name = bandpass or '-'
+        filt_plot = filt_script = ''
+        
+    # Trim the grid to nearby grid points to speed up calculation
+    full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
+    trim_rng = ExoCTK.core.find_closest(full_rng, [teff,logg,feh], 
+                                        n=1, values=True)
+                                        
+    if not trim_rng:
+        
+        message = 'Insufficient models grid points to calculate coefficients.'
         
         return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
-                    band=bandpass or 'None', profile=profile, models=model_grid.path, \
-                    script=script)
+                band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
+                message=message)
     
-    # Trim the grid and calculate
-    Teff_rng = find_closest(model_grid.Teff_vals,teff)
-    logg_rng = find_closest(model_grid.logg_vals,logg)
-    FeH_rng = find_closest(model_grid.FeH_vals,feh)
-    model_grid.customize(Teff_rng=Teff_rng, logg_rng=logg_rng, FeH_rng=FeH_rng)
+    elif not profiles:
+        
+        message = 'No limb darkening profiles have been selected. Please select at least one.'
+        
+        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
+                message=message)
     
+    else:
+        
+        try:
+            model_grid.customize(Teff_rng=trim_rng[0], logg_rng=trim_rng[1], 
+                         FeH_rng=trim_rng[2], wave_rng=min_max)
+                         
+        except:
+            
+            message = 'Insufficient wavelength coverage to calculate coefficients.'
+        
+            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+                    band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
+                    message=message)
+                         
     # Calculate the coefficients for each profile
-    coeff_list, mu_list, r_list, poly_list = [], [], [], []
-    fig = plt.figure()
+    grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
+                    mu_min=mu_min, bandpass=bandpass, plot=False, colors=COLORS,
+                    save='output.txt')
+                    
+    # Draw the figure
+    tabs = []
+    for i in range(n_bins or 1):
+        
+        # PLot it
+        TOOLS = 'box_zoom,box_select,crosshair,resize,reset,hover'
+        fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1),
+                     plot_width=800, plot_height=400)
+        ld_funcs = [ExoCTK.ldc.ldcfit.ld_profile(p) for p in profiles]
+        ExoCTK.ldc.ldcplot.ld_plot(ld_funcs, grid_point, fig=fig, bin_idx=i)
+                                    
+        # Plot formatting
+        fig.legend.location = 'bottom_right'
+        fig.xaxis.axis_label = 'mu'
+        fig.yaxis.axis_label = 'Intensity'
+        
+        tabs.append(Panel(child=fig, title=str(grid_point['centers'][0][i])))
+                
+    final = Tabs(tabs=tabs)
+    
+    # Get HTML
+    script, div = components(final)
+    
+    # Read the file into a string and delete it
+    with open('output.txt', 'r') as f:
+        file_as_string = f.read()
+    os.remove('output.txt')
+    
+    # # Format mu and r_eff vals
+    # r_eff = '{:.4f} R_\odot'.format(grid_point['r_eff']*1.438e-11)
+    # mu_eff = '{:.4f}'.format(0)
+    r_eff = mu_eff = ''
+    
+    # Make a table for each profile with a row for each wavelength bin
+    profile_tables = []
     for profile in profiles:
-        coeff, mu, r = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profile, bandpass=bandpass, plot=fig)
-
-        # LaTeX formatting
-        r = '{:.4f} R_\odot'.format(r*1.4377979836321077e-11)
-        mu = '{:.4f}'.format(mu)
-        coeff_vals = ', '.join(['c{} = {:.3f}'.format(n+1,c) for n,c in enumerate(coeff)])
-        poly = '\({}\)'.format(ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)).replace('*','\cdot').replace('\e','e')
+        
+        # Make LaTeX for polynomials
+        latex = ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)
+        poly = '\({}\)'.format(latex).replace('*','\cdot').replace('\e','e')
+        
+        # Make the table into LaTeX
+        table = grid_point[profile]['coeffs']
+        table.rename_column('wavelength', '\(\lambda_\mbox{eff}\hspace{5px}(\mu m)\)')
         
         # Add the results to the lists
-        coeff_list.append(coeff_vals)
-        mu_list.append(mu)
-        r_list.append(r)
-        poly_list.append(poly)
+        html_table = '\n'.join(table.pformat(max_width=500, html=True))\
+                     .replace('<table','<table id="myTable"')
         
-    # Make the results into a list for easy printing
-    table = at.Table([profiles, poly_list, coeff_list], names=['Profile','\(I(\mu)/I(\mu=1)\)','Coefficients'])
-    table = '\n'.join(table.pformat(html=True)).replace('<table','<table class="results"')
-    profile = ', '.join(profiles)
+        # Add the table title
+        header = '<br></br><strong>{}</strong><br><p>\(I(\mu)/I(\mu=1)\) = {}</p><br></br>'.format(profile,poly)
+        html_table = header+html_table
 
-    # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
-    p.y_range = Range1d(0, 1)
-    p.x_range = Range1d(0, 1)
-
-    # # # Make LaTeX labels
-    # # xlabel = LatexLabel(text="\mu", angle=0, angle_units='deg',
-    # #                    x=250, y=-20, x_units='screen', y_units='screen',
-    # #                    render_mode='css', text_font_size='16pt',
-    # #                    background_fill_color='#ffffff')
-    # # ylabel = LatexLabel(text="I(\mu)/I(\mu=1)", angle=90, angle_units='deg',
-    # #                    x=-100, y=250, x_units='screen', y_units='screen',
-    # #                    render_mode='css', text_font_size='16pt',
-    # #                    background_fill_color='#ffffff')
-    # # p.add_layout(xlabel)
-    # # p.add_layout(ylabel)
-
-    script, div = components(p)
-
+        profile_tables.append(html_table)
+        
     return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
-                band=bandpass or 'None', profile=profile, mu=mu_list[0], \
-                r=r_list[0], models=model_grid.path, table=table, script=script, plot=div)
+                band=bp_name, mu=mu_eff, profile=', '.join(profiles), \
+                r=r_eff, models=model_grid.path, table=profile_tables, \
+                script=script, plot=div, file_as_string=repr(file_as_string), \
+                filt_plot=filt_plot, filt_script=filt_script)
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
 def exoctk_ldc_error():
     return render_template('ldc_error.html')
-
-# Load the TOT page
-@app_exoctk.route('/tot', methods=['GET', 'POST'])
-def exoctk_tot():
-    return render_template('tot.html')
 
 # Load the TOT results page
 @app_exoctk.route('/tot_results', methods=['GET', 'POST'])
@@ -190,13 +340,17 @@ def exoctk_tot_results():
                      labels=['Model Spectrum', 'Simulated Obs.'])
     
     # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
+    plt.savefig('static/plots/sim.png')
+    sim_plot = mpl.to_bokeh(plt.gcf())
+    output_file('test_sim.html')
+    save(sim_plot)
     plt.close()
     xmin, xmax = (1.125,1.650)
     ymin, ymax = (np.min(binspec)-2*deptherr, np.max(binspec)+2*deptherr)
-    p.y_range = Range1d(ymin, ymax)
-    p.x_range = Range1d(xmin, xmax)
-    sim_script, sim_plot = components(p)
+    sim_plot.y_range = Range1d(ymin, ymax)
+    sim_plot.x_range = Range1d(xmin, 6)
+#    sim_plot.y_axis_label = 'Wavelength (micron)'
+    sim_script, sim_plot = components(sim_plot)
     
     # Plot the transit curves
     numorbits = exo_dict['observation']['norbits']
@@ -209,77 +363,130 @@ def exoctk_tot_results():
                                               aRs, period, windowSize, ecc=0, w=90.)
                                               
     # Make the matplotlib plot into a Bokeh plot
-    p = mpl.to_bokeh()
+    plt.savefig('static/plots/obs.png')
+    obs_plot = mpl.to_bokeh(plt.gcf())
+    output_file('test_obs.html')
+    save(obs_plot)
     plt.close()
-    obs_script, obs_plot = components(p)
+    obs_script, obs_plot = components(obs_plot)
     
-    # Make some HTML for the input summary
-    summary = """<h3>Input</h3>
-    <table>
-        <tr>
-            <td>H-band magnitude of the system</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Orbital inclination [degrees]</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Semi-major axis [R*]</td>
-            <td>{}</td>
-        </tr>
-        <tr>
-            <td>Orbital period [days]</td>
-            <td>{}</td>
-        </tr>
-    </table>
-    
-    <h3>Result</h3>
-    <table>
-        <tr>
-            <td>Start observations between orbital phases:</td>
-            <td>{:.4f} - {:.4f}</td>
-        </tr>
-    </table>
-    """.format(exo_dict['star']['hmag'], exo_dict['planet']['i'], exo_dict['planet']['ars'], exo_dict['planet']['period'],
-               minphase, maxphase)
-    
-    return render_template('tot_results.html', summary=summary, sim_script=sim_script, sim_plot=sim_plot, 
-                           obs_script=obs_script, obs_plot=obs_plot)
-    
-def find_closest(A, a):
-    """
-    Find the two neighboring models for a given parameter
-    
-    Parameters
-    ----------
-    A: array-like
-        The array to search
-    a: float, int
-        The value to search for
-    
-    Returns
-    -------
-    tuple
-        The values to the left and right of 'a' in 'A'
-    """
-    idx = np.clip(A.searchsorted(a), 1, len(A)-1)
-    return (A[idx-1], A[idx])
+    exo_dict['minphase'] = round(minphase, 4)
+    exo_dict['maxphase'] = round(maxphase, 4)
 
+    sim = open('test_sim.html')
+    lines = sim.readlines()
+    sim_html = "".join(lines)
+    sim.close()
+
+    obs = open('test_obs.html')
+    lines = obs.readlines()
+    obs_html = "".join(lines)
+    print(obs_html)
+    html_dict = {'sim': sim_html, 'obs': obs_html}
+    
+    return render_template('tot_results.html', exo_dict=exo_dict, html_dict=html_dict)
+
+# Load the WIP page
+@app_exoctk.route('/wip')
+def exoctk_wip():
+    return render_template('wip.html')
+
+# Load the TOR page
+@app_exoctk.route('/tor', methods=['GET', 'POST'])
+def exoctk_tor():
+
+    ins = glob.glob('static/filter_dat/*')
+    button_ins = [this_ins[18:] for this_ins in ins]
+
+    return render_template('tor.html', button_ins=button_ins)
+
+# Load the TOR results
+@app_exoctk.route('/tor_results', methods=['GET', 'POST'])
+def exoctk_tor_results():
+    
+    
+    try:
+        n_group = request.form['groups']
+        mag = float(request.form['mag'])
+        band = request.form['band']
+        obs_time = float(request.form['T'])
+#        temp = float(request.form['temp'])
+        sat_max = float(request.form['sat_lvl'])
+        sat_mode = request.form['sat']
+#        throughput = request.form['tp']
+        filt = request.form['filt']
+        ins = request.form['ins']
+        subarray = request.form['subarray']
+        n_reset = int(request.form['n_reset'])
+        infile = os.environ['tor_pandeia_path'] 
+
+        tor_err = 0
+        # Specific error catching
+        if n_group.isdigit():
+           if n_group <= 1:
+               tor_err = 'Please try again with at least one group.'
+        else:
+            if n_group != 'optimize':
+             tor_err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
+        if (mag > 12) or (mag < 5.5):
+            tor_err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12 in a different band?'
+        if obs_time <= 0:
+            tor_err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
+#    if temp <= 0:
+#        tor_err = 'You have a negative temperature -- DOES THIS LOOK LIKE A MASER TO YOU?'
+        if sat_max <= 0:
+            tor_err = 'You put in an underwhelming saturation level. There is something to be said for being too careful...'
+        if (sat_mode == 'well') and sat_max > 1:
+            tor_err = 'You are saturating past the full well. Is that a good idea?'
+        if n_reset < 1:
+            tor_err = 'You have no or negative resets. That is not allowed!'
+
+        if type(tor_err) == str:
+            return render_template('tor_error.html', tor_err=tor_err)
+    
+    # Only create the dict if the form input looks okay.
+        tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode), float(sat_max), int(n_reset), infile)
+        if type(tor_output) == dict:
+            tor_dict = tor_output
+            if tor_dict['n_group'] == 1:
+                one_group_error = 'Be careful! This only predicts one group, and you may be in danger of oversaturating!'
+            else:
+                one_group_error = ""
+            return render_template('tor_results.html', tor_dict=tor_dict, one_group_error=one_group_error)
+        else:
+            tor_err = tor_output
+            return render_template('tor_error.html', tor_err=tor_err)
+    
+    except (IOError) as e:
+        print(e)
+        tor_err = 'One of you numbers is NOT a number! Please try again!'
+        return render_template('tor_error.html', tor_err=tor_err)
+
+# Load the TOR background
+@app_exoctk.route('/tor_background')
+def exoctk_tor_background():
+    return render_template('tor_background.html')
+
+# Load filter profiles pages
+@app_exoctk.route('/filter_profile_<ins>')
+def exoctk_filter_profile(ins):
+
+    filt_imgs = glob.glob('static/filter_dat/' + ins + '/' + ins + '*')
+    names = [filt_img[19+len(ins):-4] for filt_img in filt_imgs]
+    print(filt_imgs)
+    filt_imgs = ['../' + filt_img for filt_img in filt_imgs]
+
+    return render_template('tor_filter_profile.html', names=names, filt_imgs=filt_imgs, ins=ins)
+    
 # Save the results to file
-@app_exoctk.route('/savefile', methods=['POST'])
+@app_exoctk.route('/download', methods=['POST'])
 def exoctk_savefile():
-    export_fmt = request.form['format']
-    if export_fmt == 'votable':
-        filename = 'exoctk_table.vot'
-    else:
-        filename = 'exoctk_table.txt'
-
+    file_as_string = eval(request.form['file_as_string'])
+    
     response = make_response(file_as_string)
-    response.headers["Content-Disposition"] = "attachment; filename=%s" % filename
+    response.headers["Content-type"] = 'text; charset=utf-8'
+    response.headers["Content-Disposition"] = "attachment; filename=ExoXTK_results.txt"
     return response
-
-exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
 
 def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
     current_dir = os.path.abspath(os.curdir)
@@ -404,13 +611,14 @@ def _param_validation(args):
 
     return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
 
-@app_exoctk.route('/exotransmit', methods=['GET','POST'])
-def exotransmit_page():
+@app_exoctk.route('/exotransmit_portal', methods=['GET','POST'])
+def exotransmit_portal():
     """ 
     Run Exo-Transmit taking inputs from the HTML form and plot the results
     """
     if exotransmit_dir is None:
-        flask.abort(404)
+        return render_template('tor_error.html', tor_err="There seems to be no directory in place for exo-transmit...")
+
     # Grab the inputs arguments from the URL
     args = flask.request.args
     # Get all the form arguments in the url with defaults
@@ -436,9 +644,9 @@ def exotransmit_page():
     css_resources = INLINE.render_css()
 
     script, div = components(fig)
-
+    
     html = flask.render_template(
-        'exotransmit.html',
+        'exotransmit_portal.html',
         plot_script=script,
         plot_div=div,
         js_resources=js_resources,
@@ -456,10 +664,14 @@ def exotransmit_page():
     )
     return encode_utf8(html)
 
-
 @app_exoctk.route('/exotransmit_result', methods=['POST'])
 def save_exotransmit_result():
     table_string = flask.request.form['data_file']
     return flask.Response(table_string, mimetype="text/dat",
                           headers={"Content-disposition":
                                       "attachment; filename=exotransmit.dat"})
+                                      
+## -- RUN
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app_exoctk.run(host='0.0.0.0', port=port, debug=True)

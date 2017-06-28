@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Invalid Parameters</title>
-</head>
+{% extends "base.html" %}
+
+{% block content %}
+
+<title>Invalid Parameters</title>
 <body>
 {% for params, message in invalid.items() %}
     <p>{{ message }}</p>
 {% endfor %}
 </body>
-</html>
+
+{% endblock%}
