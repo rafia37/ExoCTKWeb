@@ -88,13 +88,19 @@ def exoctk_ldc():
 def exoctk_ldc_results():
         
     # Get the input from the form
-    modeldir = request.form['modeldir']
+    # modeldir = request.form['modeldir']
     profiles = list(filter(None,[request.form.get(pf) for pf in PROFILES]))
     bandpass = request.form['bandpass']
-    
+
+    # protect against injection attempts
+    bandpass = bandpass.replace('<', '&lt')
+    profiles = [str(p).replace('<', '&lt') for p in profiles]
+
     # Get models from local directory if necessary
-    if modeldir=='default':
-        modeldir = modelgrid_dir
+    # if modeldir=='default':
+    modeldir = modelgrid_dir
+
+    print(modeldir)
     # elif not modeldir:
     #     modeldir = request.form['local_files']
     
@@ -104,9 +110,12 @@ def exoctk_ldc_results():
         feh = float(request.form['feh'])
         mu_min = float(request.form['mu_min'])
     except:
+        teff = str(request.form['teff']).replace('<', '&lt')
+        logg = str(request.form['logg']).replace('<', '&lt')
+        feh = str(request.form['feh']).replace('<', '&lt')
         message = 'Could not calculate limb darkening with the above input parameters.'
         
-        return render_template('ldc_error.html', teff=request.form['teff'], logg=request.form['logg'], feh=request.form['feh'], \
+        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
                     band=bandpass or 'None', profile=', '.join(profiles), models=modeldir, \
                     message=message)
                     
