@@ -399,31 +399,7 @@ def exoctk_tor():
     ins = glob.glob('static/filter_dat/*')
     button_ins = [this_ins[18:] for this_ins in ins]
     
-    contamVars = {}
-    if request.method == 'POST':
-        tname = request.form['targetname']
-        contamVars['tname'] = tname
-        contamVars['binComp'] = request.form['bininfo']
-        contamVars['PAmax'] = request.form['pamax']
-        contamVars['PAmin'] = request.form['pamin']
-        print(contamVars)
-
-        if request.form['submit'] == 'Resolve Target':
-            contamVars['ra'], contamVars['dec'] = resolve_target(tname)
-    
-        if request.form['submit'] == 'Calculate contamination':
-            print('Let\'s hope this works')
-        
-        if request.form['submit'] == 'Calculate visibility':
-            dir = 'static/results'
-            cmd = 'python visibilityPA.py ' + contamVars['ra'] + ' ' + contamVars['dec'] + ' ' + tname + ' ' + dir
-            print(cmd)
-            os.system(cmd)
-            pdf = 'results/visibilityPA-'+tname+'.pdf'
-            png = 'results/visibilityPA-'+tname+'.png'
-            return render_template('result.html', pdf = pdf, png = png)
-
-    return render_template('tor.html', button_ins=button_ins, contamVars = contamVars)
+    return render_template('tor.html', button_ins=button_ins)
 
 # Load the TOR results
 @app_exoctk.route('/tor_results', methods=['GET', 'POST'])
@@ -491,6 +467,38 @@ def exoctk_tor_results():
 @app_exoctk.route('/tor_background')
 def exoctk_tor_background():
     return render_template('tor_background.html')
+
+# Load the Tor2 page
+@app_exoctk.route('/tor2', methods = ['GET', 'POST'])
+def exoctk_tor2():
+
+    contamVars = {}
+    if request.method == 'POST':
+        tname = request.form['targetname']
+        contamVars['tname'] = tname
+        contamVars['ra'], contamVars['dec'] = request.form['ra'], request.form['dec']
+        contamVars['binComp'] = request.form['bininfo']
+        contamVars['PAmax'] = request.form['pamax']
+        contamVars['PAmin'] = request.form['pamin']
+        print(contamVars)
+
+        if request.form['submit'] == 'Resolve Target':
+            contamVars['ra'], contamVars['dec'] = resolve_target(tname)
+    
+        if request.form['submit'] == 'Calculate contamination':
+            print('Let\'s hope this works')
+        
+        if request.form['submit'] == 'Calculate visibility':
+            dir = 'static/results'
+            cmd = 'python visibilityPA.py ' + contamVars['ra'] + ' ' + contamVars['dec'] + ' ' + tname + ' ' + dir
+            print(cmd)
+            os.system(cmd)
+            pdf = 'results/visibilityPA-'+tname+'.pdf'
+            png = 'results/visibilityPA-'+tname+'.png'
+            return render_template('result.html', pdf = pdf, png = png)
+
+    return render_template('tor2.html', contamVars = contamVars)
+
 
 # Load filter profiles pages
 @app_exoctk.route('/filter_profile_<ins>')
