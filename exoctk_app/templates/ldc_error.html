@@ -1,19 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-    
-        <div id="header"></div>
 
-        <div class=page>
+        <h1>Limb Darkening Calculator</h1>
 
-            <h1>Limb Darkening Calculator</h1>
+        <div class=metanav>
+            <p>
+            
+            The LDC calculates limb-darkening coefficients for a specified stellar model, plotting results versus intensity ratio and wavelength. It uses high
+            spectral resolution stellar atmospheric models, which are a neccesisty given JWST's expected precision. 
+            </p>
 
-            <div class=metanav>
-                <p>
-                    Here is a bunch of stuff about the LDC.
-                </p>
-
-            </div>
             
             <h3>Input</h3>
             <table style="border-spacing: 10px; border-collapse: separate;">
@@ -49,8 +46,5 @@
             <br>
 
         </div>
-
-        
-    </body>
 
 {% endblock %}
