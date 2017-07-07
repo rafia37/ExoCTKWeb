@@ -41,6 +41,7 @@ import ExoCTK
 from ExoCTK.pal import exotransmit
 from ExoCTK.tor.tor import create_tor_dict
 from ExoCTK.tor.contam_tool.resolve import *
+from ExoCTK.tor.contam_tool.visibilityPA import *
 
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
@@ -486,16 +487,18 @@ def exoctk_tor2():
             contamVars['ra'], contamVars['dec'] = resolve_target(tname)
     
         if request.form['submit'] == 'Calculate contamination':
-            print('Let\'s hope this works')
+            contamVars['contam'] = True
+            png = 'results/visibilityPA-'+tname+'.png'
+            contamVars['kelt-8'] = 'images/contamination-KELT-8_PA0-360.png'
+            contamVars['tyc-55'] = 'images/contamination-TYC_5530-1795-1_PA0-360.png'
+            contamVars['wasp-62'] = 'images/contamination-wasp-62_PA0-360.png'
+            return render_template('tor2_results.html', contamVars = contamVars, png = png)
         
         if request.form['submit'] == 'Calculate visibility':
+            contamVars['visPA'] = True
             dir = 'static/results'
-            cmd = 'python visibilityPA.py ' + contamVars['ra'] + ' ' + contamVars['dec'] + ' ' + tname + ' ' + dir
-            print(cmd)
-            os.system(cmd)
-            pdf = 'results/visibilityPA-'+tname+'.pdf'
-            png = 'results/visibilityPA-'+tname+'.png'
-            return render_template('result.html', pdf = pdf, png = png)
+            png = calc_vis(contamVars['ra'], contamVars['dec'], tname, dir)
+            return render_template('tor2_results.html', contamVars = contamVars, png = png)
 
     return render_template('tor2.html', contamVars = contamVars)
 
