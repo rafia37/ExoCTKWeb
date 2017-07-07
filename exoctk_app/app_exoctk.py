@@ -88,10 +88,14 @@ def exoctk_ldc():
 def exoctk_ldc_results():
         
     # Get the input from the form
-    modeldir = request.form['modeldir']
+    # modeldir = request.form['modeldir']
     profiles = list(filter(None,[request.form.get(pf) for pf in PROFILES]))
     bandpass = request.form['bandpass']
-    
+
+    # protect against injection attempts
+    bandpass = bandpass.replace('<', '&lt')
+    profiles = [str(p).replace('<', '&lt') for p in profiles]
+
     # Get models from local directory if necessary
     if modeldir=='default':
         modeldir = modelgrid_dir
@@ -102,9 +106,12 @@ def exoctk_ldc_results():
         feh = float(request.form['feh'])
         mu_min = float(request.form['mu_min'])
     except:
+        teff = str(request.form['teff']).replace('<', '&lt')
+        logg = str(request.form['logg']).replace('<', '&lt')
+        feh = str(request.form['feh']).replace('<', '&lt')
         message = 'Could not calculate limb darkening with the above input parameters.'
         
-        return render_template('ldc_error.html', teff=request.form['teff'], logg=request.form['logg'], feh=request.form['feh'], \
+        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
                     band=bandpass or 'None', profile=', '.join(profiles), models=modeldir, \
                     message=message)
                     
@@ -408,7 +415,6 @@ def exoctk_tor():
 @app_exoctk.route('/tor_results', methods=['GET', 'POST'])
 def exoctk_tor_results():
     
-    
     try:
         n_group = request.form['groups']
         mag = float(request.form['mag'])
@@ -427,7 +433,8 @@ def exoctk_tor_results():
         tor_err = 0
         # Specific error catching
         if n_group.isdigit():
-           if n_group <= 1:
+            n_group = int(n_group)
+            if n_group <= 1:
                tor_err = 'Please try again with at least one group.'
         else:
             if n_group != 'optimize':
@@ -461,9 +468,14 @@ def exoctk_tor_results():
             tor_err = tor_output
             return render_template('tor_error.html', tor_err=tor_err)
     
-    except (IOError) as e:
-        print(e)
-        tor_err = 'One of you numbers is NOT a number! Please try again!'
+    except (IOError, KeyError) as e:
+        if e == IOError:
+            tor_err = 'One of you numbers is NOT a number! Please try again!'
+        else:
+            tor_err = 'Looks like you have mismatched your instrument/filter/subarray. Please try again.'
+        return render_template('tor_error.html', tor_err=tor_err)
+    except Exception as e:
+        tor_err = 'This is not an error we anticipated, but the error caught was : ' + str(e)
         return render_template('tor_error.html', tor_err=tor_err)
 
 # Load the TOR background
