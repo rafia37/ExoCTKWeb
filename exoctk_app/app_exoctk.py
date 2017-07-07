@@ -40,6 +40,7 @@ from flask import request
 import ExoCTK
 from ExoCTK.pal import exotransmit
 from ExoCTK.tor.tor import create_tor_dict
+from ExoCTK.tor.contam_tool.resolve import *
 
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
@@ -397,8 +398,32 @@ def exoctk_tor():
 
     ins = glob.glob('static/filter_dat/*')
     button_ins = [this_ins[18:] for this_ins in ins]
+    
+    contamVars = {}
+    if request.method == 'POST':
+        tname = request.form['targetname']
+        contamVars['tname'] = tname
+        contamVars['binComp'] = request.form['bininfo']
+        contamVars['PAmax'] = request.form['pamax']
+        contamVars['PAmin'] = request.form['pamin']
+        print(contamVars)
 
-    return render_template('tor.html', button_ins=button_ins)
+        if request.form['submit'] == 'Resolve Target':
+            contamVars['ra'], contamVars['dec'] = resolve_target(tname)
+    
+        if request.form['submit'] == 'Calculate contamination':
+            print('Let\'s hope this works')
+        
+        if request.form['submit'] == 'Calculate visibility':
+            dir = 'static/results'
+            cmd = 'python visibilityPA.py ' + contamVars['ra'] + ' ' + contamVars['dec'] + ' ' + tname + ' ' + dir
+            print(cmd)
+            os.system(cmd)
+            pdf = 'results/visibilityPA-'+tname+'.pdf'
+            png = 'results/visibilityPA-'+tname+'.png'
+            return render_template('result.html', pdf = pdf, png = png)
+
+    return render_template('tor.html', button_ins=button_ins, contamVars = contamVars)
 
 # Load the TOR results
 @app_exoctk.route('/tor_results', methods=['GET', 'POST'])
