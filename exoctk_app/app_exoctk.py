@@ -88,7 +88,7 @@ def exoctk_ldc():
 def exoctk_ldc_results():
         
     # Get the input from the form
-    # modeldir = request.form['modeldir']
+    modeldir = request.form['modeldir']
     profiles = list(filter(None,[request.form.get(pf) for pf in PROFILES]))
     bandpass = request.form['bandpass']
 
