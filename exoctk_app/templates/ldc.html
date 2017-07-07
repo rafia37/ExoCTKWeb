@@ -11,7 +11,7 @@
             $(document).ready(function(){
             
                 $('#filterselect').on('change', function() {
-                  if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141' )
+                  if ( this.value == 'WFC3_IR.G102' || this.value == 'WFC3_IR.G141' || this.value == 'NIRISS.GR700XD.1')
                   {
                       $("#n_bins").show();
                       $("#or").show()
@@ -56,6 +56,7 @@
                 
                 <select name="bandpass" id="filterselect">
                     <option value="tophat"> Top Hat</option>
+                    <option value="'NIRISS.GR700XD.1'"> 'NIRISS.GR700XD.1'</option>
                     {{filters|safe}}
                 </select>
                 <table id='n_bins' style='display:none'>
