@@ -97,12 +97,8 @@ def exoctk_ldc_results():
     profiles = [str(p).replace('<', '&lt') for p in profiles]
 
     # Get models from local directory if necessary
-    # if modeldir=='default':
-    modeldir = modelgrid_dir
-
-    print(modeldir)
-    # elif not modeldir:
-    #     modeldir = request.form['local_files']
+    if modeldir=='default':
+        modeldir = modelgrid_dir
     
     try:
         teff = int(request.form['teff'])
@@ -159,7 +155,7 @@ def exoctk_ldc_results():
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
-    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass=='tophat':
+    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass in ['tophat','NIRISS.GR700XD.1']:
         
         try:
             
@@ -170,11 +166,17 @@ def exoctk_ldc_results():
                 kwargs['wl_min'] = float(wl_min)*q.um
                 kwargs['wl_max'] = float(wl_max)*q.um
             
-            bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
+            # Manually create GR700XD filter
+            if bandpass=='NIRISS.GR700XD.1':
+                p = os.path.join(os.path.dirname(ExoCTK.__file__),'data/filters/NIRISS.GR700XD.1.txt')
+                bandpass = ExoCTK.svo.Filter(bandpass, filter_directory=np.genfromtxt(p, unpack=True), **kwargs)
+            else:
+                bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
+                
             min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
             n_bins = bandpass.n_bins
             bp_name = bandpass.filterID
-        
+            
             # Get the filter plot
             TOOLS = 'box_zoom,resize,reset'
             bk_plot = figure(tools=TOOLS, title=bp_name, plot_width=400, plot_height=300,

@@ -1,54 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!doctype html>
         
         {{ script|safe }}
         {{ filt_script|safe }}
-        <link rel="sytlesheet" href="/static/css/stylec.css" type="text/css" />
-        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" type="text/css" />
-        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" type="text/css" />
-         <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script>
-         <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
-        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" type="text/css" />
-        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script>
-        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
-    
+
+        <h1>Limb Darkening Calculator</h1>
+
+        <div class=metanav>
+            <p>
             
+            The LDC calculates limb-darkening coefficients for a specified stellar model, plotting results versus intensity ratio and wavelength. It uses high
+            spectral resolution stellar atmospheric models, which are a neccesisty given JWST's expected precision. 
+            </p>
+
             <div style='float:left; width:500px;'>
-            <h3>Input</h3>
+                <h3>Input</h3>
                 
-                <table>
-                    <tr>
-                        <td>Teff</td>
-                        <td>{{teff|e}}</td>
-                    </tr>
-                    <tr>
-                        <td>log(g)</td>
-                        <td>{{logg|safe}}</td>
-                    </tr>
-                    <tr>
-                        <td>Fe/H</td>
-                        <td>{{feh|safe}}</td>
-                    </tr>
-                    <tr>
-                        <td>Bandpass</td>
-                        <td>{{band|safe}}</td>
-                    </tr>
-                    <tr>
-                        <td>Profiles</td>
-                        <td>{{profile|safe}}</td>
-                    </tr>
-                    <tr>
-                        <td>Models</td>
-                        <td>Phoenix ACES</td>
-                    </tr>
-                </table>
+                    <table>
+                        <tr>
+                            <td>Teff</td>
+                            <td>{{teff|safe}}</td>
+                        </tr>
+                        <tr>
+                            <td>log(g)</td>
+                            <td>{{logg|safe}}</td>
+                        </tr>
+                        <tr>
+                            <td>Fe/H</td>
+                            <td>{{feh|safe}}</td>
+                        </tr>
+                        <tr>
+                            <td>Bandpass</td>
+                            <td>{{band|safe}}</td>
+                        </tr>
+                        <tr>
+                            <td>Profiles</td>
+                            <td>{{profile|safe}}</td>
+                        </tr>
+                        <tr>
+                            <td>Models</td>
+                            <td>{{models|safe}}</td>
+                        </tr>
+                    </table>
+
             </div>
             <div style='float:right; width:450px;margin-top:10px;'>
                 {{filt_plot|safe}}
             </div>
             <div class='clearfix'></div>
+            
             <br>
             
             <h3>Result</h3>
@@ -58,18 +59,7 @@
             </div>
             <div style="clear:both;"></div>
             <br>
-            <!-- <table> 
-            <tr>
-                <td>\(\mu\)</td>
-                <td>{{mu|safe}}</td>
-            </tr>
-            <tr>
-                <td>Effective Radius</td>
-                <td>\({{r|safe}}\)</td>
-            </tr>
-    
-            </table> --!>
-        
+
             <div>
 
                 <form id='exportform' method='post' action='download' >
