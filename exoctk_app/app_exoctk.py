@@ -496,8 +496,8 @@ def exoctk_tor2():
         
         if request.form['submit'] == 'Calculate visibility':
             contamVars['visPA'] = True
-            dir = 'static/results'
-            png = calc_vis(contamVars['ra'], contamVars['dec'], tname, dir)
+#             dir = 'static/results'
+            png = calc_vis(contamVars['ra'], contamVars['dec'], tname)
             return render_template('tor2_results.html', contamVars = contamVars, png = png)
 
     return render_template('tor2.html', contamVars = contamVars)
