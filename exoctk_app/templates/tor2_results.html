@@ -23,7 +23,8 @@
 	{% if contamVars['visPA'] ==  True %}
 
 		<h3>Visibility Of Target</h3>
-		<img src="{{ png }}" alt="visibility">
+		<!--<img src="{{ png }}" alt="visibility">-->
+		{{ png | safe }}
 		<p>Figure explication:</p>
 		<ul>
 			<li>The black curve indicates the nominal PA of NIRISS as a function of the calendar date.</li>
