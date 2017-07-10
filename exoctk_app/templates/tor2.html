@@ -1,0 +1,60 @@
+{%extends "base.html" %}
+
+{% block content %}
+<!doctype html>
+
+	<h1>Time-Series Observation & Reduction Tools</h1>
+    <br>
+
+	<h2>Contamination & Visibility Calculator</h2>
+
+			<p>Currently, this tool is designed for Single-Object Slit-less Spectroscopy (SOSS) mode of NIRISS. 
+			Since it is slit-less, the spectrum of a target star may be contaminated by partly overlapping spectra of 
+			nearby stars. For a given target, the details of this potential contamination are a function of the 
+			position angle (PA) at which the observations are taken. This tool simulates SOSS observations of a 
+			given target and produces an estimate of the level of contamination as a function of the PA of the 
+			observation; it may be used to plan observations at the optimal PA. The tool also computes the JWST 
+			accessibility windows of the target, along with the corresponding accessible PAs for NIRISS observations.<br>
+			
+			In the future, this tool's functions will be extended to calculate contamination by other instruments. 
+			</p>
+
+			<p>Usage notes:</p>
+			<ul>
+				<li>The &ldquo;calculate contamination&rdquo; button computes both the contamination and the visibility of a target. If you wish, you may calculate only the visibility using the &ldquo;calculate visibility&rdquo; button.</li>
+				<li>The field stars used for this analysis are retrieved from the 2MASS point source catalogue. Contamination from stars missing from the 2MASS PSC is thus not modelled; this may be important for faint targets.</li>
+			</ul>
+			<br>
+			<form action="/tor2" method="POST" />
+				<h3>Input information</h3>
+				
+				<p><b>Target name:</b>
+				<i>(Please don't put any spaces in target name)</i></p>
+				<p><input type="text" name="targetname" value = "{{ contamVars['tname'] }}" size="30" maxlength="110"/>
+				<input type="submit" name = "submit" value="Resolve Target"/></p>
+
+				<p><b>Coordinates: </b>
+				<i>(If target is unresolved, reload page and enter coordinates manually)</i></p>
+				<p>RA (HH:MM:SS.S) <input type="text" name="ra" value = "{{ contamVars['ra'] }}"/></p>
+				<p>DEC (DDD:MM:SS.S) <input type="text" name="dec" value = "{{ contamVars['dec'] }}"/></p>
+
+	
+				<p><b>Add a close binary companion not present in 2MASS:</b>
+				<i>(This is optional)</i></p>
+				<p>RA offset (&quot;), DEC offset (&quot;), 2MASS J (mag), H (mag) and Ks (mag) [comma separated, no spaces] <input type="text" name="bininfo" value="{{ contamVars['binComp'] }}"  size="50" maxlength="110"></p>
+				
+				<p><b>Contamination graph PA range:</b>
+				<i>(This is also optional)</i></p>
+				<p>from <input type="number" name="pamin" min="0" max="359" value="{{ contamVars['PAmax'] }}" >
+				to <input type="number" name="pamax" min="1" max="360" value="{{ contamVars['PAmin'] }}"></p>
+
+				<br>
+				<h3>Actions</h3>
+				<p><input type = "submit" name = "submit" value = "Calculate contamination" >
+				<i>(This functionality is work in progress)</i></p>
+				<p><input type="submit" name="submit" value="Calculate visibility" >
+				<i>(Takes about 2 seconds)</i></p>
+			</form>
+
+
+{% endblock %}

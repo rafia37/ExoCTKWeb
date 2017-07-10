@@ -40,6 +40,8 @@ from flask import request
 import ExoCTK
 from ExoCTK.pal import exotransmit
 from ExoCTK.tor.tor import create_tor_dict
+from ExoCTK.tor.contam_tool.resolve import *
+from ExoCTK.tor.contam_tool.visibilityPA import *
 
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
@@ -408,7 +410,7 @@ def exoctk_tor():
 
     ins = glob.glob('static/filter_dat/*')
     button_ins = [this_ins[18:] for this_ins in ins]
-
+    
     return render_template('tor.html', button_ins=button_ins)
 
 # Load the TOR results
@@ -482,6 +484,40 @@ def exoctk_tor_results():
 @app_exoctk.route('/tor_background')
 def exoctk_tor_background():
     return render_template('tor_background.html')
+
+# Load the Tor2 page
+@app_exoctk.route('/tor2', methods = ['GET', 'POST'])
+def exoctk_tor2():
+
+    contamVars = {}
+    if request.method == 'POST':
+        tname = request.form['targetname']
+        contamVars['tname'] = tname
+        contamVars['ra'], contamVars['dec'] = request.form['ra'], request.form['dec']
+        contamVars['binComp'] = request.form['bininfo']
+        contamVars['PAmax'] = request.form['pamax']
+        contamVars['PAmin'] = request.form['pamin']
+        print(contamVars)
+
+        if request.form['submit'] == 'Resolve Target':
+            contamVars['ra'], contamVars['dec'] = resolve_target(tname)
+    
+        if request.form['submit'] == 'Calculate contamination':
+            contamVars['contam'] = True
+            png = 'results/visibilityPA-'+tname+'.png'
+            contamVars['kelt-8'] = 'images/contamination-KELT-8_PA0-360.png'
+            contamVars['tyc-55'] = 'images/contamination-TYC_5530-1795-1_PA0-360.png'
+            contamVars['wasp-62'] = 'images/contamination-wasp-62_PA0-360.png'
+            return render_template('tor2_results.html', contamVars = contamVars, png = png)
+        
+        if request.form['submit'] == 'Calculate visibility':
+            contamVars['visPA'] = True
+#             dir = 'static/results'
+            png = calc_vis(contamVars['ra'], contamVars['dec'], tname)
+            return render_template('tor2_results.html', contamVars = contamVars, png = png)
+
+    return render_template('tor2.html', contamVars = contamVars)
+
 
 # Load filter profiles pages
 @app_exoctk.route('/filter_profile_<ins>')
