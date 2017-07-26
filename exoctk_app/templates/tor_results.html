@@ -20,9 +20,10 @@
                             <th>Columns</th>
                             <th>Amplifiers </th>
                             <th>Resets </th>
-                            <th>Maximum Saturation Level (counts/s) </th>
+                            <th>Maximum Saturation Level (counts) </th>
                             <th> Frame Time (seconds per frame) </th>
                             <th>Transit Observation Time (hours) </th>
+                            <th>Frames per Group</th>
                         </tr>
                         <tr>
                             <td>{{ tor_dict['n_row'] }}</td>
@@ -32,6 +33,7 @@
                             <td>{{ tor_dict['sat_max']}}</td>
                             <td>{{ tor_dict['t_frame'] }}</td>
                             <td>{{ tor_dict['obs_time'] }}</td>
+                            <td>1</td>
                         </tr>
                     </table>
                     </center>
@@ -45,10 +47,11 @@
                         <tr class="header">
                             <th> Integrations </th>
                             <th> Groups </th>
-                            <th> Integration Time (seconds per group)</th>
+                            <th> Integration Time (seconds per integration)</th>
                             <th> Photon Collection Time (hours) </th>
                             <th> Total Duration Time (hours) </th>
                             <th> Observation Efficiency </th>
+                            <th> Maximum Saturation Reached During Observation </th>
                         </tr>
                         <tr>
                             <td>{{ tor_dict['n_int'] }}</td>
@@ -57,6 +60,7 @@
                             <td>{{ tor_dict['t_exp'] }}</td>
                             <td>{{ tor_dict['t_duration'] }}</td>
                             <td>{{ tor_dict['obs_eff'] }}</td>
+                            <td>{{ tor_dict['max_sat_prediction'] }}</td>
                         </tr>
                     </table>
                     </center>

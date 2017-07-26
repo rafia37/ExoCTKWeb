@@ -461,10 +461,11 @@ def exoctk_tor_results():
         tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode), float(sat_max), int(n_reset), infile)
         if type(tor_output) == dict:
             tor_dict = tor_output
+            one_group_error = ""
             if tor_dict['n_group'] == 1:
                 one_group_error = 'Be careful! This only predicts one group, and you may be in danger of oversaturating!'
-            else:
-                one_group_error = ""
+            if (tor_dict['max_sat_prediction'] > tor_dict['sat_max']) and (n_group != 'optimize'):
+                one_group_error = "Be careful! You chose to put in your own estimate for groups and this observation will exceed your chosen maximum saturation."
             return render_template('tor_results.html', tor_dict=tor_dict, one_group_error=one_group_error)
         else:
             tor_err = tor_output
@@ -476,9 +477,9 @@ def exoctk_tor_results():
         else:
             tor_err = 'Looks like you have mismatched your instrument/filter/subarray. Please try again.'
         return render_template('tor_error.html', tor_err=tor_err)
-    except Exception as e:
-        tor_err = 'This is not an error we anticipated, but the error caught was : ' + str(e)
-        return render_template('tor_error.html', tor_err=tor_err)
+  #  except Exception as e:
+  #      tor_err = 'This is not an error we anticipated, but the error caught was : ' + str(e)
+  #      return render_template('tor_error.html', tor_err=tor_err)
 
 # Load the TOR background
 @app_exoctk.route('/tor_background')
