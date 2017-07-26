@@ -42,6 +42,8 @@ from ExoCTK.pal import exotransmit
 from ExoCTK.tor.tor import create_tor_dict
 from ExoCTK.tor.contam_tool.resolve import *
 from ExoCTK.tor.contam_tool.visibilityPA import *
+from ExoCTK.tor.contam_tool.sossFieldSim import *
+from ExoCTK.tor.contam_tool.sossContamFig import *
 
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
@@ -474,13 +476,15 @@ def exoctk_tor_background():
 def exoctk_tor2():
 
     contamVars = {}
+    saveDir    = 'static/tor2'
     if request.method == 'POST':
-        tname = request.form['targetname']
-        contamVars['tname'] = tname
-        contamVars['ra'], contamVars['dec'] = request.form['ra'], request.form['dec']
+        tname                 = request.form['targetname']
+        contamVars['tname']   = tname
+        contamVars['ra']      = request.form['ra']
+        contamVars['dec']     = request.form['dec']
         contamVars['binComp'] = request.form['bininfo']
-        contamVars['PAmax'] = request.form['pamax']
-        contamVars['PAmin'] = request.form['pamin']
+        contamVars['PAmax']   = request.form['pamax']
+        contamVars['PAmin']   = request.form['pamin']
         print(contamVars)
 
         if request.form['submit'] == 'Resolve Target':
@@ -488,10 +492,10 @@ def exoctk_tor2():
     
         if request.form['submit'] == 'Calculate contamination':
             contamVars['contam'] = True
-            png = 'results/visibilityPA-'+tname+'.png'
-            contamVars['kelt-8'] = 'images/contamination-KELT-8_PA0-360.png'
-            contamVars['tyc-55'] = 'images/contamination-TYC_5530-1795-1_PA0-360.png'
-            contamVars['wasp-62'] = 'images/contamination-wasp-62_PA0-360.png'
+#             png = 'results/visibilityPA-'+tname+'.png'
+            fitsName = sossFieldSim(contamVars['ra'], contamVars['dec'], dir = saveDir)
+            png, pdf = contam(contamVars['ra'], contamVars['dec'], contamVars['tname'], fitsName, tmpDir = saveDir)
+
             return render_template('tor2_results.html', contamVars = contamVars, png = png)
         
         if request.form['submit'] == 'Calculate visibility':
