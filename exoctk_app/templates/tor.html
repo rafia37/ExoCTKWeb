@@ -3,20 +3,18 @@
 {% block content %}
 <!doctype html>
 
-            <h1>Time-Series Observation & Reduction Tools</h1>
+            <h1>Groups & Integrations Calculator</h1>
             <br>
             
-            <h2>Integrations Calculator</h2>
-
             <div class=metanav>
                 <p>
-                    Let's find you an exoplanet transit!
-                    (This is essentially de-mystify-apt.py.) It works to take your
-                    transit parameters and spit out EXACTLY what you need to plan 
-                    your proposal in APT: number of groups
-                    per integrations and the number of integrations that make up
-                    the entirety of your transit without oversaturating whichever
-                    instrument your heart -- or planet -- desires!
+                    This tool calculates the groups and integrations for an optimal transit observation.
+                    We require the transit time, maximum saturation level, a stellar magnitude, and some information 
+                    about your planned use of JWST (instrument, subarray, and filter), in order to interpolate your
+                    planned transit observation to our nearest information from 
+                    <a href="http://www.stsci.edu/wfirst/software/Pandeia">pandeia</a>
+                    (which powers the <a href="https://jwst.etc.stsci.edu/">JWST ETC</a>.) 
+                    
                 </p>
 
              <!--       <p>    
@@ -30,8 +28,7 @@
 
             <div class="span20">
                 <h3>Star/Transit Parameters</h3>
-                First off, we'll need a bit of information about the star. Technically we can fit any magnitude
-                you throw at us, but the closer the magnitude band is to the filter, the better your estimate will be!
+                Please provide some information about the host star in your transit. 
                 
                 <br></br>
                 <div class="row">
@@ -57,6 +54,7 @@
                     <div class="span20">
                         Transit Observation Time:
                         <input type="text" name="T" size="7" rows="1" value='5'  placeholder="(in hours)"/>
+                        (in hours)
                     </div>
                     
                     <div class="span10">
@@ -68,8 +66,7 @@
 
             <div class="span20">
                 <h3>Instrument Specifics</h3>
-                Next we need a bit of info about how you'll be using JWST. 
-                
+                Please provide some information on your plannet instrument, filter, and subarray use. 
                 <!--
 
                 <br></br>
@@ -149,33 +146,49 @@
                         </select>
                     </div>
 
-                    <div class="span10">
+<!--                    <div class="span10">
+                        Outputs:
+                        <select name='amps'>
+                            <optgroup label='MIRI'>
+                                <option value='4'>4</option>
+                            </optgroup>
+                            <optgroup label='NIRCam'>
+                                <option value='1'>1</option>
+                                <option value='4'>4</option>
+                            </optgroup>
+                            <optgroup label='NIRSpec'>
+                                <option value='1'>1</option>
+                            <optgroup label='NIRISS'>
+                                <option value='1'>1</option>
+                            </optgroup>
+                        </select>
+                        </div>  --!>
+
+
+                    </div class="span10">
                         Resets:
                         <input type="text" name="n_reset" size="7" value='1' />
-                    </div>
-                </div>
-            </div>
-
-           <div class="span20">
-                <h3>Risk Assessment</h3>
-                Our final questions for you gauge how comfortable you are with danger. 
-                Please specify your maximum saturation, in full well fraction or counts.
+                        (We'll make sure to change it for you if you enter
+                        something incompatible 
+                        with your subarray.)
+                                            </div>
+           <div class="span30">
+                <h3>Maximum Saturation Limit</h3>
+                Please provide a maximum saturation level.
                 
                 <br></br>
                 
-                <div class="row">
 
+                <div class="row">
                     <div class="span10">
                         Saturation can be input in counts or full well fraction (i.e. less than or equal to 1!)
                         <div style="width:10em"><input type="radio" name="sat" value="counts"> counts</div>
                         <div style="width:10em"><input type="radio" name="sat" value="well" checked> full well fraction</div>
                     </div>
                     
-                </div>
-                <div class="row">
                     <div class="span10">
                         Saturation Level</td>
-                        <input type="text" name="sat_lvl" size="7" value='.99' placeholder='counts or full well fraction'/>
+                        <input type="text" name="sat_lvl" size="7" value='.5' placeholder='counts or full well fraction'/>
                     </div>
 
 
@@ -183,7 +196,7 @@
             </div>     
 
             <div class="span300">
-                    <h3>Okay! Press the button!</h3>
+                    <h3>Okay, press the button!</h3>
 
                 <input class="btn" type='submit' value='CALCULATE!'></p>
                 <br>

@@ -95,12 +95,14 @@ def exoctk_ldc_results():
     modeldir = request.form['modeldir']
     profiles = list(filter(None,[request.form.get(pf) for pf in PROFILES]))
     bandpass = request.form['bandpass']
-    
+
+    # protect against injection attempts
+    bandpass = bandpass.replace('<', '&lt')
+    profiles = [str(p).replace('<', '&lt') for p in profiles]
+
     # Get models from local directory if necessary
     if modeldir=='default':
         modeldir = modelgrid_dir
-    # elif not modeldir:
-    #     modeldir = request.form['local_files']
     
     try:
         teff = int(request.form['teff'])
@@ -108,9 +110,12 @@ def exoctk_ldc_results():
         feh = float(request.form['feh'])
         mu_min = float(request.form['mu_min'])
     except:
+        teff = str(request.form['teff']).replace('<', '&lt')
+        logg = str(request.form['logg']).replace('<', '&lt')
+        feh = str(request.form['feh']).replace('<', '&lt')
         message = 'Could not calculate limb darkening with the above input parameters.'
         
-        return render_template('ldc_error.html', teff=request.form['teff'], logg=request.form['logg'], feh=request.form['feh'], \
+        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
                     band=bandpass or 'None', profile=', '.join(profiles), models=modeldir, \
                     message=message)
                     
@@ -154,7 +159,7 @@ def exoctk_ldc_results():
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
-    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass=='tophat':
+    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass in ['tophat','NIRISS.GR700XD.1']:
         
         try:
             
@@ -165,11 +170,17 @@ def exoctk_ldc_results():
                 kwargs['wl_min'] = float(wl_min)*q.um
                 kwargs['wl_max'] = float(wl_max)*q.um
             
-            bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
+            # Manually create GR700XD filter
+            if bandpass=='NIRISS.GR700XD.1':
+                p = os.path.join(os.path.dirname(ExoCTK.__file__),'data/filters/NIRISS.GR700XD.1.txt')
+                bandpass = ExoCTK.svo.Filter(bandpass, filter_directory=np.genfromtxt(p, unpack=True), **kwargs)
+            else:
+                bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
+                
             min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
             n_bins = bandpass.n_bins
             bp_name = bandpass.filterID
-        
+            
             # Get the filter plot
             TOOLS = 'box_zoom,resize,reset'
             bk_plot = figure(tools=TOOLS, title=bp_name, plot_width=400, plot_height=300,
@@ -408,7 +419,6 @@ def exoctk_tor():
 @app_exoctk.route('/tor_results', methods=['GET', 'POST'])
 def exoctk_tor_results():
     
-    
     try:
         n_group = request.form['groups']
         mag = float(request.form['mag'])
@@ -427,7 +437,8 @@ def exoctk_tor_results():
         tor_err = 0
         # Specific error catching
         if n_group.isdigit():
-           if n_group <= 1:
+            n_group = int(n_group)
+            if n_group <= 1:
                tor_err = 'Please try again with at least one group.'
         else:
             if n_group != 'optimize':
@@ -461,9 +472,14 @@ def exoctk_tor_results():
             tor_err = tor_output
             return render_template('tor_error.html', tor_err=tor_err)
     
-    except (IOError) as e:
-        print(e)
-        tor_err = 'One of you numbers is NOT a number! Please try again!'
+    except (IOError, KeyError) as e:
+        if e == IOError:
+            tor_err = 'One of you numbers is NOT a number! Please try again!'
+        else:
+            tor_err = 'Looks like you have mismatched your instrument/filter/subarray. Please try again.'
+        return render_template('tor_error.html', tor_err=tor_err)
+    except Exception as e:
+        tor_err = 'This is not an error we anticipated, but the error caught was : ' + str(e)
         return render_template('tor_error.html', tor_err=tor_err)
 
 # Load the TOR background

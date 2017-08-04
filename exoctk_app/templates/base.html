@@ -11,13 +11,13 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
 
-        <link rel="stylesheet" href="/../static/css/bootstrap.min.css">
-        <link rel="icon" type="image/png" href="/../static/images/favicon.png">
+        <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+        <link rel="icon" type="image/png" href="/static/images/favicon.gif">
    <script type="text/javascript" async
             src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
     </script>
     <link rel="stylesheet" href="/static/css/custom.css">
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
+        <script type="text/javascript" src="/static/js/jquery-1.12.0.min.js"></script>
         <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" type="text/css" />
         <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" type="text/css" />
         
@@ -35,11 +35,11 @@
 			}
         }
         </style>
-        <link rel="stylesheet" href="/../static/css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="/static/css/bootstrap-responsive.min.css">
 
-        <script src="/../static/js/vendor/modernizr-2.6.2.min.js"></script>
+        <!--    <script src="/../static/js/vendor/modernizr-2.6.2.min.js"></script>  --!>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="/../static/js/vendor/jquery-1.10.1.min.js"><\/script>')</script>
+        <script>window.jQuery || document.write('<script src="/static/js/vendor/jquery-1.10.1.min.js"></script>')</script>
 
         
 <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script>
@@ -49,23 +49,27 @@
 </script>
     </head>
     <body>
-        <!--[if lt IE 7]>
-            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-        <![endif]-->
-
         <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-inner">
                 <div class="container">
                     <div class="nav-collapse collapse">
                     <a class="brand pull-left no-overflow" href="/">Exoplanet Characterization Tool Kit</a>
-                    <ul class="nav pull-left">
-                             <li><a
-                                    href="https://2.bp.blogspot.com/-LTmFbKdu_zk/Vxji7vwMZ3I/AAAAAAAAR_c/NbVTEj9-iM8KB_MW-tlQjOUhZUZ2mK8tgCLcB/s1600/TLC.jpg">TLC</a></li>
-                             <li><a href="ldc">LDC</a></li>
-                             <li><a href="tor">TOR1</a></li>
-                             <li><a href="tor2">TOR2</a></li>
-                            <li><a href="exotransmit_portal">Exo-Transmit</a></li>
+                    <ul class="nav pull-left no-overflow">
+                            <li class="dropdown-toggle">
+                                <a class="dropdown" data-toggle="dropdown">Observation Planning </a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="tor">Integrations Calculator</a></li>
+                                    <li><a href="tor2">Contamination Overlap</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a class="dropdown-toggle" data-toggle="dropdown">Forward Modelling </a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="exotransmit_portal">Exo-Transmit</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="ldc">Limb Darkening Calculator</a></li>
                     </ul>
                     </div><!--/.nav-collapse -->
                 </div>
@@ -75,7 +79,7 @@
         <div class="container">
 
                 <p >
-                        <img src="../static/images/ExoCTK_logo.gif" width="450px" />
+                        <img src="/static/images/ExoCTK_logo.gif" width="450px" />
                 </p>
             {% block content %}
             {% endblock %}
@@ -83,7 +87,7 @@
 
             </p>
         <p style="float:right;">    
-            <img src="../static/images/STScI_logo.png" width="150px" />
+            <img src="/static/images/STScI_logo.png" width="150px" />
         </p> 
 
     <footer>
@@ -107,8 +111,8 @@
 
         </div> <!-- /container -->
 
-        <script src="/../static/js/vendor/bootstrap.min.js"></script>
-        <script src="/../static/js/plugins.js"></script>
-        <script src="/../static/js/main.js"></script>
+        <script src="/static/js/vendor/bootstrap.min.js"></script>
+        <!--        <script src="/../static/js/plugins.js"></script> --!>
+<!--        <script src="/../static/js/main.js"></script> --!>
     </body>
 </html>
