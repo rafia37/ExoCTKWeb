@@ -3,14 +3,9 @@
 {% block content %}
 
 	{% if contamVars['contam'] == True %}
-		<h3>This is what contamination tool will produce once it's done!</h3>
-		<p><img src="{{ png }}" alt="contam1"></p>
-<!-- 
-		<p><img src="{{ url_for('static', filename = contamVars['tyc-55']) }}" alt="contam2"></p>
-		<p><img src="{{ url_for('static', filename = contamVars['wasp-62']) }}" alt="contam3"></p>
- -->
-	
-		<p>Figure explication:</p>
+		<h3> {{ contamVars['tname'] }} </h3>
+		<p><img src="data:image/png;base64,{{ png | safe }}" alt="contam"></p>
+		<h4>Figure explication:</h4>
 		<ul>
 			<li>The two panels on the right are for the order 1 spectrum, while the two panels on the left are for the order 2 spectrum.</li>
 			<li>In the middle two panels, the color scale encodes the level of contamination of the target spectrum by the surrounding field stars (scale shown in upper right). The contamination level is defined as the ratio of the extracted flux coming from all field stars over the extracted flux coming from the target star, using the proper extraction weighing function for the target trace.</li>
@@ -25,9 +20,8 @@
 	{% if contamVars['visPA'] ==  True %}
 
 		<h3>Visibility Of Target</h3>
-		<!--<img src="{{ png }}" alt="visibility">-->
-		{{ png | safe }}
-		<p>Figure explication:</p>
+		<p><img src="data:image/png;base64,{{ png | safe }}" alt="contam"></p>
+		<h4>Figure explication:</h4>
 		<ul>
 			<li>The black curve indicates the nominal PA of NIRISS as a function of the calendar date.</li>
 			<li>The grey shaded region indicates the range of PAs accessible by rolling the telescope.</li>

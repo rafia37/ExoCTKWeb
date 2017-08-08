@@ -476,7 +476,7 @@ def exoctk_tor_background():
 def exoctk_tor2():
 
     contamVars = {}
-    saveDir    = 'static/tor2'
+    saveDir    = 'static/images'
     if request.method == 'POST':
         tname                 = request.form['targetname']
         contamVars['tname']   = tname
@@ -492,16 +492,19 @@ def exoctk_tor2():
     
         if request.form['submit'] == 'Calculate contamination':
             contamVars['contam'] = True
-#             png = 'results/visibilityPA-'+tname+'.png'
-            fitsName = sossFieldSim(contamVars['ra'], contamVars['dec'], dir = saveDir)
-            png, pdf = contam(contamVars['ra'], contamVars['dec'], contamVars['tname'], fitsName, tmpDir = saveDir)
-
-            return render_template('tor2_results.html', contamVars = contamVars, png = png)
-        
+            
+            #Funtion call from sossFieldSim
+            fitsName = sossFieldSim(contamVars['ra'], contamVars['dec'], binComp = contamVars['binComp'], dir = saveDir)
+            
+            #Funtion call from sossContamFig
+            buff = contam(contamVars['ra'], contamVars['dec'], contamVars['tname'], fitsName, pamin = 0, pamax = 360)
+            os.remove(fitsName)
+            return render_template('tor2_results.html', contamVars = contamVars, png = buff)
+            
+            
         if request.form['submit'] == 'Calculate visibility':
             contamVars['visPA'] = True
-#             dir = 'static/results'
-            png = calc_vis(contamVars['ra'], contamVars['dec'], tname)
+            _,_,png = calc_vis(contamVars['ra'], contamVars['dec'], tname)
             return render_template('tor2_results.html', contamVars = contamVars, png = png)
 
     return render_template('tor2.html', contamVars = contamVars)
