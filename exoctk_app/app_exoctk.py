@@ -40,10 +40,11 @@ from flask import request
 import ExoCTK
 from ExoCTK.pal import exotransmit
 from ExoCTK.tor.tor import create_tor_dict
-from ExoCTK.tor.contam_tool.resolve import *
-from ExoCTK.tor.contam_tool.visibilityPA import *
-from ExoCTK.tor.contam_tool.sossFieldSim import *
-from ExoCTK.tor.contam_tool.sossContamFig import *
+from ExoCTK.tor.tor2.resolve import *
+from ExoCTK.tor.tor2.visibilityPA import *
+from ExoCTK.tor.tor2.sossFieldSim import *
+from ExoCTK.tor.tor2.sossContamFig import *
+from ExoCTK.tor.tor2.ncam_miri import *
 
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
@@ -475,39 +476,50 @@ def exoctk_tor_background():
 @app_exoctk.route('/tor2', methods = ['GET', 'POST'])
 def exoctk_tor2():
 
-    contamVars = {}
+    vars = {}
     saveDir    = 'static/images'
     if request.method == 'POST':
         tname                 = request.form['targetname']
-        contamVars['tname']   = tname
-        contamVars['ra']      = request.form['ra']
-        contamVars['dec']     = request.form['dec']
-        contamVars['binComp'] = request.form['bininfo']
-        contamVars['PAmax']   = request.form['pamax']
-        contamVars['PAmin']   = request.form['pamin']
-        print(contamVars)
+        vars['tname']   = tname
+        vars['ra']      = request.form['ra']
+        vars['dec']     = request.form['dec']
+        vars['binComp'] = request.form['bininfo']
+        vars['PAmax']   = request.form['pamax']
+        vars['PAmin']   = request.form['pamin']
+        vars['action']  = request.form['submit']
+        vars['ins']     = request.form['instrument']
+        print(vars)
 
-        if request.form['submit'] == 'Resolve Target':
-            contamVars['ra'], contamVars['dec'] = resolve_target(tname)
-    
-        if request.form['submit'] == 'Calculate contamination':
-            contamVars['contam'] = True
+        if vars['action'] == 'Resolve Target':
+            vars['ra'], vars['dec'] = resolve_target(tname)
             
-            #Funtion call from sossFieldSim
-            fitsName = sossFieldSim(contamVars['ra'], contamVars['dec'], binComp = contamVars['binComp'], dir = saveDir)
+        
+        if vars['ins'] == 'NIRISS':
+            if vars['action'] == 'Calculate contamination':
+                vars['contam'] = True
             
-            #Funtion call from sossContamFig
-            buff = contam(contamVars['ra'], contamVars['dec'], contamVars['tname'], fitsName, pamin = 0, pamax = 360)
-            os.remove(fitsName)
-            return render_template('tor2_results.html', contamVars = contamVars, png = buff)
+                #Funtion call from sossFieldSim
+                fitsName = sossFieldSim(vars['ra'], vars['dec'], binComp = vars['binComp'], dir = saveDir)
+            
+                #Funtion call from sossContamFig
+                buff = contam(vars['ra'], vars['dec'], vars['tname'], fitsName, pamin = 0, pamax = 360)
+                os.remove(fitsName)
+                return render_template('tor2_results.html', vars = vars, png = buff)
             
             
-        if request.form['submit'] == 'Calculate visibility':
-            contamVars['visPA'] = True
-            _,_,png = calc_vis(contamVars['ra'], contamVars['dec'], tname)
-            return render_template('tor2_results.html', contamVars = contamVars, png = png)
+            if vars['action'] == 'Calculate visibility':
+                vars['visPA'] = True
+                _,_,png = calc_vis(vars['ra'], vars['dec'], tname)
+                return render_template('tor2_results.html', vars = vars, png = png)
+        
+        else:
+            if vars['action'] == 'Calculate contamination':
+                vars['contam'] = True
+                png = ncam_miri(tname, ins = vars['ins'])
+                return render_template('tor2_results.html', vars = vars, png = png)
+            
 
-    return render_template('tor2.html', contamVars = contamVars)
+    return render_template('tor2.html', vars = vars)
 
 
 # Load filter profiles pages

@@ -2,33 +2,40 @@
 
 {% block content %}
 
-	{% if contamVars['contam'] == True %}
-		<h3> {{ contamVars['tname'] }} </h3>
-		<p><img src="data:image/png;base64,{{ png | safe }}" alt="contam"></p>
-		<h4>Figure explication:</h4>
-		<ul>
-			<li>The two panels on the right are for the order 1 spectrum, while the two panels on the left are for the order 2 spectrum.</li>
-			<li>In the middle two panels, the color scale encodes the level of contamination of the target spectrum by the surrounding field stars (scale shown in upper right). The contamination level is defined as the ratio of the extracted flux coming from all field stars over the extracted flux coming from the target star, using the proper extraction weighing function for the target trace.</li>
-			<li>The two panels at the end summarize the middle two panels by showing for each order the fraction of all spectral channels that are contaminated at a level of at least 0.01 (green) or 0.001 (blue).</li>
-			<li>The hatched regions are the PAs that are inaccessible at the target RA & DEC.</li>
-			<li>The top two panels show the locations of various spectral features.</li>
-		</ul>
+	{% if vars['ins'] == 'NIRISS' %}
+		{% if vars['contam'] == True %}
+			<h3> {{ vars['tname'] }} </h3>
+			<p><img src="data:image/png;base64,{{ png | safe }}" alt="contam"></p>
+			<h4>Figure explication:</h4>
+			<ul>
+				<li>The two panels on the right are for the order 1 spectrum, while the two panels on the left are for the order 2 spectrum.</li>
+				<li>In the middle two panels, the color scale encodes the level of contamination of the target spectrum by the surrounding field stars (scale shown in upper right). The contamination level is defined as the ratio of the extracted flux coming from all field stars over the extracted flux coming from the target star, using the proper extraction weighing function for the target trace.</li>
+				<li>The two panels at the end summarize the middle two panels by showing for each order the fraction of all spectral channels that are contaminated at a level of at least 0.01 (green) or 0.001 (blue).</li>
+				<li>The hatched regions are the PAs that are inaccessible at the target RA & DEC.</li>
+				<li>The top two panels show the locations of various spectral features.</li>
+			</ul>
 
-	{% endif %}
+		{% endif %}
 
 
-	{% if contamVars['visPA'] ==  True %}
+		{% if vars['visPA'] ==  True %}
 
-		<h3>Visibility Of Target</h3>
-		<p><img src="data:image/png;base64,{{ png | safe }}" alt="contam"></p>
-		<h4>Figure explication:</h4>
-		<ul>
-			<li>The black curve indicates the nominal PA of NIRISS as a function of the calendar date.</li>
-			<li>The grey shaded region indicates the range of PAs accessible by rolling the telescope.</li>
-			<li>On dates where there is no black curve, the target is inaccessible.</li>
-			<li>The TXT file provides the same information detailed on a daily basis, with at the end a summary of the accessible and non-accessible PA ranges.</li>
-		</ul>
+			<h3>Visibility Of Target</h3>
+			<p><img src="data:image/png;base64,{{ png | safe }}" alt="contam"></p>
+			<h4>Figure explication:</h4>
+			<ul>
+				<li>The black curve indicates the nominal PA of NIRISS as a function of the calendar date.</li>
+				<li>The grey shaded region indicates the range of PAs accessible by rolling the telescope.</li>
+				<li>On dates where there is no black curve, the target is inaccessible.</li>
+				<li>The TXT file provides the same information detailed on a daily basis, with at the end a summary of the accessible and non-accessible PA ranges.</li>
+			</ul>
 	
+		{% endif %}
+	{% endif %}
+	
+	{% if vars['ins'] != 'NIRISS' %}
+	<h3> {{ vars['tname'] }} </h3>
+	<p><img src="data:image/png;base64,{{ png | safe }}" alt="contam"></p>
 	{% endif %}
 	
 	<br>
