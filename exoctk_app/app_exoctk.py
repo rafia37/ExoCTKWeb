@@ -418,35 +418,38 @@ def exoctk_tor():
 def exoctk_tor_results():
     
     try:
+        # Science obs
         n_group = request.form['groups']
         mag = float(request.form['mag'])
         band = request.form['band']
         obs_time = float(request.form['T'])
-#        temp = float(request.form['temp'])
         sat_max = float(request.form['sat_lvl'])
         sat_mode = request.form['sat']
-#        throughput = request.form['tp']
         filt = request.form['filt']
         ins = request.form['ins']
         subarray = request.form['subarray']
         n_reset = int(request.form['n_reset'])
+        amps = int(request.form['amps'])
         infile = os.environ['tor_pandeia_path'] 
+        
+        # Target acq
+        #filt_ta = request.form['filt_ta']
+        #subarray_ta = request.form['subarray_ta']
 
         tor_err = 0
         # Specific error catching
         if n_group.isdigit():
             n_group = int(n_group)
             if n_group <= 1:
-               tor_err = 'Please try again with at least one group.'
+                tor_err = 'Please try again with at least one group.'
         else:
             if n_group != 'optimize':
-             tor_err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
+                tor_err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
         if (mag > 12) or (mag < 5.5):
             tor_err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12 in a different band?'
         if obs_time <= 0:
             tor_err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
-#    if temp <= 0:
-#        tor_err = 'You have a negative temperature -- DOES THIS LOOK LIKE A MASER TO YOU?'
+        
         if sat_max <= 0:
             tor_err = 'You put in an underwhelming saturation level. There is something to be said for being too careful...'
         if (sat_mode == 'well') and sat_max > 1:
@@ -457,14 +460,16 @@ def exoctk_tor_results():
         if type(tor_err) == str:
             return render_template('tor_error.html', tor_err=tor_err)
     
-    # Only create the dict if the form input looks okay.
-        tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode), float(sat_max), int(n_reset), infile)
+        # Only create the dict if the form input looks okay.
+        tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode),
+            float(sat_max), int(n_reset), int(amps), infile)
         if type(tor_output) == dict:
             tor_dict = tor_output
+            one_group_error = ""
             if tor_dict['n_group'] == 1:
                 one_group_error = 'Be careful! This only predicts one group, and you may be in danger of oversaturating!'
-            else:
-                one_group_error = ""
+            if (tor_dict['max_sat_prediction'] > tor_dict['sat_max']) and (n_group != 'optimize'):
+                one_group_error = "Be careful! You chose to put in your own estimate for groups and this observation will exceed your chosen maximum saturation."
             return render_template('tor_results.html', tor_dict=tor_dict, one_group_error=one_group_error)
         else:
             tor_err = tor_output
@@ -475,7 +480,8 @@ def exoctk_tor_results():
             tor_err = 'One of you numbers is NOT a number! Please try again!'
         else:
             tor_err = 'Looks like you have mismatched your instrument/filter/subarray. Please try again.'
-        return render_template('tor_error.html', tor_err=tor_err)
+        return render_template('tor_error.html', tor_err=e) #tor_err=tor_err)
+    
     except Exception as e:
         tor_err = 'This is not an error we anticipated, but the error caught was : ' + str(e)
         return render_template('tor_error.html', tor_err=tor_err)

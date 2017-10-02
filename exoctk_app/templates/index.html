@@ -2,7 +2,7 @@
 {% block content %}
 
 
-                <p  style="WIDTH:750px">
+                <p  style="WIDTH:1000px">
                     
                     ExoCTK (the Exoplanet Characterixation Tool Kit) is an open-source, modular, data analysis software package 
                     focused primarily on atompspheric characterization of exoplanets and observation planning. 
@@ -12,20 +12,46 @@
 
                     <br></br>
 
-                    <p>Coming soon:</p>
+                
+                <div class="row">
+                    <div class="span3">
+                        <h3>Observation Planning</h3>
+                        <p> Tools observations with JWST.</p>
+                            <p><a class="btn" href="./tor">Integrations and Groups</a></p>
+                            <p><a class="btn" href="./tor2">Contamination Overlap</a></p>
+                    </div>
+                    <div class="span3">
+                        <h3>Forward Modelling</h3>
+                        <p>Atmospheric forward modelling tools.</p>
+                            <p><a class="btn" href="./exotransmit_portal">Exo-Transmit</a></p>
+                    </div>
+                    <div class="span5">
+                        <h3>Limb Darkening Calculator</h3>
+                        <p>Tools to estimate limb darkening in your host star.</p>
+                            <p><a class="btn" href="./ldc'">Limb Darkening Calculator</a></p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="span3">
+                    <h3>Coming Soon</h3>
                     <ul>
                         <li style="color:#808080">Data Reduction</li>
                         <li style="color:#808080">Light Curve Fitting</li>
                         <li style="color:#808080">Retrievals</li>
                     </ul>
-                    <br>
-
-                    <p>Following are links to our GitHub packages:</p>
+                    </div>
+                    
+                    <div class="span5">
+                    <h3> GitHub Source Code</h3>
                     <ul>
                         <li><a href="https://github.com/ExoCTK/ExoCTK">ExoCTK</a> is the computing package behind the website.</li>
                         <li><a href="https://github.com/ExoCTK/ExoCTKWeb">ExoCTKWeb</a> is the literal source code of this website.</li>
                         <li><a href="https://github.com/ExoCTK/PandExo_HST">PandExo_HST</a> is our counterpart for HST observations.</li>
                     </ul>
+                    </div>
+
+                </div>
 
 <script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
 <script src="//cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/2/dataTables.bootstrap.js"></script>
