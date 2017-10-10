@@ -9,6 +9,8 @@ import astropy.units as q
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pandas as pd
+from sqlalchemy import *
 
 import bokeh
 from bokeh import mpl
@@ -51,6 +53,9 @@ app_exoctk.config['CACHE_TYPE'] = 'null'
 
 exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
 modelgrid_dir = os.environ.get('MODELGRID_DIR')
+
+#fortney grid
+fortgrid_dir = os.environ.get('FORTGRID_DIR')
 
 # register the cache instance and binds it on to your app
 # cache = Cache(app_exoctk)
@@ -665,12 +670,12 @@ def _param_validation(args):
 
 @app_exoctk.route('/exotransmit_portal', methods=['GET','POST'])
 def exotransmit_portal():
-    """ 
-    Run Exo-Transmit taking inputs from the HTML form and plot the results
     """
+        Run Exo-Transmit taking inputs from the HTML form and plot the results
+        """
     if exotransmit_dir is None:
         return render_template('tor_error.html', tor_err="There seems to be no directory in place for exo-transmit...")
-
+    
     # Grab the inputs arguments from the URL
     args = flask.request.args
     # Get all the form arguments in the url with defaults
@@ -681,7 +686,7 @@ def exotransmit_portal():
         x, y = exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh)
     else:
         x, y = np.loadtxt(os.path.join(exotransmit_dir, 'Spectra/default.dat'), skiprows=2, unpack=True)
-
+    
     tab = at.Table(data=[x/1e-6, y/100])
     fh = StringIO()
     tab.write(fh, format='ascii.no_header')
@@ -691,30 +696,103 @@ def exotransmit_portal():
     fig.line(x/1e-6, y/100, color='Black', line_width=0.5)
     fig.xaxis.axis_label = 'Wavelength (um)'
     fig.yaxis.axis_label = 'Transit Depth'
-
+    
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
-
+    
     script, div = components(fig)
     
     html = flask.render_template(
-        'exotransmit_portal.html',
-        plot_script=script,
-        plot_div=div,
-        js_resources=js_resources,
-        css_resources=css_resources,
-        eos_files=os.listdir(os.path.join(exotransmit_dir,'EOS')),
-        tp_files=os.listdir(os.path.join(exotransmit_dir, 'T_P')),
-        tp=tp,
-        eos=eos,
-        g=g,
-        R_p=R_p,
-        R_s=R_s,
-        P=P,
-        Rayleigh=Rayleigh,
-        table_string=table_string
-    )
+                                 'exotransmit_portal.html',
+                                 plot_script=script,
+                                 plot_div=div,
+                                 js_resources=js_resources,
+                                 css_resources=css_resources,
+                                 eos_files=os.listdir(os.path.join(exotransmit_dir,'EOS')),
+                                 tp_files=os.listdir(os.path.join(exotransmit_dir, 'T_P')),
+                                 tp=tp,
+                                 eos=eos,
+                                 g=g,
+                                 R_p=R_p,
+                                 R_s=R_s,
+                                 P=P,
+                                 Rayleigh=Rayleigh,
+                                 table_string=table_string
+                                 )
     return encode_utf8(html)
+
+def _param_fort_validation(args):
+    rstar = float(args.get('rstar',7e5))
+    temp = float(args.get('temp',1000))
+    gravity = float(args.get('gravity',100))
+    chem = str(args.get('chem','noTiO'))
+    h2he = bool(args.get('h2he',True))
+    fcloud = bool(args.get('fcloud',False))
+    reference_radius = float(args.get('reference_radius',10000))
+    return rstar, temp, gravity, chem, h2he, fcloud, reference_radius
+
+@app_exoctk.route('/fortney_portal', methods=['GET','POST'])
+def fortney_portal():
+    """
+        Pull up Forntey Grid plot the results and download
+        """
+    
+    # Grab the inputs arguments from the URL
+    args = flask.request.args
+    rstar, temp, gravity, chem, h2he, fcloud, reference_radius = _param_fort_validation(args)
+    #get sqlite database
+    db = create_engine('sqlite:///'+os.environ.get('FORTGRID_DIR'))
+    header= pd.read_sql_table('header',db)
+
+    if args:
+        df = header.loc[(header.gravity==gravity) & (header.temp==temp)
+                           & (header.chem==chem) & (header.h2he==h2he) &
+                           (header.fcloud==fcloud) & (header.reference_radius==reference_radius)]
+
+        x=pd.read_sql_table(df['name'].values[0],db)['wavelength']
+        y=pd.read_sql_table(df['name'].values[0],db)['radius']**2.0/rstar**2.0
+    else:
+        df= pd.read_sql_table('t1000g100_noTiO',db)
+        x, y = df['wavelength'], df['radius']**2.0/7e5**2.0
+    
+    tab = at.Table(data=[x, y])
+    fh = StringIO()
+    tab.write(fh, format='ascii.no_header')
+    table_string = fh.getvalue()
+
+    fig = figure(plot_width=1100, plot_height=400, responsive=False)
+    fig.line(x, 1e6*(y-np.mean(y)), color='Black', line_width=0.5)
+    fig.xaxis.axis_label = 'Wavelength (um)'
+    fig.yaxis.axis_label = 'Rel. Transit Depth (ppm)'
+    
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+    
+    script, div = components(fig)
+    
+    html = flask.render_template(
+                                 'fortney_portal.html',
+                                 plot_script=script,
+                                 plot_div=div,
+                                 js_resources=js_resources,
+                                 css_resources=css_resources,
+                                 rstar = rstar,
+                                 temp=list(map(str, header.temp.unique())),
+                                 gravity=list(map(str, header.gravity.unique())),
+                                 chem=list(map(str, header.chem.unique())),
+                                 h2he=list(map(str, header.h2he.unique())),
+                                 fcloud=list(map(str, header.fcloud.unique())),
+                                 reference_radius=list(map(str, header.reference_radius.unique())),
+                                 table_string=table_string
+                                 )
+    return encode_utf8(html)
+
+@app_exoctk.route('/fortney_result', methods=['POST'])
+def save_fortney_result():
+    table_string = flask.request.form['data_file']
+    return flask.Response(table_string, mimetype="text/dat",
+                          headers={"Content-disposition":
+                          "attachment; filename=fortney.dat"})
 
 @app_exoctk.route('/exotransmit_result', methods=['POST'])
 def save_exotransmit_result():
