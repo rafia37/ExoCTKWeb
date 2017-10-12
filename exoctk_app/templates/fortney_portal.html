@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <body>
+    {{ js_resources|indent(4)|safe }}
+
+    {{ css_resources|indent(4)|safe }}
+
+    {{ plot_script|indent(4)|safe }}
+    {{sim_script|safe}}
+    {{obs_script|safe}}
+
+
+    <div class="page">
+        <h1>Fortney Grid</h1>
+
+            <div class=metanav>
+                <p>
+                Some info about the fortney grid. 
+                </p>
+                <p>
+                Should probably go here. 
+                </p>
+
+            </div>
+    
+    <div>
+        <h3>Parameters</h3>
+        <form name="fort_menu" method='GET'>
+            <div>
+                Stellar Radius (km)
+                <input type="text" name="rstar" value="7e5">
+            </div>
+
+            <div>
+            Temperature
+            <select name="temp">
+                {% for i in temp %}
+                    <option {{ i }} value={{ i }}>{{ i }}</option>
+                {% endfor %}
+            </select>
+            </div>
+            
+            <div>
+            Reference Radius (km)
+            <select name="reference_radius">
+                {% for i in reference_radius %}
+                    <option {{ i }} value={{ i }}>{{ i }}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            <div>
+            Gravity m/s^2
+            <select name="gravity">
+                {% for i in gravity %}
+                    <option {{ i }} value={{ i }}>{{ i }}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            <div>
+                Chemistry
+                <select name="chem">
+                {% for i in chem %}
+                    <option {{ i }} value={{ i }}>{{ i }}</option>
+                {% endfor %}
+            </select>            
+            </div>
+
+            <div>
+                H2-He
+                <select name="h2he">
+                {% for i in h2he %}
+                    <option {{ i }} value={{ i }}>{{ i }}</option>
+                {% endfor %}
+            </select>            
+            </div>
+
+            <div>
+                Cloud
+                <select name="fcloud">
+                    <option value="True">True</option>
+                    <option value="False">False</option>
+                </select>             
+            </div>
+
+
+            <input class="btn btn-success" type='submit' value='Submit'></p>
+        </form>
+    </div>
+
+    <div style="display:table; margin:0 auto;">
+        {{ plot_div|indent(4)|safe }}
+    </div>
+
+    <div>
+        <form action="/fortney_result" method="post">
+            <input type="hidden" name="data_file" value="{{ table_string }}" />
+            <input class="btn btn-primary" type='submit' value='Save File'></p>
+        </form>
+    </div>
+    <div>
+        <h3>References</h3>
+
+    </div>
+  </body>
+
+{% endblock%}
