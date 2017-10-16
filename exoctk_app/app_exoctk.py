@@ -726,8 +726,8 @@ def _param_fort_validation(args):
     temp = float(args.get('temp',1000))
     gravity = float(args.get('gravity',100))
     chem = str(args.get('chem','noTiO'))
-    h2he = bool(args.get('h2he',True))
-    fcloud = bool(args.get('fcloud',False))
+    h2he = str(args.get('h2he',True)).lower() == "true"
+    fcloud = str(args.get('fcloud',False)).lower() == "true"
     reference_radius = float(args.get('reference_radius',10000))
     return rstar, temp, gravity, chem, h2he, fcloud, reference_radius
 
@@ -741,6 +741,7 @@ def fortney_portal():
     args = flask.request.args
     rstar, temp, gravity, chem, h2he, fcloud, reference_radius = _param_fort_validation(args)
     #get sqlite database
+
     db = create_engine('sqlite:///'+os.environ.get('FORTGRID_DIR'))
     header= pd.read_sql_table('header',db)
 
