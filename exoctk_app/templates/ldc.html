@@ -2,7 +2,7 @@
 
 {% block content %}
         
-        <script src='{{ url_for('static',filename='jquery-1.12.0.min.js')}}'></script>
+        <!-- <script src='{{ url_for('static',filename='js/jquery-1.12.0.min.js')}}'></script> -->
         <script>
             $(document).ready(function(){
             
@@ -27,88 +27,217 @@
                 
             });
         </script>
-        
-        <h1>Limb Darkening Calculator</h1>
 
-        <div class=metanav>
+        <div class='form-group'>
+            <h1>Limb Darkening Calculator</h1>
+            <br>
             <p>
             
             The LDC calculates limb-darkening coefficients for a specified stellar model, plotting results versus intensity ratio and wavelength. It uses high
             spectral resolution stellar atmospheric models, which are a neccesisty given JWST's expected precision. 
             </p>
-
-
     
-            <form id='searchform' method='post' action='ldc_results' >
+            <form class='form-horizontal' id='searchform' method='post' action='ldc_results' >
                 
-                <h3>Step 1: Choose a Model Grid</h3>
-                <input type="radio" name="modeldir" value="default" checked/> Phoenix ACES<br>
-                <!-- <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ATLAS9/default/" /> Kurucz ATLAS9<br>
-                <input type="radio" name="modeldir" value="" checked/> Local files: <input type="text" name="local_files" size="80" rows="1" value="/Users/jfilippazzo/Documents/Modules/_DEPRECATED/limb_dark_jeff/limb/specint/"/>​​​​​​​​​​​​​​​​​​​​​​<br> -->
-
-                <h3>Step 2: Choose a Filter</h3>
+                <hr class="col-md-12">
+                <div class='form-group'>
+                    <label for="modeldir" class="col-sm-2 control-label">Choose a Model Grid</label>
+                    <div class="col-sm-10">
+                        <div class='radio'>
+                            <label>
+                                <input type="radio" name="modeldir" value="default" checked/> Phoenix ACES
+                            </label>
+                        </div>
+                        <div class='radio'>
+                            <label style='color:grey;'>
+                                <input type="radio" name="modeldir" value="/user/jfilippazzo/Models/ATLAS9/default/" disabled/> Kurucz ATLAS9
+                            </label>
+                        </div>
+                        <div class='radio'>
+                            <label style='color:grey;'>
+                                <input type="radio" name="modeldir" value="" disabled/> Local files: <input type="text" name="local_files" size="40" rows="1" value=""/>​​​​​​​​​​​​​​​​​​​​​​
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 
-                <select name="bandpass" id="filterselect">
-                    <option value="tophat"> Top Hat</option>
-                    <option value="NIRISS.GR700XD.1"> NIRISS.GR700XD.1</option>
-                    {{filters|safe}}
-                </select>
-                <table id='n_bins' style='display:none'>
-                    <tr>
-                        <td>Wavelength min [\(\mu\)m]:</td>
-                        <td><input type="text" name="wave_min" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
-                    </tr>
+                <hr class="col-md-12">
+                
+                <div class='form-group'>
                     
-                    <tr>
-                        <td>Wavelength max [\(\mu\)m]:</td>
-                        <td><input type="text" name="wave_max" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
-                    </tr>
-                    <tr>
-                        <td>Indicate the desired number of wavelength bins:</td>
-                        <td><input type="text" name="n_bins" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
-                    </tr>
-                    <tr>
-                        <td><strong><span id='and'>AND</span><span id='or' style='display:none;'>OR</span></strong> the number of pixels per wavelength bin:</td>
-                        <td><input type="text" name="pixels_per_bin" size="5" rows="1"/>​​​​​​​​​​​​​​</td>
-                    </tr>
-                </table>
-    
-                <h3>Step 3: Choose One or More Limb Darkening Profiles</h3>
-                <input type="checkbox" name="uniform" value="uniform"> Uniform<br>
-                <input type="checkbox" name="linear" value="linear"> Linear<br>
-                <input type="checkbox" name="quadratic" value="quadratic" checked> Quadratic<br>
-                <input type="checkbox" name="square-root" value="square-root"> Square-root<br>
-                <input type="checkbox" name="logarithmic" value="logarithmic"> Logarithmic<br>
-                <input type="checkbox" name="exponential" value="exponential"> Exponential<br>
-                <input type="checkbox" name="3-parameter" value="3-parameter"> 3-parameter<br>
-                <input type="checkbox" name="4-parameter" value="4-parameter"> 4-parameter<br>
-    
-                <h3>Step 4: Choose the Stellar Parameters to Calculate</h3>
-    
-                <p><table>
-                    <tr>
-                        <td>Teff value [K]</td>
-                        <td><input type="text" name="teff" size="10" rows="1" value="3624" placeholder="3500 - 6000"/></td>
-                    </tr>
-                    <tr>
-                        <td>Log(g) value [dex]</td>
-                        <td><input type="text" name="logg" size="10" rows="1" value="5.22" placeholder="3 - 6"/></td>
-                    </tr>
-                    <tr>
-                        <td>Fe/H value [dex]</td>
-                        <td><input type="text" name="feh" size="10" rows="1" value="0.0" placeholder="-0.5 - 0.5"/></td>
-                    </tr>
-                    <tr>
-                        <td>Minimum \(\mu\) to fit</td>
-                        <td><input type="text" name="mu_min" size="10" rows="1" value="0.05" placeholder="0 - 1"/></td>
-                    </tr>
-                </table></p>
-    
+                    <label for="bandpass" class="col-sm-2 control-label">Choose a Bandpass</label>
+                    <div class="col-sm-10">
+                
+                        <select class='form-control' name="bandpass" id="filterselect">
+                            <option value="tophat"> Top Hat</option>
+                            <option value="NIRISS.GR700XD.1"> NIRISS.GR700XD.1</option>
+                            {{filters|safe}}
+                        </select>
+                    </div>
+                </div>
+                
                 <br>
-               <p>
-                    <input class="btn" type='submit' value='Calculate Coefficients'></p>
-                      (This can take up to 20 seconds.)
-                </p>
+                
+                <div id='n_bins' class='form-group', style='display:none;'>
+                    
+                    <label for='' class="col-sm-2 control-label">Grism Details</label>
+                    <div class="col-sm-10">                        
+                        <div class="input-group">
+                          <div class="input-group-addon" style='width:120px'>\(\lambda_\text{min}\)</div>
+                          <input id='wave_min' type="text" class='form-control' name="wave_min" size="10" rows="1" value="" placeholder=""/>
+                          <div class="input-group-addon" style='width:60px'>\(\mu\)m</div>
+                        </div>
+                        <span id="helpBlock" class="help-block">The minimum wavelength of the grism to use</span>
+                        
+                        <br>
+
+                        <div class="input-group">
+                          <div class="input-group-addon" style='width:120px'>\(\lambda_\text{max}\)</div>
+                          <input id='wave_max' type="text" class='form-control' name="wave_max" size="10" rows="1" value="" placeholder=""/>
+                          <div class="input-group-addon" style='width:60px'>\(\mu\)m</div>
+                        </div>
+                        <span id="helpBlock" class="help-block">The maximum wavelength of the grism to use</span>
+                        
+                        <br>
+
+                        <div class="form-inline">
+                            <div class="input-group col-sm-4"> 
+                                <div class="input-group">
+                                  <div class="input-group-addon" style='width:120px'># channels</div>
+                                  <input id='n_bins' type="text" class='form-control' name="n_bins" size="10" rows="1" value="" placeholder=""/>
+                                </div>
+                                <span id="helpBlock" class="help-block">The number of channel to split the grism into</span>
+                            </div>
+                            
+                            <div class="input-group col-sm-1"> 
+                                <strong><span id='and'>AND</span><span id='or' style='display:none;'>OR</span></strong>
+                            </div>
+                            
+                            <div class="input-group col-sm-4">
+                                <div class="input-group"> 
+                                  <div class="input-group-addon" style='width:120px'># pix/channel</div>
+                                  <input id='pixels_per_bin' type="text" class='form-control' name="pixels_per_bin" size="10" rows="1" value="" placeholder=""/>
+                                 </div>
+                                  <span id="helpBlock" class="help-block">The number of pixels in each grism channel</span>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <hr class="col-md-12">
+                
+                <div class='form-group'>
+                    
+                    <label class="col-sm-2 control-label">Choose One or More Limb Darkening Profiles</label>
+                    <div class="col-sm-10">
+                        
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" name="uniform" value="uniform">
+                            Uniform
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" name="linear" value="linear">
+                            Linear
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" name="quadratic" value="quadratic" checked>
+                            Quadratic
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" name="square-root" value="square-root">
+                            Square Root
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" name="logarithmic" value="logarithmic">
+                            Logarithmic
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" name="exponential" value="exponential">
+                            Exponential
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" name="3-parameter" value="3-parameter">
+                            3-parameter
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" name="4-parameter" value="4-parameter">
+                            4-parameter
+                          </label>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <hr class="col-md-12">
+                
+                <div class='form-group'>
+                    
+                    <label for='' class="col-sm-2 control-label">Specify the Stellar Parameters</label>
+                    <div class="col-sm-10">                        
+                        <div class="input-group">
+                          <div class="input-group-addon" style='width:120px'>\(T_\text{eff}\)</div>
+                          <input id='teff' type="text" class='form-control' name="teff" size="10" rows="1" value="3624" placeholder="3500 - 6000"/>
+                          <div class="input-group-addon" style='width:60px'>K</div>
+                        </div>
+                        <span id="helpBlock" class="help-block">The stellar effective temperature</span>
+                        
+                        <br>
+
+                        <div class="input-group">
+                          <div class="input-group-addon" style='width:120px'>\(\log (g)\)</div>
+                          <input id='logg' type="text" class='form-control' name="logg" size="10" rows="1" value="5.22" placeholder="3 - 6"/>
+                          <div class="input-group-addon" style='width:60px'>dex</div>
+                        </div>
+                        <span id="helpBlock" class="help-block">The logarithm of the stellar surface gravity</span>
+                        
+                        <br>
+
+                        <div class="input-group">
+                          <div class="input-group-addon" style='width:120px'>\([\text{Fe}/\text{H}]\)</div>
+                          <input id='feh' type="text" class='form-control' name="feh" size="10" rows="1" value="0.0" placeholder="-0.5 - 0.5"/>
+                          <div class="input-group-addon" style='width:60px'>dex</div>
+                        </div>
+                        <span id="helpBlock" class="help-block">The logarithm of the stellar metallicity</span>
+                        
+                        <br>
+
+                        <div class="input-group">
+                          <div class="input-group-addon" style='width:120px'>Minimum \(\mu\)</div>
+                          <input id='mu_min' type="text" class='form-control' name="mu_min" size="10" rows="1" value="0.05" placeholder="0 - 1"/>
+                          <div class="input-group-addon" style='width:60px'></div>
+                        </div>
+                        <span id="helpBlock" class="help-block">The minimum angle to consider when fitting the LD profile</span>
+                    </div>
+                </div>
+                
+                <hr class="col-md-12">
+                
+                <div class='form-group'>
+                    
+                    <label for='submit' class="col-sm-2 control-label">Submit!</label>
+                    <div class="col-sm-10">
+                      <p>
+                        <input id='submit' class="btn btn-success" type='submit' value='Calculate Coefficients'></p>
+                        <span id="helpBlock" class="help-block">This can take up to 20 seconds! Please be patient.</span>
+                      </p>
+                     </div>
+                </div>
             
             </form>
 
