@@ -35,81 +35,150 @@
                 </p>
 
             </div>
-    <!--<div class="nav">-->
-      <!--<div class="container">-->
-        <!--<ul class="pull-left">-->
-            <!--<li><a href="index">ExoCTK</a></li>-->
-            <!--<li><a href="ldc">Limb Darkening Caluclator</a></li>-->
-            <!--<li><a href="tot">Transit Observation Tools</a></li>-->
-            <!--<li><a href="exotransmit">Exo-Transmit</a></li>-->
-        <!--</ul>-->
-      <!--</div>-->
-    <!--</div>-->
-    <!-- A simple form for changing the graph -->
+        <!--<div class="nav">-->
+          <!--<div class="container">-->
+            <!--<ul class="pull-left">-->
+                <!--<li><a href="index">ExoCTK</a></li>-->
+                <!--<li><a href="ldc">Limb Darkening Caluclator</a></li>-->
+                <!--<li><a href="tot">Transit Observation Tools</a></li>-->
+                <!--<li><a href="exotransmit">Exo-Transmit</a></li>-->
+            <!--</ul>-->
+          <!--</div>-->
+        <!--</div>-->
+        <!-- A simple form for changing the graph -->
     
-    <div>
-        <h3>Parameters</h3>
-        <form name="eos_menu" method='GET'>
+        <div class='form-group'>
+            <h3>Parameters</h3>
+            <form name="eos_menu" method='GET'>
+            
+                <hr class="col-md-12">
 
-            <div>
-            Chemistry Template
-            <select name="eos">
-                {% for fname in eos_files %}
-                    <option {{"selected" if eos|indent(4)|safe == fname }} value={{ fname }}>{{ process_eos(fname) }}</option>
-                {% endfor %}
-            </select>
+                <div class='form-group'>
+                    <label for="eos" class="col-sm-2 control-label">Chemistry Template</label>
+                    <div class="col-sm-10">
+                        <select class='form-control' name="eos">
+                            {% for fname in eos_files %}
+                                <option {{"selected" if eos|indent(4)|safe == fname }} value={{ fname }}>{{ process_eos(fname) }}</option>
+                            {% endfor %}
+                        </select>
+                        <span id="helpBlock" class="help-block">The stellar effective temperature</span>
+                    </div>
+                </div>
+            
+                <hr class="col-md-12">
+
+                <div class='form-group'>
+                    <label for="tp" class="col-sm-2 control-label">T-P Profile</label>
+                    <div class="col-sm-10">
+                        <select class='form-control' name="tp">
+                            {% for fname in tp_files %}
+                                <option {{"selected" if tp|indent(4)|safe == fname }} value={{ fname }}>{{ process_tp(fname) }}</option>
+                            {% endfor %}
+                        </select>
+                        <!-- <span id="helpBlock" class="help-block">Description</span> -->
+                </div>
+            
+                <hr class="col-md-12">
+
+                <div class='form-group'>
+                    <label for="g" class="col-sm-2 control-label">Planet Surface Gravity</label>
+                    <div class="col-sm-10">
+                        <div class='input-group'>
+                            <input type="text" name="g" value="{{ g }}" class='form-control' size="10" rows="1">
+                            <div class="input-group-addon" style='width:60px'>\(\small\text{m}/\text{s}^2\)</div>
+                        </div>
+                        <!-- <span id="helpBlock" class="help-block">Description</span> -->
+                    </div>
+                </div>
+            
+                <hr class="col-md-12">
+            
+                <div class='form-group'>
+                    <label for="R_p" class="col-sm-2 control-label">Planet Radius</label>
+                    <div class="col-sm-10">
+                        <div class='input-group'>
+                            <input type="text" name="R_p" value="{{ R_p }}" class='form-control' size="10" rows="1">
+                            <div class="input-group-addon" style='width:60px'>\(\small R_\text{Jup}\)</div>
+                        </div>
+                        <!-- <span id="helpBlock" class="help-block">Description</span> -->
+                    </div>
+                </div>
+            
+                <hr class="col-md-12">
+            
+                <div class='form-group'>
+                    <label for="R_s" class="col-sm-2 control-label">Star Radius</label>
+                    <div class="col-sm-10">
+                        <div class='input-group'>
+                            <input type="text" name="R_s" value="{{ R_s }}" class='form-control' size="10" rows="1">
+                            <div class="input-group-addon" style='width:60px'>\(\small R_\odot\)</div>
+                        </div>
+                        <!-- <span id="helpBlock" class="help-block">Description</span> -->
+                    </div>
+                </div>
+            
+                <hr class="col-md-12">
+            
+                <div class='form-group'>
+                    <label for="P" class="col-sm-2 control-label">Pressure of Cloud Layer</label>
+                    <div class="col-sm-10">
+                        <div class='input-group'>
+                            <input type="text" name="P" value="{{ P }}" class='form-control' size="10" rows="1">
+                            <div class="input-group-addon" style='width:60px'>\(\small \text{bar}\)</div>
+                        </div>
+                        <span id="helpBlock" class="help-block">Use 0 for no clouds</span>
+                    </div>
+                </div>
+            
+                <hr class="col-md-12">
+            
+                <div class='form-group'>
+                    <label for="Rayleigh" class="col-sm-2 control-label">Rayleigh Scattering Augmentation Factor</label>
+                    <div class="col-sm-10">
+                        <div class='input-group'>
+                            <input type="text" name="Rayleigh" value="{{ Rayleigh }}" class='form-control' size="10" rows="1">
+                            <div class="input-group-addon" style='width:60px'></div>
+                        </div>
+                        <!-- <span id="helpBlock" class="help-block">Description</span> -->
+                    </div>
+                </div>
+            
+                <hr class="col-md-12">
+            
+                <div class='form-group col-md-12'>
+                    <div class='input-group'>
+                        <input class="btn btn-success" type='submit' value='Submit'></p>
+                    </div>
+                </div>
+                                
+            </form>
+        </div>
+    
+    <div class='form-group col-md-12'>
+        <br><br><br>
+        <h3>Plot</h3>
+
+        <br>
+        <div class='form-group col-md-12'>
+            <div style="display:table; margin:0 auto;">
+                {{ plot_div|indent(4)|safe }}
             </div>
+        </div>
+        <br>
 
-            <div>
-            T-P Profile
-            <select name="tp">
-                {% for fname in tp_files %}
-                    <option {{"selected" if tp|indent(4)|safe == fname }} value={{ fname }}>{{ process_tp(fname) }}</option>
-                {% endfor %}
-            </select>
-            </div>
-
-            <div>
-                Planet Surface Gravity (m / s^2)
-                <input type="text" name="g" value="{{ g }}">
-            </div>
-
-            <div>
-                Planet Radius (Jupiter Radii)
-                <input type="text" name="R_p" value="{{ R_p }}">
-            </div>
-
-            <div>
-                Star Radius (Solar Radii)
-                <input type="text" name="R_s" value="{{ R_s }}">
-            </div>
-
-            <div>
-                Pressure of Cloud Layer (bar; use 0.0 for no cloud)
-                <input type="text" name="P" value="{{ P }}">
-            </div>
-
-            <div>
-                Rayleigh Scattering augmentation factor
-                <input type="text" name="Rayleigh" value="{{ Rayleigh }}">
-            </div>
-
-            <input class="btn" type='submit' value='Submit'></p>
-        </form>
+        <div class='form-group col-md-12'>
+            <form action="/exotransmit_result" method="post">
+                <input type="hidden" name="data_file" value="{{ table_string }}" />
+                <input class="btn btn-success" type='submit' value='Save File'></p>
+            </form>
+        </div>
+    
     </div>
-
-    <div style="display:table; margin:0 auto;">
-        {{ plot_div|indent(4)|safe }}
-    </div>
-
-    <div>
-        <form action="/exotransmit_result" method="post">
-            <input type="hidden" name="data_file" value="{{ table_string }}" />
-            <input class="btn" type='submit' value='Save File'></p>
-        </form>
-    </div>
-    <div>
+    
+    <div class='form-group col-md-12'>
+        <br><br><br>
         <h3>References</h3>
+        <br>
         <p>When publishing results based on usage of Exo-Transmit please cite:</p>
         <ul style="list-style-type:none">
         <li><a href="http://adsabs.harvard.edu/abs/2016arXiv161103871K">Kempton, E. M.-R., Lupu, R. E., Owusu-Asare, A., Slough, P., & Cale, B., 2016, arXiv:1611.03871</a></li>
@@ -121,6 +190,9 @@
         <li><a href="http://adsabs.harvard.edu/abs/2014ApJS..214...25F">Freedman, R. S., Lustig-Yaeger, J., Fortney, J. J., et al., 2014, ApJS, 214, 25</a></li>
         <li><a href="http://adsabs.harvard.edu/abs/2014ApJ...784...27L">Lupu, R. E., Zahnle, K., Marley, M. S., et al., 2014, ApJ, 784, 27</a></li>
         </ul>
-  </body>
+    </div>
+</div>
+</div>
+ </body>
 
 {% endblock%}
