@@ -3,259 +3,289 @@
 {% block content %}
 <!doctype html>
 
-            <h1>Groups & Integrations Calculator</h1>
-            <br>
+<div class='form-group'>
+    <h1>Groups & Integrations Calculator</h1>
+    <br>
             
-            <div class=metanav>
-                <p>
-                    This tool calculates the groups and integrations for an optimal transit observation.
-                    We require the transit time, maximum saturation level, a stellar magnitude, and some information 
-                    about your planned use of JWST (instrument, subarray, and filter), in order to interpolate your
-                    planned transit observation to our nearest information from 
-                    <a href="https://jwst.stsci.edu/science-planning/proposal-planning-toolbox/exposure-time-calculator-etc">pandeia</a>
-                    (which powers the <a href="https://jwst.etc.stsci.edu/">JWST ETC</a>.) 
-                    
-                </p>
+    <p>
+        This tool calculates the groups and integrations for an optimal transit observation.
+        We require the transit time, maximum saturation level, a stellar magnitude, and some information 
+        about your planned use of JWST (instrument, subarray, and filter), in order to interpolate your
+        planned transit observation to our nearest information from 
+        <a href="https://jwst.stsci.edu/science-planning/proposal-planning-toolbox/exposure-time-calculator-etc">pandeia</a>
+        (which powers the <a href="https://jwst.etc.stsci.edu/">JWST ETC</a>.) 
+        
+    </p>
 
-             <!--       <p>    
-                    How exactly do we calculate this? When is this going to a poor estimate for
-                    your star/planet/system? Well, feel free to <a href="{{ url_for('exoctk_tor_background') }}">check our math!</a>
-                    </p>  --!>
+
+    <form class='form-horizontal' id='searchform' method='post' action='tor_results' >
+        
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+            
+            <label for='mag' class="col-sm-2 control-label">Stellar Magnitude</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <input type="text" name="mag" size="7" rows="1" value='10.3' placeholder="magnitude" class='form-control' />
+                    <div class="input-group-addon" style='width:50px'>\(\small \text{mag}\)</div>
+                 </div>
+                 <span id="helpBlock" class="help-block">The magnitude of the target</span>
             </div>
-            <div class="span300"> 
-                <p>
-            <form id='searchform' method='post' action='tor_results' >
-
-            <div class="span20">
-                <h3>Star/Transit Parameters</h3>
-                Please provide some information about the host star in your transit. 
-                
-                <br></br>
-                <div class="row">
-                    
-                    <div class="span20"> 
-                    Stellar Magnitude: 
-                    <input type="text" name="mag" size="7" rows="1" value='10.3' placeholder="magnitude"/>
-                        <select name="band">
-                            <option value="H">H</option>
-                            <option value="I">I</option>    
-                            <option value="J">J</option>
-                            <option value="K">K</option>
-                            <option value="L">L</option>
-                            <option value="R">R</option>
-                            <option value="U">U</option>
-                            <option value="V">V</option>    
-                            </select>
-                    </div> 
-                </div>
-
-                <div class="row">
-                    <div class="span20">
-                        Transit Observation Time:
-                        <input type="text" name="T" size="7" rows="1" value='5'  placeholder="(in hours)"/>
-                        (in hours)
-                    </div>
-                    
-                    <div class="span10">
-                        Groups -- if you don't know enter 'optimize':
-                        <input type="text" name="groups" size="7" rows="1" value='optimize' />
-                    </div>
-                </div>
-            </div>
-<!---            
-            <div class="span20">
-                <h3>Target Acquisition Instrument Specifics</h3>
-                There are only a few options for target acquisition, but we need you to make a few choices.
-                We run this assuming that your guidestar is the host star in your transit. If that's not the case,
-                you'll need to run this separately for the transit.
-                <br></br>
-
-                <div class="row">
-                    <div class="span10">
-                        Filter:
-                        <select name="filt_ta">
-                            <optgroup label='MIRI'>
-                                <option value="F560W">F560W</option>
-                                <option value="F1000W">F1000W</option>
-                                <option value="F1500W">F1500W</option>
-                            </optgroup>
-                            <optgroup label='NIRCam'>
-                                <option value="F335M">F335M</option>
-                            </optgroup>
-                            <optgroup label='NIRSpec'>
-                                <option value="F110W">F110W</option>
-                            </optgroup>
-                            <optgroup label='NIRISS'>
-                                <option value="F480M">F480M</option>
-                            </optgroup>
-                        </select>
+            
+        </div>
+        
+        <br>
+        
+        <div class='form-group'>
                         
-                    </div>
+            <label for='band' class="col-sm-2 control-label"></label>
+            <div class="col-sm-10">
+                <div class="input-group">
+               
+                     <select class='form-control' name="band">
+                         <option value="H">H</option>
+                         <option value="I">I</option>    
+                         <option value="J">J</option>
+                         <option value="K">K</option>
+                         <option value="L">L</option>
+                         <option value="R">R</option>
+                         <option value="U">U</option>
+                         <option value="V">V</option>    
+                         </select>
+                   
                 </div>
-                <div class="row">
-
-                    <div class="span10">
-                        Subarray:
-                        <select name="subarray_ta">
-                            <optgroup label='MIRI'>
-                                <option value='SLITLESSPRISM'>SLITLESSPRISM</option>
-                            </optgroup>
-                            <optgroup label='NIRCam, NIRSpec, and NIRISS'>
-                                <option value='FULL'>FULL FRAME</option>    
-                                <option value='SUBGRISM32'>SUBGRISM32</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                </div> 
-                </div>   ---!>                         
-            <div class="span20">
-                <h3>Science Observation Instrument Specifics</h3>
-                Please provide some information on your plannet instrument, filter, and subarray use. 
-                <!--
-
-                <br></br>
-
-                Are you a little turned around about what filter goes where? What throughput level is best for 
-                your observation! That's fine!! We all are. Take a quick peep at these filter profiles...
-                <br></br>
-                {% for this_ins in button_ins %}
-                    <a class="btn" href="{{ url_for('exoctk_filter_profile', ins=this_ins) }}">{{ this_ins }}</a>
-                {% endfor %}
-                --!>
-                <br></br>
-
-                <div class="row">
-                    <div class="span4">
-                        Instrument:
-                        <select name="ins">
-                        <!---    <option value="MIRI">MIRI</option>
-                            <option value="NIRCam">NIRCam</option>
-                            <option value="NIRSpec">NIRSpec</option> ---!>
-                            <option value="NIRISS">NIRISS</option>
-                        </select>
-                    </div>
-
-                    <div class="span10">
-                        Filter:
-                        <select name="filt">
-                     <!---       <optgroup label='MIRI'>
-                                <option value="LRS">LRS</option>
-                            </optgroup>
-                            <optgroup label='NIRCam'>
-                                <option value="F322W2">F322W2</option>
-                                <option value="F444W">F444W</option>
-                                <option value="F277W">F277W</option>   
-                            </optgroup>
-                            <optgroup label='NIRSpec'>
-                                <option value="G140H">G140H</option>
-                                <option value="G140M">G140M</option>
-                                <option value="G235H">G235H</option>
-                                <option value="G235M">G235M</option>     
-                                <option value="G395H">G395H</option>
-                                <option value="G395M">G395M</option>   
-                                </optgroup> ---!>
-                            <optgroup label='NIRISS'>
-                                <option value="GR700XD">GR700XD (SOSS)</option>
-                            </optgroup>
-                        </select>
+                 <span id="helpBlock" class="help-block">The photometric band of the above magnitude</span>
+            </div>
+                
+        </div>
+        
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+            
+            <label for='T' class="col-sm-2 control-label">Observation Time</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <input type="text" name="T" size="7" rows="1" value='5' placeholder="time" class='form-control' />
+                    <div class="input-group-addon" style='width:50px'>\(\small \text{hours}\)</div>
+                 </div>
+                 <span id="helpBlock" class="help-block">The length of the observation in hours</span>
+            </div>
+            
+        </div>
+        
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+            
+            <label for='groups' class="col-sm-2 control-label">Groups Per Integration</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <input type="text" name="groups" size="7" rows="1" value='optimize' placeholder="groups" class='form-control' />
+                    <div class="input-group-addon" style='width:50px'></div>
+                 </div>
+                 <span id="helpBlock" class="help-block">If you are unsure, just enter <code>optimize</code></span>
+            </div>
+            
+        </div>
+        
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
                         
-                    </div>
+            <label for='ins' class="col-sm-2 control-label">Instrument</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+               
+                    <select class='form-control' name="ins">
+                        <option selected='selected' value="NIRISS">NIRISS</option>
+                        <option disabled='disabled' value="NIRCam">NIRCam</option>
+                        <option disabled='disabled' value="NIRSpec">NIRSpec</option>
+                        <option disabled='disabled' value="MIRI" >MIRI</option>
+                    </select>
+                   
                 </div>
-                
-                <div class="row">
-
-                    <div class="span10">
-                        Subarray:
-                        <select name="subarray">
-                    <!---        <optgroup label='MIRI'>
-                                <option value='FULL'>FULL FRAME</option> 
-                                <option value='SLITLESSPRISM'>SLITLESSPRISM</option>
-                            </optgroup>
-                            <optgroup label='NIRCam'>
-                                <option value='FULL'>FULL FRAME</option>    
-                                <option value='SUBGRISM256'>SUBGRISM256</option>    
-                                <option value='SUBGRISM128'>SUBGRISM128</option>
-                                <option value='SUBGRISM64'>SUBGRISM64</option>    
-                            </optgroup>
-                            <optgroup label='NIRSpec'>
-                                <option value='SUB2048'>SUB2048</option>    
-                                <option value='SUB1024A'>SUB1024A</option>
-                                <option value='SUB1024B'>SUB1024B</option>    
-                                <option value='SUB512'>SUB512</option>
-                                <option value='SUB512S'>SUB512S</option>    ---!>
-                            <optgroup label='NIRISS'>
-                                <option value='SUBSTRIP256'>SUBSTRIP256</option>
-                                <option value='SUBSTRIP96'>SUBSTRIP96</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <div class="span10">
-                        Outputs:
-                        <select name='amps'>
-                        <!---    <optgroup label='MIRI'>
-                                <option value='4'>4</option>
-                            </optgroup>
-                            <optgroup label='NIRCam'>
-                                <option value='1'>1</option>
-                                <option value='4'>4</option>
-                            </optgroup>
-                            <optgroup label='NIRSpec'>
-                            <option value='1'>1</option> ---!>
-                            <optgroup label='NIRISS'>
-                                <option value='1'>1</option>
-                            </optgroup>
-                        </select>
-                        </div>  
-
-
-                    </div class="span10">
-                        Resets:
-                        <input type="text" name="n_reset" size="7" value='1' />
-                        (We'll make sure to change it for you if you enter
-                        something incompatible 
-                        with your subarray.)
-                                            </div>
-           <div class="span30">
-                <h3>Maximum Saturation Limit</h3>
-                Please provide a maximum saturation level.
-                
-                <br></br>
-                
-
-                <div class="row">
-                    <div class="span10">
-                        Saturation can be input in counts or full well fraction (i.e. less than or equal to 1!)
-                        <div style="width:10em"><input type="radio" name="sat" value="counts"> counts</div>
-                        <div style="width:10em"><input type="radio" name="sat" value="well" checked> full well fraction</div>
-                    </div>
-                    
-                    <div class="span10">
-                        Saturation Level</td>
-                        <input type="text" name="sat_lvl" size="7" value='.5' placeholder='counts or full well fraction'/>
-                    </div>
-
-
-                    </div> 
-            </div>     
-
-            <div class="span300">
-                    <h3>Okay, press the button!</h3>
-
-                <input class="btn" type='submit' value='CALCULATE!'></p>
-                <br>
+                 <span id="helpBlock" class="help-block">The JWST instrument</span>
             </div>
+                
+        </div>
+        
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+                        
+            <label for='filt' class="col-sm-2 control-label">Filter</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+               
+                    <select class='form-control' name="filt">
+                        <optgroup label='NIRISS'>
+                            <option selected='selected' value="GR700XD">GR700XD (SOSS)</option>
+                        </optgroup>
+                        <optgroup label='NIRCam'>
+                            <option disabled='disabled' value="F322W2">F322W2</option>
+                            <option disabled='disabled' value="F444W">F444W</option>
+                            <option disabled='disabled' value="F277W">F277W</option>
+                        </optgroup>
+                        <optgroup label='NIRSpec'>
+                            <option disabled='disabled' value="G140H">G140H</option>
+                            <option disabled='disabled' value="G140M">G140M</option>
+                            <option disabled='disabled' value="G235H">G235H</option>
+                            <option disabled='disabled' value="G235M">G235M</option>
+                            <option disabled='disabled' value="G395H">G395H</option>
+                            <option disabled='disabled' value="G395M">G395M</option>
+                        </optgroup>
+                        <optgroup label='MIRI'>
+                            <option disabled='disabled' value="LRS">LRS</option>
+                        </optgroup>
+                    </select>
+                   
+                </div>
+                 <span id="helpBlock" class="help-block">The photometric bandpass or grism</span>
+            </div>
+                
+        </div>
 
-            </form>
-            </p>
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+                        
+            <label for='filt' class="col-sm-2 control-label">Subarray</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+               
+                    <select class='form-control' name="subarray">
+                        <optgroup label='NIRISS'>
+                            <option selected='selected' value='SUBSTRIP256'>SUBSTRIP256</option>
+                            <option value='SUBSTRIP96'>SUBSTRIP96</option>
+                        </optgroup>
+                        <optgroup label='NIRCam'>
+                            <option disabled='disabled' value='FULL'>FULL FRAME</option>
+                            <option disabled='disabled' value='SUBGRISM256'>SUBGRISM256</option>
+                            <option disabled='disabled' value='SUBGRISM128'>SUBGRISM128</option>
+                            <option disabled='disabled' value='SUBGRISM64'>SUBGRISM64</option>
+                        </optgroup>
+                        <optgroup label='NIRSpec'>
+                            <option disabled='disabled' value='SUB2048'>SUB2048</option>
+                            <option disabled='disabled' value='SUB1024A'>SUB1024A</option>
+                            <option disabled='disabled' value='SUB1024B'>SUB1024B</option>
+                            <option disabled='disabled' value='SUB512'>SUB512</option>
+                            <option disabled='disabled' value='SUB512S'>SUB512S</option>
+                        </optgroup>
+                        <optgroup label='MIRI'>
+                            <option disabled='disabled' value='FULL'>FULL FRAME</option>
+                            <option disabled='disabled' value='SLITLESSPRISM'>SLITLESSPRISM</option>
+                        </optgroup>
+                    </select>
+                </div>
+                 <span id="helpBlock" class="help-block">The detector subarray size</span>
+            </div>
+                
+        </div>
+        
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+                        
+            <label for='amps' class="col-sm-2 control-label">Outputs</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+               
+                    <select class='form-control' name="amps">
+                        <optgroup label='NIRISS'>
+                            <option selected='selected' value='1'>1</option>
+                        </optgroup>
+                        <optgroup label='NIRCam'>
+                            <option disabled='disabled' value='1'>1</option>
+                            <option disabled='disabled' value='4'>4</option>
+                        </optgroup>
+                        <optgroup label='NIRSpec'>
+                            <option disabled='disabled' value='1'>1</option>
+                        </optgroup>
+                        <optgroup label='MIRI'>
+                            <option disabled='disabled' value='4'>4</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <span id="helpBlock" class="help-block">The number of amplifiers</span>
+            </div>
+                
+        </div>
 
-            <HR>
-
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+                        
+            <label for='n_reset' class="col-sm-2 control-label">Reset Frames</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+               
+                    <select class='form-control' name="n_reset">
+                        <option selected='selected' value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10" >10</option>
+                    </select>
+                   
+                </div>
+                <span id="helpBlock" class="help-block">The number of reset frames per integration, which will be corrected if incompatible with the chosen subarray</span>
+            </div>
+                
+        </div>
+    
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+            <label for="sat" class="col-sm-2 control-label">Maximum Saturation</label>
+            <div class="col-sm-10">
+                <div class='radio-inline'>
+                    <label>
+                        <input type="radio" name="sat" value="counts"/> Counts
+                    </label>
+                </div>
+                <div class='radio-inline'>
+                    <label>
+                        <input type="radio" name="sat" value="well" checked/> Full well fraction
+                    </label>
+                </div>
+                <span id="helpBlock" class="help-block">How to measure the saturation</span>
             </div>
             
+        </div>
+        
+        <br>
+        
+        <div class='form-group'>
             
-        	
-        	
+            <label for='sat_lvl' class="col-sm-2 control-label"></label>
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <input type="text" name="sat_lvl" size="7" rows="1" value='0.5' placeholder="Counts or Full Well Fraction" class='form-control' />
+                    <div class="input-group-addon" style='width:50px'></div>
+                 </div>
+                 <span id="helpBlock" class="help-block">The level of saturation</span>
+            </div>
+            
+        </div>
+        
+        <hr class="col-md-12">
+        
+        <div class='form-group'>
+            
+            <label for='submit' class="col-sm-2 control-label">Submit!</label>
+            <div class="col-sm-10">
+              <p>
+                <input id='submit' class="btn btn-success" type='submit' value='Calculate Groups and Integrations'></p>
+                <!-- <span id="helpBlock" class="help-block">This can take up to 20 seconds! Please be patient.</span> -->
+              </p>
+             </div>
+        </div>
 
 {% endblock %}
