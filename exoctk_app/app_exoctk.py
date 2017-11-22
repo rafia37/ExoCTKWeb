@@ -11,6 +11,8 @@ import numpy as np
 import os
 import pandas as pd
 from sqlalchemy import *
+import astropy.units as u 
+import astropy.constants as constants
 
 import bokeh
 from bokeh import mpl
@@ -514,7 +516,7 @@ def exoctk_tor2():
             contamVars['tyc-55'] = 'images/contamination-TYC_5530-1795-1_PA0-360.png'
             contamVars['wasp-62'] = 'images/contamination-wasp-62_PA0-360.png'
             return render_template('tor2_results.html', contamVars = contamVars, png = png)
-        
+    
         if request.form['submit'] == 'Calculate visibility':
             contamVars['visPA'] = True
 #             dir = 'static/results'
@@ -722,38 +724,93 @@ def exotransmit_portal():
     return encode_utf8(html)
 
 def _param_fort_validation(args):
-    rstar = float(args.get('rstar',7e5))
-    temp = float(args.get('temp',1000))
-    gravity = float(args.get('gravity',100))
-    chem = str(args.get('chem','noTiO'))
-    h2he = str(args.get('h2he',True)).lower() == "true"
-    fcloud = str(args.get('fcloud',False)).lower() == "true"
-    reference_radius = float(args.get('reference_radius',10000))
-    return rstar, temp, gravity, chem, h2he, fcloud, reference_radius
+    temp = args.get('ptemp',1000)
+    chem = args.get('pchem','noTiO')
+    cloud = args.get('cloud','0')
+    pmass = args.get('pmass','1.5')
+    m_unit = args.get('m_unit','M_jup')
+    reference_radius = args.get('refrad',1)
+    r_unit = args.get('r_unit','R_jup')
+    rstar = args.get('rstar',1)
+    rstar_unit = args.get('rstar_unit','R_sun')
+    return temp,chem,cloud,pmass,m_unit,reference_radius,r_unit,rstar,rstar_unit
 
 @app_exoctk.route('/fortney_portal', methods=['GET','POST'])
 def fortney_portal():
     """
-        Pull up Forntey Grid plot the results and download
-        """
+    Pull up Forntey Grid plot the results and download
+    """
     
     # Grab the inputs arguments from the URL
     args = flask.request.args
-    rstar, temp, gravity, chem, h2he, fcloud, reference_radius = _param_fort_validation(args)
+    
+    temp,chem,cloud,pmass,m_unit,reference_radius,r_unit,rstar,rstar_unit = _param_fort_validation(args)
     #get sqlite database
 
-    db = create_engine('sqlite:///'+os.environ.get('FORTGRID_DIR'))
-    header= pd.read_sql_table('header',db)
+    try:
+        db = create_engine('sqlite:///'+os.environ.get('FORTGRID_DIR'))
+        header= pd.read_sql_table('header',db)
+    except:
+        raise Exception('Fortney Grid File Path is incorrect, or not initialized')
 
     if args:
-        df = header.loc[(header.gravity==gravity) & (header.temp==temp)
-                           & (header.chem==chem) & (header.h2he==h2he) &
-                           (header.fcloud==fcloud) & (header.reference_radius==reference_radius)]
+        rstar=float(rstar)
+        rstar = (rstar*u.Unit(rstar_unit)).to(u.km)
+        reference_radius = float(reference_radius)
+        rplan = (reference_radius*u.Unit(r_unit)).to(u.km)
 
-        x=pd.read_sql_table(df['name'].values[0],db)['wavelength']
-        y=pd.read_sql_table(df['name'].values[0],db)['radius']**2.0/rstar**2.0
-    else:
-        df= pd.read_sql_table('t1000g100_noTiO',db)
+        #clouds 
+        if cloud.find('flat') != -1: 
+            flat = int(cloud[4:])
+            ray = 0 
+        elif cloud.find('ray') != -1: 
+            ray = int(cloud[3:])
+            flat = 0 
+        elif int(cloud) == 0: 
+            flat = 0 
+            ray = 0     
+        else:
+            flat = 0 
+            ray = 0 
+            print('No cloud parameter not specified, default no clouds added')
+        
+        #chemistry 
+        if chem == 'noTiO': 
+            noTiO = True
+        if chem == 'eqchem': 
+            noTiO = False
+            #grid does not allow clouds for cases with TiO
+            flat = 0 
+            ray = 0 
+
+        fort_grav = 25.0*u.m/u.s/u.s
+
+        temp = float(temp)
+        df = header.loc[(header.gravity==fort_grav) & (header.temp==temp)
+                           & (header.noTiO==noTiO) & (header.ray==ray) &
+                           (header.flat==flat)]
+
+        wave_planet=np.array(pd.read_sql_table(df['name'].values[0],db)['wavelength'])[::-1]
+        r_lambda=np.array(pd.read_sql_table(df['name'].values[0],db)['radius'])*u.km
+        z_lambda = r_lambda- (1.25*u.R_jup).to(u.km) #all fortney models have fixed 1.25 radii
+        
+        #scale with planetary mass 
+        pmass=float(pmass)
+        mass = (pmass*u.Unit(m_unit)).to(u.kg)
+        gravity = constants.G*(mass)/(rplan.to(u.m))**2.0 #convert radius to m for gravity units
+        #scale lambbda (this technically ignores the fact that scaleheight is altitude dependent)
+        #therefore, it will not be valide for very very low gravities
+        z_lambda = z_lambda*fort_grav/gravity
+        
+        #create new wavelength dependent R based on scaled ravity
+        r_lambda = z_lambda + rplan
+        #finally compute (rp/r*)^2
+        flux_planet = np.array(r_lambda**2/rstar**2)
+
+        x=wave_planet
+        y=flux_planet
+    else:   
+        df= pd.read_sql_table('t1000g25_noTiO',db)
         x, y = df['wavelength'], df['radius']**2.0/7e5**2.0
     
     tab = at.Table(data=[x, y])
@@ -777,13 +834,7 @@ def fortney_portal():
                                  plot_div=div,
                                  js_resources=js_resources,
                                  css_resources=css_resources,
-                                 rstar = rstar,
                                  temp=list(map(str, header.temp.unique())),
-                                 gravity=list(map(str, header.gravity.unique())),
-                                 chem=list(map(str, header.chem.unique())),
-                                 h2he=list(map(str, header.h2he.unique())),
-                                 fcloud=list(map(str, header.fcloud.unique())),
-                                 reference_radius=list(map(str, header.reference_radius.unique())),
                                  table_string=table_string
                                  )
     return encode_utf8(html)

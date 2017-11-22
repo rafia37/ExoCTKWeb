@@ -15,79 +15,116 @@
     <div class="page">
         <h1>Fortney Grid</h1>
 
-            <div class=metanav>
+            <div class="col-md-9">
                 <p>
-                Some info about the fortney grid. 
-                </p>
-                <p>
-                Should probably go here. 
+                This is the grid of models created in <a href="http://adsabs.harvard.edu/abs/2010ApJ...709.1396F">Fortney et al. 2010</a> and used in <a href="http://adsabs.harvard.edu/abs/2016Natur.529...59S">Sing et al. 2016</a>. Downloaded files are in two column format with Col 1: micron, Col 2: (Rp/R*)<sup>2</sup>. These can be directly uploaded to PandExo. This form is also directly embeded in <a href="http://exoctk.stsci.edu/pandexo/calculation/new">PandExo</a>.  
+
                 </p>
 
             </div>
     
-    <div>
-        <h3>Parameters</h3>
-        <form name="fort_menu" method='GET'>
-            <div>
-                Stellar Radius (km)
-                <input type="text" name="rstar" value="7e5">
-            </div>
+    <div class='form-group'>
+                <hr class="col-md-11 col-md-offset-1">
 
-            <div>
-            Temperature
-            <select name="temp">
+        <form name="fort_menu" method='GET'>
+        
+        <div class='form-group'>
+            <label class="col-md-3 control-label" for="ptemp">Planet Temp (K)</label>
+         <div class="col-md-3">
+            <select id="ptemp" name="ptemp" class="form-control" data-placeholder="Select Temp (K)">
+                <option value=""></option> 
                 {% for i in temp %}
                     <option {{ i }} value={{ i }}>{{ i }}</option>
-                {% endfor %}
+                {% endfor %}               
             </select>
-            </div>
-            
-            <div>
-            Reference Radius (km)
-            <select name="reference_radius">
-                {% for i in reference_radius %}
-                    <option {{ i }} value={{ i }}>{{ i }}</option>
-                {% endfor %}
+        </div>
+        </div>
+        <hr class="col-md-11 col-md-offset-1">
+        <div class='form-group'>
+            <label class="col-md-3 control-label" for="pchem">Select Chemistry Type</label>
+         <div class="col-md-3"">
+            <select id="pchem" name="pchem" class="form-control" data-placeholder="Select Chemistry">
+                <option value=""></option> 
+                <option value='noTiO'>Equilibrium Chemistry</option>  
+                <option value='eqchem'>Equilibrium Chemistry, w/ TiO</option>         
             </select>
-            </div>
-
-            <div>
-            Gravity m/s^2
-            <select name="gravity">
-                {% for i in gravity %}
-                    <option {{ i }} value={{ i }}>{{ i }}</option>
-                {% endfor %}
+        </div> 
+        </div> 
+        <hr class="col-md-11 col-md-offset-1">
+        <div class='form-group'>
+        <label class="col-md-3 control-label" for="cloud">Clouds or Scattering?</label>
+        <div class="col-md-3">
+            <select id="cloud" name="cloud" class="form-control" data-placeholder="Clouds/Scattering">
+                <option value=""></option> 
+                <option value="0">Nothing</option>  
+                <option value="ray10">Weak Rayleigh</option>  
+                <option value="ray100">Medium Rayleigh</option>             
+                <option value="ray1000">Strong Rayleigh</option>             
+                <option value="flat1">Weak Cloud</option>  
+                <option value="flat10">Medium Cloud</option>             
+                <option value="flat100">Strong Cloud</option>             
             </select>
+        </div> 
+        </div> 
+
+        <hr class="col-md-11 col-md-offset-1">
+
+        <div class='form-group'>
+            <label class="col-md-3 control-label" for="pmass">Planet Mass</label>
+          <div class="col-md-4 form-inline">
+            <input type="text" class="form-control" id="pmass" name="pmass" style="width: 70%;" value="1.5">
+        <div class="input-group-btn" style="width: 20%;left: -4px;display: inline-block;">
+            <select id="m_unit" name="m_unit" class="form-control">
+                <option value='M_jup'>M<sub>J</sub></option>   
+                <option value='kilogram'>Kg</option>  
+                <option value='g'>g</option>  
+                <option value='M_earth'>M<sub>E</sub></option> 
+                <option value='M_sun'>M<sub>S</sub></option>          
+            </select>
+            </div> 
+        </div>
+        </div>
+
+        <hr class="col-md-11 col-md-offset-1">
+        <div class='form-group'>
+            <label class="col-md-3 control-label" for="refrad">Planet Radius</label>
+        <div class="col-md-4 form-inline">
+            <input type="text" class="form-control" id="refrad" name="refrad" style="width: 70%;" value="1.25">
+            <div class="input-group-btn" style="width: 20%;left: -4px;display: inline-block;">
+                <select id="r_unit" name="r_unit" class="form-control">
+                <option value='R_jup'>R<sub>J</sub></option>   
+                <option value='kilometer'>Km</option>  
+                <option value='m'>m</option>  
+                <option value='R_earth'>R<sub>E</sub></option> 
+                <option value='R_sun'>R<sub>S</sub></option>  
+                </select>
             </div>
+        </div>
+    </div>
 
-            <div>
-                Chemistry
-                <select name="chem">
-                {% for i in chem %}
-                    <option {{ i }} value={{ i }}>{{ i }}</option>
-                {% endfor %}
-            </select>            
+        <hr class="col-md-11 col-md-offset-1">
+    <div class='form-group'>
+            <label class="col-md-3 control-label" for="rstar">Stellar Radius</label>
+         <div class="col-md-4 form-inline">
+            <input type="text" class="form-control" id="rstar" name="rstar" style="width: 70%;" value="1">
+            <div class="input-group-btn" style="width: 20%;left: -4px;display: inline-block;">
+                <select id="rstar_unit" name="rstar_unit" class="form-control">
+                <option value='R_sun'>R<sub>S</sub></option>
+                <option value='kilometer'>Km</option>  
+                <option value='m'>m</option>  
+                <option value='R_earth'>R<sub>E</sub></option> 
+                <option value='R_jup'>R<sub>J</sub></option>  
+                </select>
             </div>
-
-            <div>
-                H2-He
-                <select name="h2he">
-                {% for i in h2he %}
-                    <option {{ i }} value={{ i }}>{{ i }}</option>
-                {% endfor %}
-            </select>            
+        </div>
+        </div>
+ <hr class="col-md-11 col-md-offset-1">
+        <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-9">
+                <button type="submit" class="btn btn-success">Submit</button>
             </div>
+        </div>
 
-            <div>
-                Cloud
-                <select name="fcloud">
-                    <option value="True">True</option>
-                    <option value="False">False</option>
-                </select>             
-            </div>
-
-
-            <input class="btn btn-success" type='submit' value='Submit'></p>
         </form>
     </div>
 
