@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,600');
+
+body {
+    font-family: 'Open Sans', "Helvetica Neue", Helvetica, Arial, sans-serif;
+    padding-top: 50px;
+}
 
 #myTable{
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -66,4 +72,3 @@
 .page table.results th {background-color: #cccccc; border: 1px solid black; padding: 15px; text-align: left;}
 
 .page table {border-spacing: 10px; border-collapse: separate;}
-

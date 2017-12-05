@@ -2,56 +2,81 @@
 {% block content %}
 
 
-                <p  style="WIDTH:1000px">
+                <div class="row">
+                    <div class="col-md-9">
                     
                     ExoCTK (the Exoplanet Characterixation Tool Kit) is an open-source, modular, data analysis software package 
                     focused primarily on atompspheric characterization of exoplanets and observation planning. 
                     This web application runs the most recent available version of ExoCTK through this web portal designed to
                     single out the most useful tools for observation planning, forward modeling, data reduction, limb darkening,
                     light curve fitting, and retrievals. </p> 
-
-                    <br></br>
-
-                
-                <div class="row">
-                    <div class="span3">
-                        <h3>Observation Planning</h3>
-                        <p> Tools for observation planning with JWST.</p>
-                            <p><a class="btn" href="./tor">Integrations and Groups</a></p>
-                            <p><a class="btn" href="./tor2">Contamination Overlap</a></p>
-                    </div>
-                    <div class="span3">
-                        <h3>Forward Modeling</h3>
-                        <p>Atmospheric forward modeling tools.</p>
-                            <p><a class="btn" href="./exotransmit_portal">Exo-Transmit</a></p>
-                    </div>
-                    <div class="span5">
-                        <h3>Limb Darkening Calculator</h3>
-                        <p>Tools to estimate limb darkening in your host star.</p>
-                            <p><a class="btn" href="./ldc">Limb Darkening Calculator</a></p>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class="span3">
-                    <h3>Coming Soon</h3>
-                    <ul>
-                        <li style="color:#808080">Data Reduction</li>
-                        <li style="color:#808080">Light Curve Fitting</li>
-                        <li style="color:#808080">Retrievals</li>
-                    </ul>
+                <hr class="col-md-12">
+                <div class="form-group col-sm-12">
+                    
+                    
+                    <div class="col-sm-6">
+                        <h3>Observation Planning</h3>
+                        <span id="helpBlock" class="help-block">Tools for observation planning with JWST</span>
+                        <a class="btn btn-primary" href="./tor">Integrations and Groups</a>
+                        <a class="btn btn-primary" href="./tor2">Contamination Overlap</a>
                     </div>
                     
-                    <div class="span5">
-                    <h3> GitHub Source Code</h3>
-                    <ul>
-                        <li><a href="https://github.com/ExoCTK/ExoCTK">ExoCTK</a> is the computing package behind the website.</li>
-                        <li><a href="https://github.com/ExoCTK/ExoCTKWeb">ExoCTKWeb</a> is the literal source code of this website.</li>
-                        <li><a href="https://github.com/ExoCTK/PandExo_HST">PandExo_HST</a> is our counterpart for HST observations.</li>
-                    </ul>
+                    <div class="col-sm-6">
+                        <h3>Forward Modeling</h3>
+                        <span id="helpBlock" class="help-block">Atmospheric forward modeling tools</span>
+                        <a class="btn btn-primary" href="./exotransmit_portal">Exo-Transmit</a>
+                        <a class="btn btn-primary" href="./fortney_portal">Fortney Grid</a>
+                    </div>
+                    
+                </div>
+                
+                <div class="form-group col-sm-12">
+                    
+                    <div class="col-sm-6">
+                        <h3>Limb Darkening Calculator</h3>
+                        <p>Tools to estimate limb darkening in your host star.</p>
+                            <p><a class="btn btn-primary" href="./ldc">Limb Darkening Calculator</a></p>
+                    </div>
+                    
+                    <div class="col-sm-6">
+                        <h3>Atmospheric Retrievals</h3>
+                        <span id="helpBlock" class="help-block">Tools for Bayesian atmospheric retrievals</span>
+                        <a class="btn btn-default disabled" href="./bar">Atmospheric Retrievals</a>
+                    </div>
+                    
+                </div>
+                
+                <div class="form-group col-sm-12">
+                    
+                    <div class="col-sm-6">
+                        <h3>Light Curve Fitting</h3>
+                        <span id="helpBlock" class="help-block">Tools to fit the parameters of derived light curves</span>
+                        <a class="btn btn-default disabled" href="./lcf">Light Curve Fitting</a>
                     </div>
 
+                    <div class="col-sm-6">
+                        <h3>Data Reduction</h3>
+                        <span id="helpBlock" class="help-block">A variety of data reduction tools</span>
+                        <a class="btn btn-default disabled" href="./drt">Data Reduction</a>
+                    </div>
+                    
                 </div>
+                
+                <hr class="col-md-12">
+                <br>
+                
+                    
+                <div>
+                    <h3> GitHub Source Code</h3>
+                        <ul>
+                            <li><a href="https://github.com/ExoCTK/ExoCTK">ExoCTK</a> is the computing package behind the website.</li>
+                            <li><a href="https://github.com/ExoCTK/ExoCTKWeb">ExoCTKWeb</a> is the literal source code of this website.</li>
+                            <li><a href="https://github.com/ExoCTK/PandExo_HST">PandExo_HST</a> is our counterpart for HST observations.</li>
+                        </ul>
+                </div>
+
 
 <script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
 <script src="//cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/2/dataTables.bootstrap.js"></script>
