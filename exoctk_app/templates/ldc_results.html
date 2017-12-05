@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-        
+
+    <body>
+        {{ js|indent(4)|safe }}
+        {{ css|indent(4)|safe }}
         {{ script|safe }}
         {{ filt_script|safe }}
 
@@ -16,8 +19,9 @@
 
             <div style='float:left; width:500px;'>
                 <h3>Input</h3>
+                <br>
                 
-                    <table>
+                    <table class='table'>
                         <tr>
                             <td>Teff</td>
                             <td>{{teff|safe}}</td>
@@ -45,7 +49,7 @@
                     </table>
 
             </div>
-            <div style='float:right; width:450px;margin-top:10px;'>
+            <div style='float:right; width:450px;margin-top:40px;'>
                 {{filt_plot|safe}}
             </div>
             <div class='clearfix'></div>
@@ -54,7 +58,7 @@
             
             <h3>Result</h3>
             
-            <div style='clear:both;'>
+            <div style='clear:both;margin:40px 0px'>
                 {{ plot|safe }}
             </div>
             <div style="clear:both;"></div>
@@ -87,5 +91,7 @@
             </form> -->
 
         </div>
+        
+    </body>
 
 {% endblock %}
