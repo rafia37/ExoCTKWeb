@@ -200,6 +200,9 @@ def exoctk_ldc_results():
             
             bk_plot.xaxis.axis_label = 'Wavelength [um]'
             bk_plot.yaxis.axis_label = 'Throughput'
+            
+            js_resources = INLINE.render_js()
+            css_resources = INLINE.render_css()
             filt_script, filt_plot = components(bk_plot)
         
             plt.close()
@@ -300,10 +303,10 @@ def exoctk_ldc_results():
         
         # Add the results to the lists
         html_table = '\n'.join(table.pformat(max_width=500, html=True))\
-                     .replace('<table','<table id="myTable"')
+                     .replace('<table','<table id="myTable" class="table table-striped table-hover"')
         
         # Add the table title
-        header = '<br></br><strong>{}</strong><br><p>\(I(\mu)/I(\mu=1)\) = {}</p><br></br>'.format(profile,poly)
+        header = '<br></br><strong>{}</strong><br><p>\(I(\mu)/I(\mu=1)\) = {}</p>'.format(profile,poly)
         html_table = header+html_table
 
         profile_tables.append(html_table)
@@ -312,7 +315,7 @@ def exoctk_ldc_results():
                 band=bp_name, mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \
                 script=script, plot=div, file_as_string=repr(file_as_string), \
-                filt_plot=filt_plot, filt_script=filt_script)
+                filt_plot=filt_plot, filt_script=filt_script, js=js_resources, css=css_resources)
 
 # Load the LDC error page
 @app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
