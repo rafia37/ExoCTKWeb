@@ -13,6 +13,10 @@ import pandas as pd
 from sqlalchemy import *
 import astropy.units as u 
 import astropy.constants as constants
+import sqlite3
+import datetime
+from ExoCTKWeb import exoctk_app
+from ExoCTKWeb.exoctk_app import log_exoctk
 
 import bokeh
 from bokeh import mpl
@@ -55,9 +59,14 @@ app_exoctk.config['CACHE_TYPE'] = 'null'
 
 exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
 modelgrid_dir = os.environ.get('MODELGRID_DIR')
-
-#fortney grid
+package_dir = os.path.dirname(os.path.realpath(exoctk_app.__file__))
 fortgrid_dir = os.environ.get('FORTGRID_DIR')
+
+# Load the database to log all form submissions
+dbpath = package_dir+'/exoctk_log.db'
+if not os.path.isfile(dbpath):
+    log_exoctk.create_db(dbpath, package_dir+'/schema.sql')
+DB = log_exoctk.load_db(dbpath)
 
 # register the cache instance and binds it on to your app
 # cache = Cache(app_exoctk)
@@ -95,6 +104,9 @@ def exoctk_ldc():
 # Load the LDC results page
 @app_exoctk.route('/ldc_results', methods=['GET', 'POST'])
 def exoctk_ldc_results():
+    
+    # Log the form inputs
+    log_exoctk.log_form_input(request.form, 'ldc', DB)
         
     # Get the input from the form
     modeldir = request.form['modeldir']
