@@ -253,8 +253,7 @@ def exoctk_ldc_results():
                          
     # Calculate the coefficients for each profile
     grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
-                    mu_min=mu_min, bandpass=bandpass, plot=False, colors=COLORS,
-                    save='output.txt')
+                    mu_min=mu_min, bandpass=bandpass, plot=False, colors=COLORS)
                     
     # Draw the figure
     tabs = []
@@ -279,10 +278,8 @@ def exoctk_ldc_results():
     # Get HTML
     script, div = components(final)
     
-    # Read the file into a string and delete it
-    with open('output.txt', 'r') as f:
-        file_as_string = f.read()
-    os.remove('output.txt')
+    # Store the tables as a string
+    file_as_string = '\n\n'.join(["{}:\n{}".format(p,str(grid_point[p]['coeffs'])) for p in profiles])
     
     # # Format mu and r_eff vals
     # r_eff = '{:.4f} R_\odot'.format(grid_point['r_eff']*1.438e-11)
