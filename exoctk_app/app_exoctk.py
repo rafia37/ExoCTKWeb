@@ -39,7 +39,8 @@ from flask import make_response
 from flask import redirect
 from flask import render_template
 from flask import request
-#from flask_cache import Cache
+from flask import send_file
+from flask import send_from_directory
 
 import ExoCTK
 from ExoCTK.pal import exotransmit
@@ -852,7 +853,21 @@ def save_exotransmit_result():
     return flask.Response(table_string, mimetype="text/dat",
                           headers={"Content-disposition":
                                       "attachment; filename=exotransmit.dat"})
-                                      
+
+
+@app_exoctk.route('/tor_download')
+def tor_download():
+    tor_data = os.environ['tor_pandeia_path'] 
+    return send_file(tor_data, mimetype="text/json", attachment_filename='tor_input_data.json', as_attachment=True)
+
+
+@app_exoctk.route('/fortney_download')
+def fortney_download():
+    fortney_data = os.environ['FORTGRID_DIR']
+    return send_file(fortney_data, attachment_filename='fortney_grid.db', as_attachment=True)
+
+
+
 ## -- RUN
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
