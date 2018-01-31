@@ -1,3 +1,6 @@
+"""
+This module creates and manages a SQL database as a log for all jobs submitted via the ExoCTKWeb app
+"""
 import os
 import sqlite3
 import datetime
@@ -29,6 +32,14 @@ def create_db(dbpath, schema, overwrite=True):
         print("Please provide a path and file name with a .db file extension, e.g. /Users/<username>/Desktop/test.db")
 
 def load_db(dbpath):
+    """
+    Load a database
+    
+    Parameters
+    ----------
+    dbpath: str
+        The path to the .db database file
+    """
     if os.path.isfile(dbpath):
     
         con = sqlite3.connect(dbpath, isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
@@ -42,6 +53,15 @@ def load_db(dbpath):
 def log_form_input(form_dict, table, database):
     """
     A function to store the form inputs of any page GET requests in a database
+    
+    Parameters
+    ----------
+    form_dict: dict
+        The dictionary of form inputs
+    table: str
+        The table name to INSERT on
+    database: sqlite.connection.cursor
+        The database cursor object
     """
     # Convert hyphens to underscores and leading numerics to letters for db column names
     inpt = {k.replace('-','_').replace('3','three').replace('4','four'):v[0] for k,v in dict(form_dict).items()}
