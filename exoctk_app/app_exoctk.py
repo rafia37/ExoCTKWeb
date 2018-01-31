@@ -57,15 +57,16 @@ app_exoctk = Flask(__name__)
 # define the cache config keys, remember that it can be done in a settings file
 app_exoctk.config['CACHE_TYPE'] = 'null'
 
-exotransmit_dir = os.environ.get('EXOTRANSMIT_DIR')
-modelgrid_dir = os.environ.get('MODELGRID_DIR')
-package_dir = os.path.dirname(os.path.realpath(exoctk_app.__file__))
-fortgrid_dir = os.environ.get('FORTGRID_DIR')
+EXOTRANSMIT_DIR = os.environ.get('EXOTRANSMIT_DIR')
+MODELGRID_DIR = os.environ.get('MODELGRID_DIR')
+PKG_DIR = os.path.dirname(os.path.realpath(exoctk_app.__file__))
+FORTGRID_DIR = os.environ.get('FORTGRID_DIR')
+LOG_DIR = os.environ.get('JOBLOG_DIR')
 
 # Load the database to log all form submissions
-dbpath = package_dir+'/exoctk_log.db'
+dbpath = os.path.join(LOG_DIR,'exoctk_log.db')
 if not os.path.isfile(dbpath):
-    log_exoctk.create_db(dbpath, package_dir+'/schema.sql')
+    log_exoctk.create_db(dbpath, os.path.join(PKG_DIR,'schema.sql'))
 DB = log_exoctk.load_db(dbpath)
 
 # register the cache instance and binds it on to your app
@@ -119,7 +120,7 @@ def exoctk_ldc_results():
 
     # Get models from local directory if necessary
     if modeldir=='default':
-        modeldir = modelgrid_dir
+        modeldir = MODELGRID_DIR
     
     try:
         teff = int(request.form['teff'])
@@ -565,11 +566,11 @@ def exoctk_savefile():
 def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
     current_dir = os.path.abspath(os.curdir)
     now = datetime.now().isoformat()
-    os.chdir(os.path.join(exotransmit_dir, 'runs'))
+    os.chdir(os.path.join(EXOTRANSMIT_DIR, 'runs'))
     os.mkdir(now)
     os.chdir(now)
-    output_file = os.path.relpath('result.dat', start=exotransmit_dir)
-    exotransmit.exotransmit(base_dir=exotransmit_dir,
+    output_file = os.path.relpath('result.dat', start=EXOTRANSMIT_DIR)
+    exotransmit.exotransmit(base_dir=EXOTRANSMIT_DIR,
                             EOS_file=os.path.join('/EOS', eos),
                             T_P_file=os.path.join('/T_P', tp),
                             g=g,
@@ -581,7 +582,7 @@ def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
                             )
     x, y = np.loadtxt('result.dat', skiprows=2, unpack=True)
     os.chdir(current_dir)
-    shutil.rmtree(os.path.join(exotransmit_dir, 'runs', now))
+    shutil.rmtree(os.path.join(EXOTRANSMIT_DIR, 'runs', now))
     return x, y
 
 @app_exoctk.context_processor
@@ -621,7 +622,7 @@ def _param_validation(args):
     eos = args.get('eos', 'eos_0p1Xsolar_cond.dat')
     try:
         str(eos)
-        if eos not in os.listdir(os.path.join(exotransmit_dir,'EOS')):
+        if eos not in os.listdir(os.path.join(EXOTRANSMIT_DIR,'EOS')):
             invalid['eos'] = "Invalid chemistry template file"
             eos = 'eos_0p1Xsolar_cond.dat'
     except ValueError:
@@ -631,7 +632,7 @@ def _param_validation(args):
     tp = args.get('tp', 't_p_800K.dat')
     try:
         str(tp)
-        if eos not in os.listdir(os.path.join(exotransmit_dir,'EOS')):
+        if eos not in os.listdir(os.path.join(EXOTRANSMIT_DIR,'EOS')):
             invalid['tp'] = "Invalid TP file"
             tp = 't_p_800K.dat'
     except ValueError:
@@ -690,7 +691,7 @@ def exotransmit_portal():
     """
         Run Exo-Transmit taking inputs from the HTML form and plot the results
         """
-    if exotransmit_dir is None:
+    if EXOTRANSMIT_DIR is None:
         return render_template('tor_error.html', tor_err="There seems to be no directory in place for exo-transmit...")
     
     # Grab the inputs arguments from the URL
@@ -702,7 +703,7 @@ def exotransmit_portal():
     if args:
         x, y = exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh)
     else:
-        x, y = np.loadtxt(os.path.join(exotransmit_dir, 'Spectra/default.dat'), skiprows=2, unpack=True)
+        x, y = np.loadtxt(os.path.join(EXOTRANSMIT_DIR, 'Spectra/default.dat'), skiprows=2, unpack=True)
     
     tab = at.Table(data=[x/1e-6, y/100])
     fh = StringIO()
@@ -725,8 +726,8 @@ def exotransmit_portal():
                                  plot_div=div,
                                  js_resources=js_resources,
                                  css_resources=css_resources,
-                                 eos_files=os.listdir(os.path.join(exotransmit_dir,'EOS')),
-                                 tp_files=os.listdir(os.path.join(exotransmit_dir, 'T_P')),
+                                 eos_files=os.listdir(os.path.join(EXOTRANSMIT_DIR,'EOS')),
+                                 tp_files=os.listdir(os.path.join(EXOTRANSMIT_DIR, 'T_P')),
                                  tp=tp,
                                  eos=eos,
                                  g=g,
