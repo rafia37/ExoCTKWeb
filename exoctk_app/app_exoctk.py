@@ -61,10 +61,10 @@ EXOTRANSMIT_DIR = os.environ.get('EXOTRANSMIT_DIR')
 MODELGRID_DIR = os.environ.get('MODELGRID_DIR')
 PKG_DIR = os.path.dirname(os.path.realpath(exoctk_app.__file__))
 FORTGRID_DIR = os.environ.get('FORTGRID_DIR')
-LOG_DIR = os.environ.get('JOBLOG_DIR')
+EXOCTKLOG_DIR = os.environ.get('EXOCTKLOG_DIR')
 
 # Load the database to log all form submissions
-dbpath = os.path.join(LOG_DIR,'exoctk_log.db')
+dbpath = os.path.join(EXOCTKLOG_DIR,'exoctk_log.db')
 if not os.path.isfile(dbpath):
     log_exoctk.create_db(dbpath, os.path.join(PKG_DIR,'schema.sql'))
 DB = log_exoctk.load_db(dbpath)

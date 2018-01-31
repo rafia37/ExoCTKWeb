@@ -2,8 +2,10 @@
 This module creates and manages a SQL database as a log for all jobs submitted via the ExoCTKWeb app
 """
 import os
+import numpy as np
 import sqlite3
 import datetime
+import astropy.table as at
 
 def create_db(dbpath, schema, overwrite=True):
     """
@@ -73,3 +75,38 @@ def log_form_input(form_dict, table, database):
     qmarks = ', '.join('?' * len(inpt))
     qry = "Insert Into {} ({}) Values ({})".format(table, ', '.join(inpt.keys()), qmarks)
     database.execute(qry, list(inpt.values()))
+    
+def view_log(database, table):
+    """
+    Visually inspect the job log
+    
+    Parameters
+    ----------
+    database: str, sqlite3.connection.cursor
+        The database cursor object
+    table: str
+        The table name
+    """
+    if isinstance(database, str):
+        DB = load_db(database)
+    elif isinstance(database, sqlite3.Cursor):
+        DB = database
+    else:
+        print("Please enter the path to a .db file or a sqlite.Cursor object.")
+        
+    # Query the database
+    table = scrub(table)
+    colnames = np.array(database.execute("PRAGMA table_info('{}')".format(table)).fetchall()).T[1]
+    results = database.execute("SELECT * FROM {}".format(table)).fetchall()
+    
+    results = at.Table(list(np.array(results).T), names=colnames)
+    
+    # Print them
+    return results
+    
+def scrub(table_name):
+    """
+    Snippet to prevent SQL injection attcks!
+    """
+    return ''.join( chr for chr in table_name if chr.isalnum() )
+    
