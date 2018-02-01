@@ -25,5 +25,17 @@ CREATE TABLE "ldc" (
 
 CREATE TABLE "tor" (
     'id'    INTEGER NOT NULL UNIQUE,
-    
+    'date'  TEXT NOT NULL,
+    'ins'   TEXT,
+    'mag'   REAL,
+    'groups'    TEXT,
+    'amps'  INTEGER,
+    'subarray'  TEXT,
+    'sat_lvl'   REAL,
+    'sat'   TEXT,
+    'T' REAL,
+    'n_reset'   INTEGER,
+    'band'  TEXT,
+    'filt'  TEXT,
+    PRIMARY KEY(id)
 );

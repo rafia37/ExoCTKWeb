@@ -74,6 +74,7 @@ def log_form_input(form_dict, table, database):
     # Insert the form valsues
     qmarks = ', '.join('?' * len(inpt))
     qry = "Insert Into {} ({}) Values ({})".format(table, ', '.join(inpt.keys()), qmarks)
+    print(qry,len(qmarks))
     database.execute(qry, list(inpt.values()))
     
 def view_log(database, table):

@@ -439,6 +439,9 @@ def exoctk_tor():
 # Load the TOR results
 @app_exoctk.route('/tor_results', methods=['GET', 'POST'])
 def exoctk_tor_results():
+
+    # Log the form inputs
+    log_exoctk.log_form_input(request.form, 'tor', DB)
     
     try:
         n_group = request.form['groups']
