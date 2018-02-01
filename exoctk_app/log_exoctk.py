@@ -65,8 +65,11 @@ def log_form_input(form_dict, table, database):
     database: sqlite.connection.cursor
         The database cursor object
     """
-    # Convert hyphens to underscores and leading numerics to letters for db column names
-    inpt = {k.replace('-','_').replace('3','three').replace('4','four'):v[0] for k,v in dict(form_dict).items()}
+    try:
+        # Convert hyphens to underscores and leading numerics to letters for db column names
+        inpt = {k.replace('-','_').replace('3','three').replace('4','four'):v[0] for k,v in dict(form_dict).items()}
+    except TypeError:
+        inpt = form_dict
     
     # Add a timestamp
     inpt['date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -74,7 +77,7 @@ def log_form_input(form_dict, table, database):
     # Insert the form valsues
     qmarks = ', '.join('?' * len(inpt))
     qry = "Insert Into {} ({}) Values ({})".format(table, ', '.join(inpt.keys()), qmarks)
-    print(qry,len(qmarks))
+    
     database.execute(qry, list(inpt.values()))
     
 def view_log(database, table):

@@ -39,3 +39,16 @@ CREATE TABLE "tor" (
     'filt'  TEXT,
     PRIMARY KEY(id)
 );
+
+CREATE TABLE "exotransmit" (
+    'id'    INTEGER NOT NULL UNIQUE,
+    'date'  TEXT NOT NULL,
+    'eos'   TEXT,
+    'tp'    TEXT,
+    'g' REAL,
+    'R_p'   REAL,
+    'R_s'   REAL,
+    'P' REAL,
+    'Rayleigh'  REAL,
+    PRIMARY KEY(id)
+);

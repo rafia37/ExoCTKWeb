@@ -1,6 +1,5 @@
 ## -- IMPORTS
 import glob
-from datetime import datetime
 import os
 import shutil
 from astropy.extern.six.moves import StringIO
@@ -568,7 +567,7 @@ def exoctk_savefile():
 
 def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
     current_dir = os.path.abspath(os.curdir)
-    now = datetime.now().isoformat()
+    now = datetime.datetime.now().isoformat()
     os.chdir(os.path.join(EXOTRANSMIT_DIR, 'runs'))
     os.mkdir(now)
     os.chdir(now)
@@ -686,6 +685,10 @@ def _param_validation(args):
     except ValueError:
         invalid['Rayleigh'] = "Rayleigh augmentation must be a float"
         Rayleigh = 1.0
+        
+    # Log the form inputs
+    inpt = {k:v for k,v in zip(['eos', 'tp', 'g', 'R_p', 'R_s', 'P', 'Rayleigh'],[eos, tp, g, R_p, R_s, P, Rayleigh])}
+    log_exoctk.log_form_input(inpt, 'exotransmit', DB)
 
     return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
 
