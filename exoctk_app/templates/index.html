@@ -18,14 +18,14 @@
                     
                     <div class="col-sm-6">
                         <h3>Observation Planning</h3>
-                        <span id="helpBlock" class="help-block">Tools for observation planning with JWST</span>
+                        <span id="helpBlock" class="help-block">Tools for observation planning with JWST.</span>
                         <a class="btn btn-primary" href="./tor">Integrations and Groups</a>
                         <a class="btn btn-primary" href="./tor2">Contamination Overlap</a>
                     </div>
                     
                     <div class="col-sm-6">
                         <h3>Forward Modeling</h3>
-                        <span id="helpBlock" class="help-block">Atmospheric forward modeling tools</span>
+                        <span id="helpBlock" class="help-block">Atmospheric forward modeling tools.</span>
                         <a class="btn btn-primary" href="./exotransmit_portal">Exo-Transmit</a>
                         <a class="btn btn-primary" href="./fortney_portal">Fortney Grid</a>
                     </div>
@@ -42,7 +42,7 @@
                     
                     <div class="col-sm-6">
                         <h3>Atmospheric Retrievals</h3>
-                        <span id="helpBlock" class="help-block">Tools for Bayesian atmospheric retrievals</span>
+                        <span id="helpBlock" class="help-block">Tools for Bayesian atmospheric retrievals.</span>
                         <a class="btn btn-default disabled" href="./bar">Atmospheric Retrievals</a>
                     </div>
                     
@@ -52,13 +52,13 @@
                     
                     <div class="col-sm-6">
                         <h3>Light Curve Fitting</h3>
-                        <span id="helpBlock" class="help-block">Tools to fit the parameters of derived light curves</span>
+                        <span id="helpBlock" class="help-block">Tools to fit the parameters of derived light curves.</span>
                         <a class="btn btn-default disabled" href="./lcf">Light Curve Fitting</a>
                     </div>
 
                     <div class="col-sm-6">
                         <h3>Data Reduction</h3>
-                        <span id="helpBlock" class="help-block">A variety of data reduction tools</span>
+                        <span id="helpBlock" class="help-block">A variety of data reduction tools.</span>
                         <a class="btn btn-default disabled" href="./drt">Data Reduction</a>
                     </div>
                     
@@ -68,15 +68,25 @@
                 <br>
                 
                     
-                <div>
+                <div class="form-group col-sm-12">
+                <div class="col-sm-6">
                     <h3> GitHub Source Code</h3>
                         <ul>
                             <li><a href="https://github.com/ExoCTK/ExoCTK">ExoCTK</a> is the computing package behind the website.</li>
                             <li><a href="https://github.com/ExoCTK/ExoCTKWeb">ExoCTKWeb</a> is the literal source code of this website.</li>
                             <li><a href="https://github.com/ExoCTK/PandExo_HST">PandExo_HST</a> is our counterpart for HST observations.</li>
                         </ul>
-                </div>
+                    </div>
 
+                    <div class="col-sm-6">
+                        <h3>ExoCTK Data</h3>
+                        <ul>
+                            <li><a href="{{url_for('tor_download')}}">This</a> is the JSON data file required to run the Integrations and Groups Calculator through ExoCTK.</li>
+                            <li><a href="https://github.com/elizakempton/Exo_Transmit">This</a> is a link to the Exo-Transmit Github page which includes the models required to run Exo-Transmit.</li>
+                            <li><a
+                                   href="{{url_for('fortney_download')}}">This</a> is an SQLite database of the Fortney Grid of stellar models.
+                </div>
+                </div>
 
 <script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
 <script src="//cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/2/dataTables.bootstrap.js"></script>
