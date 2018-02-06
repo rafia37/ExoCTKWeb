@@ -14,8 +14,6 @@ import astropy.units as u
 import astropy.constants as constants
 import sqlite3
 import datetime
-from ExoCTKWeb import exoctk_app
-from ExoCTKWeb.exoctk_app import log_exoctk
 
 import bokeh
 from bokeh import mpl
@@ -59,14 +57,13 @@ app_exoctk.config['CACHE_TYPE'] = 'null'
 
 EXOTRANSMIT_DIR = os.environ.get('EXOTRANSMIT_DIR')
 MODELGRID_DIR = os.environ.get('MODELGRID_DIR')
-PKG_DIR = os.path.dirname(os.path.realpath(exoctk_app.__file__))
 FORTGRID_DIR = os.environ.get('FORTGRID_DIR')
 EXOCTKLOG_DIR = os.environ.get('EXOCTKLOG_DIR')
 
 # Load the database to log all form submissions
 dbpath = os.path.join(EXOCTKLOG_DIR,'exoctk_log.db')
 if not os.path.isfile(dbpath):
-    log_exoctk.create_db(dbpath, os.path.join(PKG_DIR,'schema.sql'))
+    log_exoctk.create_db(dbpath, os.path.join(EXOCTKLOG_DIR,'schema.sql'))
 DB = log_exoctk.load_db(dbpath)
 
 # register the cache instance and binds it on to your app
