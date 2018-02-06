@@ -49,6 +49,8 @@ from ExoCTK.tor.tor import create_tor_dict
 from ExoCTK.tor.contam_tool.resolve import *
 from ExoCTK.tor.contam_tool.visibilityPA import *
 
+from . import log_exoctk
+
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
 
