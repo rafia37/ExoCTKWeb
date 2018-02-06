@@ -5,3 +5,4 @@ exoctk_app/.DS_Store
 .DS_Store
 *.p
 *.swp
+*.db
