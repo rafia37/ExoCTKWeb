@@ -22,6 +22,7 @@ from bokeh.util.string import encode_utf8
 from bokeh.core.properties import Override
 from bokeh.embed import components
 from bokeh.models import ColumnDataSource
+from bokeh.models import DatetimeTickFormatter
 from bokeh.models import HoverTool
 from bokeh.models import Label
 from bokeh.models import Range1d
@@ -539,8 +540,18 @@ def exoctk_tor2():
             TOOLS = 'crosshair,resize,reset,hover'
             # fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1), plot_width=800, plot_height=400)
             fig = figure(tools=TOOLS, plot_width=800, plot_height=400)
-                         
-            pG, pB, plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
+            
+            pG, pB, gd, plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
+            
+            # Format x axis
+            plot.x_range = Range1d(min(gd).timestamp(),max(gd).timestamp())
+            plot.xaxis.formatter=DatetimeTickFormatter(
+                    hours=["%b %y"],
+                    days=["%b %y"],
+                    months=["%b %y"],
+                    years=["%b %y"],
+                )
+            plot.xaxis.major_label_orientation = np.pi/4
             
             js_resources = INLINE.render_js()
             css_resources = INLINE.render_css()
