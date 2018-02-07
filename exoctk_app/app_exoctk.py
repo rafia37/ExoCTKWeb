@@ -46,10 +46,10 @@ from flask import send_from_directory
 import ExoCTK
 from ExoCTK.pal import exotransmit
 from ExoCTK.tor.tor import create_tor_dict
-from ExoCTK.tor.contam_tool.resolve import *
-from ExoCTK.tor.contam_tool.visibilityPA import *
+from ExoCTK.tor import resolve
+from ExoCTK.tor import visibilityPA as vpa
 
-from . import log_exoctk
+import log_exoctk
 
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
@@ -519,24 +519,35 @@ def exoctk_tor2():
         contamVars['binComp'] = request.form['bininfo']
         contamVars['PAmax'] = request.form['pamax']
         contamVars['PAmin'] = request.form['pamin']
-        print(contamVars)
 
         if request.form['submit'] == 'Resolve Target':
-            contamVars['ra'], contamVars['dec'] = resolve_target(tname)
+            contamVars['ra'], contamVars['dec'] = resolve.resolve_target(tname)
     
-        if request.form['submit'] == 'Calculate contamination':
-            contamVars['contam'] = True
-            png = 'results/visibilityPA-'+tname+'.png'
-            contamVars['kelt-8'] = 'images/contamination-KELT-8_PA0-360.png'
-            contamVars['tyc-55'] = 'images/contamination-TYC_5530-1795-1_PA0-360.png'
-            contamVars['wasp-62'] = 'images/contamination-wasp-62_PA0-360.png'
-            return render_template('tor2_results.html', contamVars = contamVars, png = png)
+        if request.form['submit'] == 'Calculate Visibility and Contamination':
+            print(request.form['submit'])
+            # contamVars['contam'] = True
+            # png = 'results/visibilityPA-'+tname+'.png'
+            # contamVars['kelt-8'] = 'images/contamination-KELT-8_PA0-360.png'
+            # contamVars['tyc-55'] = 'images/contamination-TYC_5530-1795-1_PA0-360.png'
+            # contamVars['wasp-62'] = 'images/contamination-wasp-62_PA0-360.png'
+            # return render_template('tor2_results.html', contamVars = contamVars, png = png)
     
-        if request.form['submit'] == 'Calculate visibility':
+        if request.form['submit'] == 'Calculate Visibility Only':
             contamVars['visPA'] = True
-#             dir = 'static/results'
-            png = calc_vis(contamVars['ra'], contamVars['dec'], tname)
-            return render_template('tor2_results.html', contamVars = contamVars, png = png)
+            
+            # Make plot
+            TOOLS = 'crosshair,resize,reset,hover'
+            # fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1), plot_width=800, plot_height=400)
+            fig = figure(tools=TOOLS, plot_width=800, plot_height=400)
+                         
+            pG, pB, plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
+            
+            js_resources = INLINE.render_js()
+            css_resources = INLINE.render_css()
+            
+            script, div = components(plot)
+                
+            return render_template('tor2_results.html', contamVars=contamVars, plot=div, script=script, js=js_resources, css=css_resources)
 
     return render_template('tor2.html', contamVars = contamVars)
 
