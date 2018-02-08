@@ -8,22 +8,15 @@
     <br>
 
 
-	<p>This tool is designed for Single-Object Slit-less Spectroscopy (SOSS) mode of NIRISS. 
-	For slitless observations, the spectrum of a target star may be contaminated by partlially overlapping spectra of 
-	nearby stars. For a given target this contamination depends on the 
-	position angle (PA) at which the observations are taken. This tool simulates SOSS observations of a 
-	given target and produces an estimate of the level of contamination as a function of the PA of the 
-	observation; it may be used to plan observations at the optimal PA. The tool also computes the JWST 
-	accessibility windows of the target, along with the corresponding accessible PAs for NIRISS observations.<br>
-	
-	In the future, functionality will be extended to calculate contamination by other instruments. 
-	</p>
-
-	<p>Usage notes:</p>
-	<ul>
-		<li>The &ldquo;calculate contamination&rdquo; button computes both the contamination and the visibility of a target. If you wish, you may calculate only the visibility using the &ldquo;calculate visibility&rdquo; button.</li>
-		<li>The field stars used for this analysis are retrieved from the 2MASS point source catalogue. Contamination from stars missing from the 2MASS PSC is thus not modelled; this may be important for faint targets.</li>
-	</ul>
+    	<p>This tool is designed for Single-Object Slit-less Spectroscopy (SOSS) mode of NIRISS. 
+    	For slitless observations, the spectrum of a target star may be contaminated by partlially overlapping spectra of 
+    	nearby stars. For a given target this contamination depends on the 
+    	position angle (PA) at which the observations are taken. This tool simulates SOSS observations of a 
+    	given target and produces an estimate of the level of contamination as a function of the PA of the 
+    	observation; it may be used to plan observations at the optimal PA. The tool also computes the JWST 
+    	accessibility windows of the target, along with the corresponding accessible PAs for NIRISS observations. In the future, functionality will be extended to calculate contamination by other instruments. 
+    	</p>
+        <p>Note: The field stars used for this analysis are retrieved from the 2MASS point source catalogue. Contamination from stars missing from the 2MASS PSC is thus not modelled; this may be important for faint targets.</p>
 
     <form action="/tor2" method="POST" />
     

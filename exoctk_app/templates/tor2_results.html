@@ -3,9 +3,12 @@
 {% block content %}
 
     <body>
-        {{ js|indent(4)|safe }}
-        {{ css|indent(4)|safe }}
-        {{ script|safe }}
+        {{ vis_js|indent(4)|safe }}
+        {{ vis_css|indent(4)|safe }}
+        {{ vis_script|safe }}
+        {{ contam_js|indent(4)|safe }}
+        {{ contam_css|indent(4)|safe }}
+        {{ contam_script|safe }}
         
     	<h1>Contamination & Visibility Calculator</h1>
         <br>
@@ -17,23 +20,30 @@
     	position angle (PA) at which the observations are taken. This tool simulates SOSS observations of a 
     	given target and produces an estimate of the level of contamination as a function of the PA of the 
     	observation; it may be used to plan observations at the optimal PA. The tool also computes the JWST 
-    	accessibility windows of the target, along with the corresponding accessible PAs for NIRISS observations.<br>
-	
-    	In the future, functionality will be extended to calculate contamination by other instruments. 
+    	accessibility windows of the target, along with the corresponding accessible PAs for NIRISS observations. In the future, functionality will be extended to calculate contamination by other instruments. 
     	</p>
+        <p>Note: The field stars used for this analysis are retrieved from the 2MASS point source catalogue. Contamination from stars missing from the 2MASS PSC is thus not modelled; this may be important for faint targets.</p>
 
-    	<p>Usage notes:</p>
-    	<ul>
-    		<li>The &ldquo;calculate contamination&rdquo; button computes both the contamination and the visibility of a target. If you wish, you may calculate only the visibility using the &ldquo;calculate visibility&rdquo; button.</li>
-    		<li>The field stars used for this analysis are retrieved from the 2MASS point source catalogue. Contamination from stars missing from the 2MASS PSC is thus not modelled; this may be important for faint targets.</li>
-    	</ul>
-
-    	{% if contamVars['contam'] == 'True' %}
-    		<h3>This is what contamination tool will produce once it's done!</h3>
-    		<p><img src="{{ url_for('static', filename = contamVars['kelt-8']) }}" alt="contam1"></p>
-    		<p><img src="{{ url_for('static', filename = contamVars['tyc-55']) }}" alt="contam2"></p>
-    		<p><img src="{{ url_for('static', filename = contamVars['wasp-62']) }}" alt="contam3"></p>
+    	{% if contamVars['visPA'] ==  True %}
+            <hr>
+    		<h3>Target Visibility</h3>
+    		{{ vis_plot | safe }}
+            <br><br>
+    		<p>Figure explication:</p>
+    		<ul>
+    			<li>The curve indicates the nominal PA of NIRISS as a function of the calendar date.</li>
+    			<li>The shaded region indicates the range of PAs accessible by rolling the telescope.</li>
+    			<li>On dates where there is no curve, the target is inaccessible.</li>
+    			<li>The TXT file provides the same information detailed on a daily basis, with at the end a summary of the accessible and non-accessible PA ranges.</li>
+    		</ul>
 	
+    	{% endif %}
+
+    	{% if contamVars['contam'] == True %}
+            <hr>
+    		<h3>Target Contamination</h3>
+    		{{ contam_plot | safe }}
+            <br><br>
     		<p>Figure explication:</p>
     		<ul>
     			<li>The two panels on the right are for the order 1 spectrum, while the two panels on the left are for the order 2 spectrum.</li>
@@ -43,22 +53,6 @@
     			<li>The top two panels show the locations of various spectral features.</li>
     		</ul>
 
-    	{% endif %}
-
-
-    	{% if contamVars['visPA'] ==  True %}
-            <hr>
-    		<h3>Visibility Of Target</h3>
-    		{{ plot | safe }}
-            <br><br>
-    		<p>Figure explication:</p>
-    		<ul>
-    			<li>The black curve indicates the nominal PA of NIRISS as a function of the calendar date.</li>
-    			<li>The grey shaded region indicates the range of PAs accessible by rolling the telescope.</li>
-    			<li>On dates where there is no black curve, the target is inaccessible.</li>
-    			<li>The TXT file provides the same information detailed on a daily basis, with at the end a summary of the accessible and non-accessible PA ranges.</li>
-    		</ul>
-	
     	{% endif %}
 	
     	<br>

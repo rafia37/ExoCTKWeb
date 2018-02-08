@@ -22,7 +22,7 @@ from bokeh.util.string import encode_utf8
 from bokeh.core.properties import Override
 from bokeh.embed import components
 from bokeh.models import ColumnDataSource
-from bokeh.models import DatetimeTickFormatter
+from bokeh.models import FuncTickFormatter
 from bokeh.models import HoverTool
 from bokeh.models import Label
 from bokeh.models import Range1d
@@ -523,45 +523,57 @@ def exoctk_tor2():
 
         if request.form['submit'] == 'Resolve Target':
             contamVars['ra'], contamVars['dec'] = resolve.resolve_target(tname)
-    
-        if request.form['submit'] == 'Calculate Visibility and Contamination':
-            print(request.form['submit'])
-            # contamVars['contam'] = True
-            # png = 'results/visibilityPA-'+tname+'.png'
-            # contamVars['kelt-8'] = 'images/contamination-KELT-8_PA0-360.png'
-            # contamVars['tyc-55'] = 'images/contamination-TYC_5530-1795-1_PA0-360.png'
-            # contamVars['wasp-62'] = 'images/contamination-wasp-62_PA0-360.png'
-            # return render_template('tor2_results.html', contamVars = contamVars, png = png)
-    
-        if request.form['submit'] == 'Calculate Visibility Only':
-            contamVars['visPA'] = True
             
+            return render_template('tor2.html', contamVars = contamVars)
+            
+        else:
+
+            contamVars['visPA'] = True
+    
             # Make plot
             TOOLS = 'crosshair,resize,reset,hover'
-            # fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1), plot_width=800, plot_height=400)
             fig = figure(tools=TOOLS, plot_width=800, plot_height=400)
-            
-            pG, pB, gd, plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
-            
+            pG, pB, dates, vis_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
+    
             # Format x axis
-            plot.x_range = Range1d(min(gd).timestamp(),max(gd).timestamp())
-            plot.xaxis.formatter=DatetimeTickFormatter(
-                    hours=["%b %y"],
-                    days=["%b %y"],
-                    months=["%b %y"],
-                    years=["%b %y"],
-                )
-            plot.xaxis.major_label_orientation = np.pi/4
-            
-            js_resources = INLINE.render_js()
-            css_resources = INLINE.render_css()
-            
-            script, div = components(plot)
+            vis_plot.x_range = Range1d(min(dates).timestamp(),max(dates).timestamp())
+            label_dict = {i:s[:10] for i,s in enumerate(list(map(str,dates)))}
+            vis_plot.xaxis.formatter = FuncTickFormatter(code="""
+                var labels = %s;
+                return String(labels[tick]);
+            """ % label_dict)
+    
+            vis_plot.xaxis.major_label_orientation = np.pi/4
+    
+            # Get scripts
+            vis_js = INLINE.render_js()
+            vis_css = INLINE.render_css()
+            vis_script, vis_div = components(vis_plot)
+
+            if request.form['submit'] == 'Calculate Visibility and Contamination':
+        
+                contamVars['contam'] = True
+        
+                # Make plot
+                TOOLS = 'crosshair,resize,reset,hover'
+                contam_plot = figure(tools=TOOLS, plot_width=800, plot_height=400)
+                # pG, pB, dates, contam_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
+        
+                # Get scripts
+                contam_js = INLINE.render_js()
+                contam_css = INLINE.render_css()
+                contam_script, contam_div = components(contam_plot)
                 
-            return render_template('tor2_results.html', contamVars=contamVars, plot=div, script=script, js=js_resources, css=css_resources)
+            else:
+                
+                contamVars['contam'] = False
+                contam_script = contam_div = ''
+            
+            return render_template('tor2_results.html', contamVars=contamVars, \
+                    vis_plot=vis_div, vis_script=vis_script, vis_js=vis_js, vis_css=vis_css,\
+                    contam_plot=contam_div, contam_script=contam_script, contam_js=contam_js, contam_css=contam_css)
 
     return render_template('tor2.html', contamVars = contamVars)
-
 
 # Load filter profiles pages
 @app_exoctk.route('/filter_profile_<ins>')
