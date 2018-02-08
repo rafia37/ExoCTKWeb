@@ -527,51 +527,57 @@ def exoctk_tor2():
             return render_template('tor2.html', contamVars = contamVars)
             
         else:
+            
+            try:
 
-            contamVars['visPA'] = True
+                contamVars['visPA'] = True
     
-            # Make plot
-            TOOLS = 'crosshair,resize,reset,hover'
-            fig = figure(tools=TOOLS, plot_width=800, plot_height=400)
-            pG, pB, dates, vis_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
-    
-            # Format x axis
-            vis_plot.x_range = Range1d(min(dates).timestamp(),max(dates).timestamp())
-            label_dict = {i:s[:10] for i,s in enumerate(list(map(str,dates)))}
-            vis_plot.xaxis.formatter = FuncTickFormatter(code="""
-                var labels = %s;
-                return String(labels[tick]);
-            """ % label_dict)
-    
-            vis_plot.xaxis.major_label_orientation = np.pi/4
-    
-            # Get scripts
-            vis_js = INLINE.render_js()
-            vis_css = INLINE.render_css()
-            vis_script, vis_div = components(vis_plot)
-
-            if request.form['submit'] == 'Calculate Visibility and Contamination':
-        
-                contamVars['contam'] = True
-        
                 # Make plot
                 TOOLS = 'crosshair,resize,reset,hover'
-                contam_plot = figure(tools=TOOLS, plot_width=800, plot_height=400)
-                # pG, pB, dates, contam_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
-        
+                fig = figure(tools=TOOLS, plot_width=800, plot_height=400)
+                pG, pB, dates, vis_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
+    
+                # Format x axis
+                vis_plot.x_range = Range1d(min(dates).timestamp(),max(dates).timestamp())
+                label_dict = {i:s[:10] for i,s in enumerate(list(map(str,dates)))}
+                vis_plot.xaxis.formatter = FuncTickFormatter(code="""
+                    var labels = %s;
+                    return String(labels[tick]);
+                """ % label_dict)
+    
+                vis_plot.xaxis.major_label_orientation = np.pi/4
+    
                 # Get scripts
-                contam_js = INLINE.render_js()
-                contam_css = INLINE.render_css()
-                contam_script, contam_div = components(contam_plot)
+                vis_js = INLINE.render_js()
+                vis_css = INLINE.render_css()
+                vis_script, vis_div = components(vis_plot)
+
+                if request.form['submit'] == 'Calculate Visibility and Contamination':
+        
+                    contamVars['contam'] = True
+        
+                    # Make plot
+                    TOOLS = 'crosshair,resize,reset,hover'
+                    contam_plot = figure(tools=TOOLS, plot_width=800, plot_height=400)
+                    # pG, pB, dates, contam_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
+        
+                    # Get scripts
+                    contam_js = INLINE.render_js()
+                    contam_css = INLINE.render_css()
+                    contam_script, contam_div = components(contam_plot)
                 
-            else:
+                else:
                 
-                contamVars['contam'] = False
-                contam_script = contam_div = ''
+                    contamVars['contam'] = False
+                    contam_script = contam_div = contam_js = contam_css = ''
             
-            return render_template('tor2_results.html', contamVars=contamVars, \
-                    vis_plot=vis_div, vis_script=vis_script, vis_js=vis_js, vis_css=vis_css,\
-                    contam_plot=contam_div, contam_script=contam_script, contam_js=contam_js, contam_css=contam_css)
+                return render_template('tor2_results.html', contamVars=contamVars, \
+                        vis_plot=vis_div, vis_script=vis_script, vis_js=vis_js, vis_css=vis_css,\
+                        contam_plot=contam_div, contam_script=contam_script, contam_js=contam_js, contam_css=contam_css)
+
+            except Exception as e:
+                err = 'The following error occurred: ' + str(e)
+                return render_template('tor_error.html', tor_err=err)
 
     return render_template('tor2.html', contamVars = contamVars)
 
