@@ -7,10 +7,31 @@
 <div class="span500">
 
             <h1>Groups & Integrations Calculator</h1>
-            
+            <p> Please know that at present this tool is likely to
+            overestimate saturation on direct comparison to the ETC. (This
+            means we may predict less groups -- and put you in LESS danger of
+            oversaturating your observation.)</p> 
             <div class="span200">
+            <h2> Source Specifics </h2>
+            <div class="span100">
 
-<!---            <h2> Target Acquisition </h2>
+                <table id="myTable">
+                    <tr class="header">
+                        <th>Magnitude (vega) </th>
+                        <th>Band</th>
+                        <th>Phoenix Model Key</th>
+                        <th>Transit Observation Time (hours) </th>
+                    </tr>
+                    <tr>
+                        <td>{{ tor_dict['mag'] }}</td>
+                        <td>{{ tor_dict['band'] }}</td>
+                        <td>{{ tor_dict['mod'] }}</td>
+                        <td>{{ tor_dict['obs_time'] }}</td>
+                    </td>
+                </table>
+            </div>
+
+            <h2> Target Acquisition </h2>
             <div class="span100">
                 
                 <h4> Input and Instrument Parameters</h4>
@@ -18,22 +39,16 @@
                     <center>
                     <table id="myTable">
                         <tr class="header">
-                            <th>Rows</th>
-                            <th>Columns</th>
-                            <th>Amplifiers </th>
-                            <th>Resets </th>
-                            <th>Maximum Saturation Level (counts) </th>
+                            <th>Instrument</th>
+                            <th>Filter</th>
+                            <th>Subarray</th>
                             <th> Frame Time (seconds per frame) </th>
-                            <th>Frames per Group</th>
                         </tr>
                         <tr>
-                            <td>{{ tor_dict['n_row'] }}</td>
-                            <td>{{ tor_dict['n_col'] }}</td>
-                            <td>{{ tor_dict['n_amp'] }}</td>
-                            <td>{{ tor_dict['n_reset']}}</td>
-                            <td>{{ tor_dict['sat_max']}}</td>
-                            <td>{{ tor_dict['t_frame'] }}</td>
-                            <td>1</td>
+                            <td>{{ tor_dict['ins'] }}</td>
+                            <td>{{ tor_dict['filt_ta'] }}</td>
+                            <td>{{ tor_dict['subarray_ta'] }}</td>
+                            <td>{{ tor_dict['ta_t_frame'] }}</td>
                         </tr>
                     </table>
                     </center>
@@ -41,28 +56,33 @@
 
             <div class="span100">
                 <h4> APT Ready Outputs and Useful Tidbits </h4>
+            <b> <font color="red">{{ zero_group_error }}</font></b>
                     
                     <center>
                     <table id="myTable">
                         <tr class="header">
-                            <th> Integration </th>
-                            <th> Groups </th>
-                            <th> Integration Time (seconds per integration)</th>
-                            <th> Total Duration Time </th>
-                            <th> Maximum Saturation Reached During Target Acq </th>
+                            <th> Integrations </th>
+                            <th> Groups (min) </th>
+                            <th> Groups (max) </th>
+                            <th> Total Duration Time with min (seconds) </th>
+                            <th> Total Duration Time with max </th>
+                            <th> Max Saturation Reached with min (counts) </th>
+                            <th> Max Saturation Reached with max </th>
                         </tr>
                         <tr>
-                            <td>{{ tor_dict['n_int'] }}</td>
-                            <td>{{ tor_dict['n_group'] }}</td>
-                            <td>{{ tor_dict['t_int'] }}</td>
-                            <td>{{ tor_dict['t_duration'] }}</td>
-                            <td>{{ tor_dict['max_sat_prediction'] }}</td>
+                            <td>1 (fixed for target acquisition)</td>
+                            <td>{{ tor_dict['min_ta_groups'] }}</td>
+                            <td>{{ tor_dict['max_ta_groups'] }}</td>
+                            <td>{{ tor_dict['t_duration_ta_min'] }}</td>
+                            <td>{{ tor_dict['t_duration_ta_max'] }}</td>
+                            <td>{{ tor_dict['min_sat_ta'] }}</td>
+                            <td>{{ tor_dict['max_sat_ta'] }}</td>
                         </tr>
                     </table>
                     </center>
             </div>
             </div>
-            ---!>
+            
             <div class="span200">
             <h2> Science Observation </h2>
             <div class="span100">    
@@ -72,24 +92,18 @@
                     <center>
                     <table id="myTable">
                         <tr class="header">
-                            <th>Rows</th>
-                            <th>Columns</th>
-                            <th>Amplifiers </th>
-                            <th>Resets </th>
+                            <th>Instrument</th>
+                            <th>Filter</th>
+                            <th>Subarray</th>
                             <th>Maximum Saturation Level</th>
                             <th> Frame Time </th>
-                            <th> Transit Observation Time</th>
-                            <th>Frames per Group</th>
                         </tr>
                         <tr>
-                            <td>{{ tor_dict['n_row'] }}</td>
-                            <td>{{ tor_dict['n_col'] }}</td>
-                            <td>{{ tor_dict['n_amp'] }}</td>
-                            <td>{{ tor_dict['n_reset']}}</td>
+                            <td>{{ tor_dict['ins'] }}</td>
+                            <td>{{ tor_dict['filt'] }}</td>
+                            <td>{{ tor_dict['subarray'] }}</td>
                             <td>{{ tor_dict['sat_max']}}</td>
                             <td>{{ tor_dict['t_frame'] }}</td>
-                            <td>{{ tor_dict['obs_time'] }}</td>
-                            <td>1</td>
                         </tr>
                     </table>
                     </center>
@@ -103,11 +117,11 @@
                         <tr class="header">
                             <th> Integrations </th>
                             <th> Groups </th>
-                            <th> Integration Time </th>
-                            <th> Photon Collection Time </th>
-                            <th> Total Duration Time </th>
+                            <th> Integration Time (seconds) </th>
+                            <th> Photon Collection Time (hours) </th>
+                            <th> Total Duration Time (hours) </th>
                             <th> Observation Efficiency </th>
-<!--                            <th> Maximum Saturation Reached During Observation </th> --!>
+                            <th> Maximum Sat Reached </th> 
                         </tr>
                         <tr>
                             <td>{{ tor_dict['n_int'] }}</td>
@@ -116,7 +130,7 @@
                             <td>{{ tor_dict['t_exp'] }}</td>
                             <td>{{ tor_dict['t_duration'] }}</td>
                             <td>{{ tor_dict['obs_eff'] }}</td>
-                            <!--                            <td>{{ tor_dict['max_sat_prediction'] }}</td>  --!>
+                            <td>{{ tor_dict['max_sat_prediction'] }}</td>  
                         </tr>
                     </table>
                     </center>
