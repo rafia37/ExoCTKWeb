@@ -559,8 +559,13 @@ def exoctk_tor2():
                     # Make plot
                     TOOLS = 'crosshair,resize,reset,hover'
                     contam_plot = figure(tools=TOOLS, plot_width=800, plot_height=400)
-                    # pG, pB, dates, contam_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
-        
+                    
+                    # Make field simulation
+                    contam_cube = sossFieldSim(contamVars['ra'], contamVars['dec'], binComp=contamVars['binComp'])
+                    
+                    # Generate plot
+                    contam_plot = contam(contamVars['ra'], contamVars['dec'], contamVars['tname'], contam_cube, pamin=0, pamax=360, fig=contam_plot)
+                    
                     # Get scripts
                     contam_js = INLINE.render_js()
                     contam_css = INLINE.render_css()
