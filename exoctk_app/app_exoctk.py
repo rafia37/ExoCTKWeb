@@ -49,6 +49,8 @@ from ExoCTK.pal import exotransmit
 from ExoCTK.tor.tor import create_tor_dict
 from ExoCTK.tor import resolve
 from ExoCTK.tor import visibilityPA as vpa
+from ExoCTK.tor import sossFieldSim as fs
+from ExoCTK.tor import sossContamFig as cf
 
 import log_exoctk
 
@@ -561,10 +563,10 @@ def exoctk_tor2():
                     contam_plot = figure(tools=TOOLS, plot_width=800, plot_height=400)
                     
                     # Make field simulation
-                    contam_cube = sossFieldSim(contamVars['ra'], contamVars['dec'], binComp=contamVars['binComp'])
+                    contam_cube = fs.sossFieldSim(contamVars['ra'], contamVars['dec'], binComp=contamVars['binComp'])
                     
                     # Generate plot
-                    contam_plot = contam(contamVars['ra'], contamVars['dec'], contamVars['tname'], contam_cube, pamin=0, pamax=360, fig=contam_plot)
+                    contam_plot = cf.contam(contamVars['ra'], contamVars['dec'], contamVars['tname'], contam_cube, pamin=0, pamax=360, fig=contam_plot)
                     
                     # Get scripts
                     contam_js = INLINE.render_js()
