@@ -42,7 +42,7 @@
     	{% if contamVars['contam'] == True %}
             <hr>
     		<h3>Target Contamination</h3>
-    		{{ contam_plot | safe }}
+            <p><img src="data:image/png;base64,{{ contam_plot | safe }}" alt="contam"></p>
             <br><br>
     		<p>Figure explication:</p>
     		<ul>

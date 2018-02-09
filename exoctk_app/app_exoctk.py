@@ -522,6 +522,11 @@ def exoctk_tor2():
         contamVars['binComp'] = request.form['bininfo']
         contamVars['PAmax'] = request.form['pamax']
         contamVars['PAmin'] = request.form['pamin']
+        
+        if contamVars['PAmax']=='':
+            contamVars['PAmax'] = 359
+        if contamVars['PAmin']=='':
+            contamVars['PAmin'] = 0
 
         if request.form['submit'] == 'Resolve Target':
             contamVars['ra'], contamVars['dec'] = resolve.resolve_target(tname)
@@ -557,21 +562,21 @@ def exoctk_tor2():
                 if request.form['submit'] == 'Calculate Visibility and Contamination':
         
                     contamVars['contam'] = True
-        
-                    # Make plot
-                    TOOLS = 'crosshair,resize,reset,hover'
-                    contam_plot = figure(tools=TOOLS, plot_width=800, plot_height=400)
                     
                     # Make field simulation
                     contam_cube = fs.sossFieldSim(contamVars['ra'], contamVars['dec'], binComp=contamVars['binComp'])
+                    contam_div = cf.contam(contam_cube, contamVars['tname'], paRange=[int(contamVars['PAmin']),int(contamVars['PAmax'])], to_html=True)
+                    contam_js = contam_script = contam_css = ''
                     
-                    # Generate plot
-                    contam_plot = cf.contam(contamVars['ra'], contamVars['dec'], contamVars['tname'], contam_cube, pamin=0, pamax=360, fig=contam_plot)
-                    
-                    # Get scripts
-                    contam_js = INLINE.render_js()
-                    contam_css = INLINE.render_css()
-                    contam_script, contam_div = components(contam_plot)
+                    # # Generate plot
+                    # TOOLS = 'crosshair,resize,reset,hover'
+                    # contam_plot = figure(tools=TOOLS, plot_width=800, plot_height=400)
+                    # contam_plot = cf.contam(contam_cube, contamVars['tname'], pamin=0, pamax=360, fig=contam_plot)
+                    #
+                    # # Get scripts
+                    # contam_js = INLINE.render_js()
+                    # contam_css = INLINE.render_css()
+                    # contam_script, contam_div = components(contam_plot)
                 
                 else:
                 
@@ -582,9 +587,11 @@ def exoctk_tor2():
                         vis_plot=vis_div, vis_script=vis_script, vis_js=vis_js, vis_css=vis_css,\
                         contam_plot=contam_div, contam_script=contam_script, contam_js=contam_js, contam_css=contam_css)
 
-            except Exception as e:
-                err = 'The following error occurred: ' + str(e)
-                return render_template('tor_error.html', tor_err=err)
+            except IOError:
+                pass
+            # except Exception as e:
+            #     err = 'The following error occurred: ' + str(e)
+            #     return render_template('tor_error.html', tor_err=err)
 
     return render_template('tor2.html', contamVars = contamVars)
 
