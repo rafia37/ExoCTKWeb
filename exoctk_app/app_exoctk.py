@@ -426,84 +426,120 @@ def exoctk_tot_results():
 def exoctk_wip():
     return render_template('wip.html')
 
+
 # Load the TOR page
 @app_exoctk.route('/tor', methods=['GET', 'POST'])
 def exoctk_tor():
 
-    ins = glob.glob('static/filter_dat/*')
-    button_ins = [this_ins[18:] for this_ins in ins]
+    # Print out pandeia sat values
+    with open(tor_pandeia_path) as f:
+        sat_data = json.load(f)['fullwell']
     
-    return render_template('tor.html', button_ins=button_ins)
+    return render_template('tor.html', sat_data=sat_data)
 
 # Load the TOR results
 @app_exoctk.route('/tor_results', methods=['GET', 'POST'])
 def exoctk_tor_results():
-
-    # Log the form inputs
-    log_exoctk.log_form_input(request.form, 'tor', DB)
     
+    # Read in parameters from form
+    params = {}
+    for key in dict(request.form).keys():
+        params[key] = dict(request.form)[key][0]
+    print(params)
     try:
-        n_group = request.form['groups']
-        mag = float(request.form['mag'])
-        band = request.form['band']
-        obs_time = float(request.form['T'])
-#        temp = float(request.form['temp'])
-        sat_max = float(request.form['sat_lvl'])
-        sat_mode = request.form['sat']
-#        throughput = request.form['tp']
-        filt = request.form['filt']
-        ins = request.form['ins']
-        subarray = request.form['subarray']
-        n_reset = int(request.form['n_reset'])
-        infile = os.environ['tor_pandeia_path'] 
-
         tor_err = 0
+    
         # Specific error catching
-        if n_group.isdigit():
-            n_group = int(n_group)
-            if n_group <= 1:
+        if params['n_group'].isdigit():
+            params['n_group'] = int(params['n_group'])
+            if params['n_group'] <= 1:
                tor_err = 'Please try again with at least one group.'
         else:
-            if n_group != 'optimize':
+            if params['n_group'] != 'optimize':
              tor_err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
-        if (mag > 12) or (mag < 5.5):
-            tor_err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12 in a different band?'
-        if obs_time <= 0:
-            tor_err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
-#    if temp <= 0:
-#        tor_err = 'You have a negative temperature -- DOES THIS LOOK LIKE A MASER TO YOU?'
-        if sat_max <= 0:
+        if (False in [params['mag'].isdigit(), params['obs_time'].isdigit()]) and ('.' not in params['mag']) and ('.' not in params['obs_time']):
+            tor_err = 'Your magnitude or observation time is not a number, or you left the field blank.'
+    
+        else:
+            if (4.5 > float(params['mag'])) or (12.5 < float(params['mag'])):
+                tor_err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12.5?'
+            if float(params['obs_time']) <= 0:
+                tor_err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
+    
+        if float(params['sat_max']) <= 0:
             tor_err = 'You put in an underwhelming saturation level. There is something to be said for being too careful...'
-        if (sat_mode == 'well') and sat_max > 1:
+        if (params['sat_mode'] == 'well') and float(params['sat_max']) > 1:
             tor_err = 'You are saturating past the full well. Is that a good idea?'
-        if n_reset < 1:
-            tor_err = 'You have no or negative resets. That is not allowed!'
 
         if type(tor_err) == str:
             return render_template('tor_error.html', tor_err=tor_err)
     
-    # Only create the dict if the form input looks okay.
-        tor_output = create_tor_dict(float(obs_time), n_group, float(mag), str(band), str(filt), str(ins), str(subarray), str(sat_mode), float(sat_max), int(n_reset), infile)
+        # Only create the dict if the form input looks okay
+        # Make sure everything is the right type
+        ins = params['ins']
+        float_params = ['obs_time', 'mag', 'sat_max']
+        str_params = ['mod', 'band', '{}_filt'.format(ins), '{}_ta_filt'.format(ins), 'ins', '{}_subarray'.format(ins), '{}_subarray_ta'.format(ins), 'sat_mode']
+        for key in params:
+            if key in float_params:
+                params[key] = float(params[key])
+            if key in str_params:
+                params[key] = str(params[key])
+    
+        # Also get the data path in there
+        params['infile'] = tor_pandeia_path 
+    
+        # Rename the ins-mode params to more general counterparts
+        params['filt'] = params['{}_filt'.format(ins)]
+        params['filt_ta'] = params['{}_filt_ta'.format(ins)]
+        params['subarray'] = params['{}_subarray'.format(ins)]
+        params['subarray_ta'] = params['{}_subarray_ta'.format(ins)]
+        tor_output = create_tor_dict(params)
+    
         if type(tor_output) == dict:
             tor_dict = tor_output
+            one_group_error = ""
+            zero_group_error = ""
             if tor_dict['n_group'] == 1:
                 one_group_error = 'Be careful! This only predicts one group, and you may be in danger of oversaturating!'
-            else:
-                one_group_error = ""
-            return render_template('tor_results.html', tor_dict=tor_dict, one_group_error=one_group_error)
+            if tor_dict['min_ta_groups'] == 0:
+                zero_group_error ='Be careful! This oversaturated the TA in the minimum groups. Consider a different TA setup.'
+            if tor_dict['min_ta_groups'] == -1:
+                zero_group_error = 'This object is too faint to reach the required TA SNR in this filter. Consider a different TA setup.'
+                tor_dict['max_sat_ta'] = 0
+                tor_dict['t_duration_ta_max'] = 0
+                tor_dict['min_sat_ta'] = 0
+                tor_dict['t_duration_ta_min'] = 0
+            if tor_dict['max_sat_prediction'] > tor_dict['sat_max']:
+                one_group_error = 'Hold up! You chose to input your own groups, and you have oversaturated the detector! Proceed with caution!'
+            # Do some formatting for a prettier end product
+            tor_dict['filt'] = tor_dict['filt'].upper()
+            tor_dict['filt_ta'] = tor_dict['filt_ta'].upper()
+            tor_dict['band'] = tor_dict['band'].upper()
+            tor_dict['mod'] = tor_dict['mod'].upper()
+            if tor_dict['ins'] == 'niriss':
+                if tor_dict['subarray_ta'] == 'im':
+                    tor_dict['subarray_ta'] = 'SUBTASOSS -- BRIGHT'
+                else:
+                    tor_dict['subarray_ta'] = 'SUBTASOSS -- FAINT'
+            tor_dict['subarray'] = tor_dict['subarray'].upper()
+            tor_dict['subarray_ta'] = tor_dict['subarray_ta'].upper()
+     
+            form_dict = {'miri': 'MIRI', 'nircam': 'NIRCam', 'nirspec': 'NIRSpec', 'niriss': 'NIRISS'}
+            tor_dict['ins'] = form_dict[tor_dict['ins']]
+      
+            return render_template('tor_results.html', tor_dict=tor_dict, one_group_error=one_group_error,
+                                   zero_group_error=zero_group_error)
+        
         else:
             tor_err = tor_output
             return render_template('tor_error.html', tor_err=tor_err)
     
-    except (IOError, KeyError) as e:
-        if e == IOError:
-            tor_err = 'One of you numbers is NOT a number! Please try again!'
-        else:
-            tor_err = 'Looks like you have mismatched your instrument/filter/subarray. Please try again.'
-        return render_template('tor_error.html', tor_err=tor_err)
+    except IOError:
+        tor_err = 'One of you numbers is NOT a number! Please try again!'
     except Exception as e:
         tor_err = 'This is not an error we anticipated, but the error caught was : ' + str(e)
         return render_template('tor_error.html', tor_err=tor_err)
+
 
 # Load the TOR background
 @app_exoctk.route('/tor_background')
