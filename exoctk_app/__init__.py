@@ -1,2 +1,2 @@
-from .app_exoctk import *
-from .log_exoctk import *
+from . import app_exoctk
+from . import log_exoctk
