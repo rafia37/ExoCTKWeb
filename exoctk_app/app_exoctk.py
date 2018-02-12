@@ -1,19 +1,19 @@
 ## -- IMPORTS
+import datetime
 import glob
 import os
+import json
 import shutil
+
+import astropy.constants as constants
 from astropy.extern.six.moves import StringIO
 import astropy.table as at
-import astropy.units as q
+import astropy.units as u 
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pandas as pd
 from sqlalchemy import *
-import astropy.units as u 
-import astropy.constants as constants
 import sqlite3
-import datetime
 
 import bokeh
 from bokeh import mpl
@@ -51,7 +51,6 @@ from ExoCTK.tor import resolve
 from ExoCTK.tor import visibilityPA as vpa
 from ExoCTK.tor import sossFieldSim as fs
 from ExoCTK.tor import sossContamFig as cf
-
 import log_exoctk
 
 ## -- FLASK SET UP (?)
@@ -60,8 +59,10 @@ app_exoctk = Flask(__name__)
 # define the cache config keys, remember that it can be done in a settings file
 app_exoctk.config['CACHE_TYPE'] = 'null'
 
+
 EXOTRANSMIT_DIR = os.environ.get('EXOTRANSMIT_DIR')
 MODELGRID_DIR = os.environ.get('MODELGRID_DIR')
+TOR_PANDEIA_PATH = os.environ.get('tor_pandeia_path')
 FORTGRID_DIR = os.environ.get('FORTGRID_DIR')
 EXOCTKLOG_DIR = os.environ.get('EXOCTKLOG_DIR')
 
@@ -187,8 +188,8 @@ def exoctk_ldc_results():
                      {'pixels_per_bin':int(pixels_per_bin)} if pixels_per_bin else {}
                  
             if wl_min and wl_max:
-                kwargs['wl_min'] = float(wl_min)*q.um
-                kwargs['wl_max'] = float(wl_max)*q.um
+                kwargs['wl_min'] = float(wl_min)*u.um
+                kwargs['wl_max'] = float(wl_max)*u.um
             
             # Manually create GR700XD filter
             if bandpass=='NIRISS.GR700XD.1':
@@ -432,7 +433,7 @@ def exoctk_wip():
 def exoctk_tor():
 
     # Print out pandeia sat values
-    with open(tor_pandeia_path) as f:
+    with open(TOR_PANDEIA_PATH) as f:
         sat_data = json.load(f)['fullwell']
     
     return render_template('tor.html', sat_data=sat_data)
@@ -486,7 +487,7 @@ def exoctk_tor_results():
                 params[key] = str(params[key])
     
         # Also get the data path in there
-        params['infile'] = tor_pandeia_path 
+        params['infile'] = TOR_PANDEIA_PATH 
     
         # Rename the ins-mode params to more general counterparts
         params['filt'] = params['{}_filt'.format(ins)]
@@ -857,7 +858,7 @@ def fortney_portal():
     #get sqlite database
 
     try:
-        db = create_engine('sqlite:///'+os.environ.get('FORTGRID_DIR'))
+        db = create_engine('sqlite:///'+FORTGRID_DIR)
         header= pd.read_sql_table('header',db)
     except:
         raise Exception('Fortney Grid File Path is incorrect, or not initialized')
@@ -965,13 +966,12 @@ def save_exotransmit_result():
 
 @app_exoctk.route('/tor_download')
 def tor_download():
-    tor_data = os.environ['tor_pandeia_path'] 
-    return send_file(tor_data, mimetype="text/json", attachment_filename='tor_input_data.json', as_attachment=True)
+    return send_file(TOR_PANDEIA_PATH, mimetype="text/json", attachment_filename='tor_input_data.json', as_attachment=True)
 
 
 @app_exoctk.route('/fortney_download')
 def fortney_download():
-    fortney_data = os.environ['FORTGRID_DIR']
+    fortney_data = FORTGRID_DIR
     return send_file(fortney_data, attachment_filename='fortney_grid.db', as_attachment=True)
 
 
