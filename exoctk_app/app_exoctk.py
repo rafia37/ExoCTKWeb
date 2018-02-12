@@ -541,18 +541,12 @@ def exoctk_tor2():
     
                 # Make plot
                 TOOLS = 'crosshair,resize,reset,hover'
-                fig = figure(tools=TOOLS, plot_width=800, plot_height=400)
+                fig = figure(tools=TOOLS, plot_width=800, plot_height=400, x_axis_type='datetime')
                 pG, pB, dates, vis_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
     
                 # Format x axis
-                vis_plot.x_range = Range1d(min(dates).timestamp(),max(dates).timestamp())
-                label_dict = {i:s[:10] for i,s in enumerate(list(map(str,dates)))}
-                vis_plot.xaxis.formatter = FuncTickFormatter(code="""
-                    var labels = %s;
-                    return String(labels[tick]);
-                """ % label_dict)
-    
-                vis_plot.xaxis.major_label_orientation = np.pi/4
+                day0 = datetime.date(2019, 6, 1)
+                vis_plot.x_range = Range1d(day0,day0+datetime.timedelta(days=367))
     
                 # Get scripts
                 vis_js = INLINE.render_js()
