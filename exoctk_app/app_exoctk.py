@@ -540,7 +540,7 @@ def exoctk_tor2():
                 contamVars['visPA'] = True
     
                 # Make plot
-                TOOLS = 'crosshair,resize,reset,hover'
+                TOOLS = 'crosshair,resize,reset,hover,save'
                 fig = figure(tools=TOOLS, plot_width=800, plot_height=400, x_axis_type='datetime')
                 pG, pB, dates, vis_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
     
@@ -559,18 +559,12 @@ def exoctk_tor2():
                     
                     # Make field simulation
                     contam_cube = fs.sossFieldSim(contamVars['ra'], contamVars['dec'], binComp=contamVars['binComp'])
-                    contam_div = cf.contam(contam_cube, contamVars['tname'], paRange=[int(contamVars['PAmin']),int(contamVars['PAmax'])], to_html=True)
-                    contam_js = contam_script = contam_css = ''
-                    
-                    # # Generate plot
-                    # TOOLS = 'crosshair,resize,reset,hover'
-                    # contam_plot = figure(tools=TOOLS, plot_width=800, plot_height=400)
-                    # contam_plot = cf.contam(contam_cube, contamVars['tname'], pamin=0, pamax=360, fig=contam_plot)
-                    #
-                    # # Get scripts
-                    # contam_js = INLINE.render_js()
-                    # contam_css = INLINE.render_css()
-                    # contam_script, contam_div = components(contam_plot)
+                    contam_plot = cf.contam(contam_cube, contamVars['tname'], paRange=[int(contamVars['PAmin']),int(contamVars['PAmax'])], badPA=pB, fig='bokeh')
+
+                    # Get scripts
+                    contam_js = INLINE.render_js()
+                    contam_css = INLINE.render_css()
+                    contam_script, contam_div = components(contam_plot)
                 
                 else:
                 
