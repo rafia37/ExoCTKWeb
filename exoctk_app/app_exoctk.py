@@ -560,6 +560,8 @@ def exoctk_tor2():
         contamVars['PAmax'] = request.form['pamax']
         contamVars['PAmin'] = request.form['pamin']
         
+        radec = ', '.join([contamVars['ra'], contamVars['dec']])
+        
         if contamVars['PAmax']=='':
             contamVars['PAmax'] = 359
         if contamVars['PAmin']=='':
@@ -578,7 +580,7 @@ def exoctk_tor2():
     
                 # Make plot
                 TOOLS = 'crosshair,resize,reset,hover,save'
-                fig = figure(tools=TOOLS, plot_width=800, plot_height=400, x_axis_type='datetime')
+                fig = figure(tools=TOOLS, plot_width=800, plot_height=400, x_axis_type='datetime', title=contamVars['tname'] or radec)
                 pG, pB, dates, vis_plot = vpa.checkVisPA(contamVars['ra'], contamVars['dec'], tname, fig=fig)
     
                 # Format x axis
@@ -596,8 +598,9 @@ def exoctk_tor2():
                     
                     # Make field simulation
                     contam_cube = fs.sossFieldSim(contamVars['ra'], contamVars['dec'], binComp=contamVars['binComp'])
-                    contam_plot = cf.contam(contam_cube, contamVars['tname'], paRange=[int(contamVars['PAmin']),int(contamVars['PAmax'])], badPA=pB, fig='bokeh')
-
+                    contam_plot = cf.contam(contam_cube, contamVars['tname'] or radec, paRange=[int(contamVars['PAmin']),int(contamVars['PAmax'])], badPA=pB, fig='bokeh')
+                    
+                    
                     # Get scripts
                     contam_js = INLINE.render_js()
                     contam_css = INLINE.render_css()
@@ -612,11 +615,9 @@ def exoctk_tor2():
                         vis_plot=vis_div, vis_script=vis_script, vis_js=vis_js, vis_css=vis_css,\
                         contam_plot=contam_div, contam_script=contam_script, contam_js=contam_js, contam_css=contam_css)
 
-            except IOError:
-                pass
-            # except Exception as e:
-            #     err = 'The following error occurred: ' + str(e)
-            #     return render_template('tor_error.html', tor_err=err)
+            except Exception as e:
+                err = 'The following error occurred: ' + str(e)
+                return render_template('tor_error.html', tor_err=err)
 
     return render_template('tor2.html', contamVars = contamVars)
 
