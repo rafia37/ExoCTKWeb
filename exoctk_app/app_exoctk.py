@@ -43,6 +43,8 @@ from flask import render_template
 from flask import request
 from flask import send_file
 from flask import send_from_directory
+from flask import Response
+from functools import wraps
 
 import ExoCTK
 from ExoCTK.pal import exotransmit
@@ -969,6 +971,51 @@ def fortney_download():
     fortney_data = FORTGRID_DIR
     return send_file(fortney_data, attachment_filename='fortney_grid.db', as_attachment=True)
 
+
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == 'admin' and password == 'secret'
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+    
+@app_exoctk.route('/admin')
+@requires_auth
+def secret_page():
+    
+    tables = [i[0] for i in DB.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+    print(tables)
+    
+    log_tables = []
+    for table in tables:
+        
+        data = log_exoctk.view_log(DB, table)
+        
+        # Add the results to the lists
+        html_table = '\n'.join(data.pformat(max_width=500, html=True)).replace('<table','<table id="myTable" class="table table-striped table-hover"')
+        
+        # Add the table title
+        header = '<h3>{}</h3>'.format(table)
+        html_table = header+html_table
+
+        log_tables.append(html_table)
+    
+    return render_template('admin_page.html', tables=log_tables)
 
 
 ## -- RUN
