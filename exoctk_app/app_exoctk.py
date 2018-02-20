@@ -67,7 +67,7 @@ FORTGRID_DIR = os.environ.get('FORTGRID_DIR')
 EXOCTKLOG_DIR = os.environ.get('EXOCTKLOG_DIR')
 
 # Load the database to log all form submissions
-dbpath = os.path.join(EXOCTKLOG_DIR,'exoctk_log.db')
+dbpath = os.path.realpath(os.path.join(EXOCTKLOG_DIR,'exoctk_log.db'))
 if not os.path.isfile(dbpath):
     log_exoctk.create_db(dbpath, os.path.join(EXOCTKLOG_DIR,'schema.sql'))
 DB = log_exoctk.load_db(dbpath)
@@ -110,7 +110,10 @@ def exoctk_ldc():
 def exoctk_ldc_results():
     
     # Log the form inputs
-    log_exoctk.log_form_input(request.form, 'ldc', DB)
+    try:
+        log_exoctk.log_form_input(request.form, 'ldc', DB)
+    except:
+        pass
         
     # Get the input from the form
     modeldir = request.form['modeldir']
@@ -765,7 +768,10 @@ def _param_validation(args):
         
     # Log the form inputs
     inpt = {k:v for k,v in zip(['eos', 'tp', 'g', 'R_p', 'R_s', 'P', 'Rayleigh'],[eos, tp, g, R_p, R_s, P, Rayleigh])}
-    log_exoctk.log_form_input(inpt, 'exotransmit', DB)
+    try:
+        log_exoctk.log_form_input(inpt, 'exotransmit', DB)
+    except:
+        pass
 
     return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
 
