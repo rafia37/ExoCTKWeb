@@ -502,14 +502,14 @@ def exoctk_tor_results():
             zero_group_error = ""
             if tor_dict['n_group'] == 1:
                 one_group_error = 'Be careful! This only predicts one group, and you may be in danger of oversaturating!'
-            if tor_dict['min_ta_groups'] == 0:
+            if tor_dict['max_ta_groups'] == 0:
                 zero_group_error ='Be careful! This oversaturated the TA in the minimum groups. Consider a different TA setup.'
-            if tor_dict['min_ta_groups'] == -1:
+            if tor_dict['max_ta_groups'] == -1:
                 zero_group_error = 'This object is too faint to reach the required TA SNR in this filter. Consider a different TA setup.'
+                tor_dict['min_sat_ta'] = 0
+                tor_dict['t_duration_ta_max'] = 0
                 tor_dict['max_sat_ta'] = 0
                 tor_dict['t_duration_ta_max'] = 0
-                tor_dict['min_sat_ta'] = 0
-                tor_dict['t_duration_ta_min'] = 0
             if tor_dict['max_sat_prediction'] > tor_dict['sat_max']:
                 one_group_error = 'Hold up! You chose to input your own groups, and you have oversaturated the detector! Proceed with caution!'
             # Do some formatting for a prettier end product
@@ -518,7 +518,7 @@ def exoctk_tor_results():
             tor_dict['band'] = tor_dict['band'].upper()
             tor_dict['mod'] = tor_dict['mod'].upper()
             if tor_dict['ins'] == 'niriss':
-                if tor_dict['subarray_ta'] == 'im':
+                if tor_dict['subarray_ta'] == 'nrm':
                     tor_dict['subarray_ta'] = 'SUBTASOSS -- BRIGHT'
                 else:
                     tor_dict['subarray_ta'] = 'SUBTASOSS -- FAINT'
