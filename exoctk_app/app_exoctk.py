@@ -808,7 +808,7 @@ def fortney_portal():
         flux_planet = np.array(r_lambda**2/rstar**2)
 
         x=wave_planet
-        y=flux_planet
+        y=flux_planet[::-1]
     else:   
         df= pd.read_sql_table('t1000g25_noTiO',db)
         x, y = df['wavelength'], df['radius']**2.0/7e5**2.0
