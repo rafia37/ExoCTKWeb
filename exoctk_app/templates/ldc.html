@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
         <script src='{{ url_for('static',filename='js/jquery-1.12.0.min.js')}}'></script>
+
+{% block content %}
+        
         <script>
             $(document).ready(function(){
             
@@ -25,9 +28,6 @@
                 
             });
         </script>
-
-{% block content %}
-        
 
         <div class='form-group'>
             <h1>Limb Darkening Calculator</h1>
