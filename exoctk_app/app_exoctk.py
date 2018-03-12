@@ -561,9 +561,13 @@ def exoctk_tor2():
         tname = request.form['targetname']
         contamVars['tname'] = tname
         contamVars['ra'], contamVars['dec'] = request.form['ra'], request.form['dec']
-        contamVars['binComp'] = request.form['bininfo']
         contamVars['PAmax'] = request.form['pamax']
         contamVars['PAmin'] = request.form['pamin']
+
+        if request.form['bininfo']!='':
+            contamVars['binComp'] = list(map(float, request.form['bininfo'].split(',')))
+        else:
+            contamVars['binComp'] = request.form['bininfo']
         
         radec = ', '.join([contamVars['ra'], contamVars['dec']])
         
