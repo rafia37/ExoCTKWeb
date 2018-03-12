@@ -23,10 +23,10 @@
                         <th>Transit Observation Time (hours) </th>
                     </tr>
                     <tr>
-                        <td>{{ tor_dict['mag'] }}</td>
-                        <td>{{ tor_dict['band'] }}</td>
-                        <td>{{ tor_dict['mod'] }}</td>
-                        <td>{{ tor_dict['obs_time'] }}</td>
+                        <td>{{ results_dict['mag'] }}</td>
+                        <td>{{ results_dict['band'] }}</td>
+                        <td>{{ results_dict['mod'] }}</td>
+                        <td>{{ results_dict['obs_time'] }}</td>
                     </td>
                 </table>
             </div>
@@ -45,10 +45,10 @@
                             <th> Frame Time (seconds per frame) </th>
                         </tr>
                         <tr>
-                            <td>{{ tor_dict['ins'] }}</td>
-                            <td>{{ tor_dict['filt_ta'] }}</td>
-                            <td>{{ tor_dict['subarray_ta'] }}</td>
-                            <td>{{ tor_dict['ta_t_frame'] }}</td>
+                            <td>{{ results_dict['ins'] }}</td>
+                            <td>{{ results_dict['filt_ta'] }}</td>
+                            <td>{{ results_dict['subarray_ta'] }}</td>
+                            <td>{{ results_dict['ta_t_frame'] }}</td>
                         </tr>
                     </table>
                     </center>
@@ -71,12 +71,12 @@
                         </tr>
                         <tr>
                             <td>1 (fixed for target acquisition)</td>
-                            <td>{{ tor_dict['max_ta_groups'] }}</td>
-                            <td>{{ tor_dict['min_ta_groups'] }}</td>
-                            <td>{{ tor_dict['t_duration_ta_min'] }}</td>
-                            <td>{{ tor_dict['t_duration_ta_max'] }}</td>
-                            <td>{{ tor_dict['max_sat_ta'] }}</td>
-                            <td>{{ tor_dict['min_sat_ta'] }}</td>
+                            <td>{{ results_dict['max_ta_groups'] }}</td>
+                            <td>{{ results_dict['min_ta_groups'] }}</td>
+                            <td>{{ results_dict['t_duration_ta_min'] }}</td>
+                            <td>{{ results_dict['t_duration_ta_max'] }}</td>
+                            <td>{{ results_dict['max_sat_ta'] }}</td>
+                            <td>{{ results_dict['min_sat_ta'] }}</td>
                         </tr>
                     </table>
                     </center>
@@ -99,11 +99,11 @@
                             <th> Frame Time </th>
                         </tr>
                         <tr>
-                            <td>{{ tor_dict['ins'] }}</td>
-                            <td>{{ tor_dict['filt'] }}</td>
-                            <td>{{ tor_dict['subarray'] }}</td>
-                            <td>{{ tor_dict['sat_max']}}</td>
-                            <td>{{ tor_dict['t_frame'] }}</td>
+                            <td>{{ results_dict['ins'] }}</td>
+                            <td>{{ results_dict['filt'] }}</td>
+                            <td>{{ results_dict['subarray'] }}</td>
+                            <td>{{ results_dict['sat_max']}}</td>
+                            <td>{{ results_dict['t_frame'] }}</td>
                         </tr>
                     </table>
                     </center>
@@ -124,13 +124,13 @@
                             <th> Maximum Sat Reached </th> 
                         </tr>
                         <tr>
-                            <td>{{ tor_dict['n_int'] }}</td>
-                            <td>{{ tor_dict['n_group'] }}</td>
-                            <td>{{ tor_dict['t_int'] }}</td>
-                            <td>{{ tor_dict['t_exp'] }}</td>
-                            <td>{{ tor_dict['t_duration'] }}</td>
-                            <td>{{ tor_dict['obs_eff'] }}</td>
-                            <td>{{ tor_dict['max_sat_prediction'] }}</td>  
+                            <td>{{ results_dict['n_int'] }}</td>
+                            <td>{{ results_dict['n_group'] }}</td>
+                            <td>{{ results_dict['t_int'] }}</td>
+                            <td>{{ results_dict['t_exp'] }}</td>
+                            <td>{{ results_dict['t_duration'] }}</td>
+                            <td>{{ results_dict['obs_eff'] }}</td>
+                            <td>{{ results_dict['max_sat_prediction'] }}</td>  
                         </tr>
                     </table>
                     </center>

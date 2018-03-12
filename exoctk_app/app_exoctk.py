@@ -9,12 +9,6 @@ import astropy.constants as constants
 from astropy.extern.six.moves import StringIO
 import astropy.table as at
 import astropy.units as u 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from sqlalchemy import *
-import sqlite3
-
 import bokeh
 from bokeh import mpl
 from bokeh.resources import INLINE
@@ -33,7 +27,6 @@ from bokeh.plotting import figure
 from bokeh.plotting import output_file
 from bokeh.plotting import show
 from bokeh.plotting import save
-
 import flask
 from flask import current_app
 from flask import Flask
@@ -45,14 +38,23 @@ from flask import send_file
 from flask import send_from_directory
 from flask import Response
 from functools import wraps
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sqlalchemy import *
+import sqlite3
 
 import ExoCTK
-from ExoCTK.pal import exotransmit
-from ExoCTK.tor.tor import create_tor_dict
-from ExoCTK.tor import resolve
-from ExoCTK.tor import visibilityPA as vpa
-from ExoCTK.tor import sossFieldSim as fs
-from ExoCTK.tor import sossContamFig as cf
+from ExoCTK import core
+from ExoCTK import svo
+from ExoCTK.contam_visibility import resolve
+from ExoCTK.contam_visibility import visibilityPA as vpa
+from ExoCTK.contam_visibility import contam_visibility as fs
+from ExoCTK.contam_visibility import sossContamFig as cf
+from ExoCTK.forward_models import exotransmit
+from ExoCTK.integrations_groups.integrations_groups import perform_calculation
+from ExoCTK.limb_darkening import limb_darkening_fit
+from ExoCTK.limb_darkening import limb_darkening_plot
 import log_exoctk
 
 ## -- FLASK SET UP (?)
@@ -96,20 +98,20 @@ def index():
     return render_template('index.html')
 
 # Load the LDC page
-@app_exoctk.route('/ldc', methods=['GET', 'POST'])
-def exoctk_ldc():
+@app_exoctk.route('/limb_darkening', methods=['GET', 'POST'])
+def limb_darkening():
     # Get all the available filters
-    filters = ExoCTK.svo.filters()['Band']
+    filters = svo.filters()['Band']
     
     # Make HTML for filters
     filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
                 ' selected' if b=='Kepler.K' else '') for b in filters])
     
-    return render_template('ldc.html', filters=filt_list)
+    return render_template('limb_darkening.html', filters=filt_list)
     
 # Load the LDC results page
-@app_exoctk.route('/ldc_results', methods=['GET', 'POST'])
-def exoctk_ldc_results():
+@app_exoctk.route('/limb_darkening_results', methods=['GET', 'POST'])
+def limb_darkening_results():
     
     # Log the form inputs
     try:
@@ -141,7 +143,7 @@ def exoctk_ldc_results():
         feh = str(request.form['feh']).replace('<', '&lt')
         message = 'Could not calculate limb darkening with the above input parameters.'
         
-        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+        return render_template('limb_darkening_error.html', teff=teff, logg=logg, feh=feh, \
                     band=bandpass or 'None', profile=', '.join(profiles), models=modeldir, \
                     message=message)
                     
@@ -150,25 +152,13 @@ def exoctk_ldc_results():
     wl_min = request.form.get('wave_min')
     wl_max = request.form.get('wave_max')
     
-    # # Make the model grid, caching if necessary
-    # cached = cache.get(modeldir)
-    # if cached:
-    #     model_grid = cached
-    #     print('Fetching grid from cache:',modeldir)
-    # else:
-    #     print('Not cached:',modeldir)
-    #     model_grid = ExoCTK.core.ModelGrid(modeldir, resolution=500)
-    #
-    #     if len(model_grid.data)>0:
-    #         cache.set(modeldir, model_grid, timeout=300)
-    
-    model_grid = ExoCTK.core.ModelGrid(modeldir, resolution=500)
+    model_grid = core.ModelGrid(modeldir, resolution=500)
     
     # No data, redirect to the error page
     if not hasattr(model_grid, 'data'):
         message = 'Could not find a model grid to load. Please check your path.'
     
-        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+        return render_template('limb_darkening_error.html', teff=teff, logg=logg, feh=feh, \
                     band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
                     message=message)
         
@@ -178,14 +168,14 @@ def exoctk_ldc_results():
         
             message = 'Could not calculate limb darkening with the above input parameters.'
         
-            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+            return render_template('limb_darkening_error.html', teff=teff, logg=logg, feh=feh, \
                         band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
                         message=message)
                     
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
-    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass in ['tophat','NIRISS.GR700XD.1']:
+    if bandpass in svo.filters()['Band'] or bandpass in ['tophat','NIRISS.GR700XD.1']:
         
         try:
             
@@ -199,9 +189,9 @@ def exoctk_ldc_results():
             # Manually create GR700XD filter
             if bandpass=='NIRISS.GR700XD.1':
                 p = os.path.join(os.path.dirname(ExoCTK.__file__),'data/filters/NIRISS.GR700XD.1.txt')
-                bandpass = ExoCTK.svo.Filter(bandpass, filter_directory=np.genfromtxt(p, unpack=True), **kwargs)
+                bandpass = svo.Filter(bandpass, filter_directory=np.genfromtxt(p, unpack=True), **kwargs)
             else:
-                bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
+                bandpass = svo.Filter(bandpass, **kwargs)
                 
             min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
             n_bins = bandpass.n_bins
@@ -230,7 +220,7 @@ def exoctk_ldc_results():
         except:
             message = 'Insufficient filter information. Please complete the form and try again!'
         
-            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+            return render_template('limb_darkening_error.html', teff=teff, logg=logg, feh=feh, \
                         band=bandpass or 'None', profile=', '.join(profiles), models=model_grid.path, \
                         message=message)
     else:
@@ -239,14 +229,14 @@ def exoctk_ldc_results():
         
     # Trim the grid to nearby grid points to speed up calculation
     full_rng = [model_grid.Teff_vals,model_grid.logg_vals,model_grid.FeH_vals]
-    trim_rng = ExoCTK.core.find_closest(full_rng, [teff,logg,feh], 
+    trim_rng = core.find_closest(full_rng, [teff,logg,feh], 
                                         n=1, values=True)
                                         
     if not trim_rng:
         
         message = 'Insufficient models grid points to calculate coefficients.'
         
-        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+        return render_template('limb_darkening_error.html', teff=teff, logg=logg, feh=feh, \
                 band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
                 message=message)
     
@@ -254,7 +244,7 @@ def exoctk_ldc_results():
         
         message = 'No limb darkening profiles have been selected. Please select at least one.'
         
-        return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+        return render_template('limb_darkening_error.html', teff=teff, logg=logg, feh=feh, \
                 band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
                 message=message)
     
@@ -268,12 +258,12 @@ def exoctk_ldc_results():
             
             message = 'Insufficient wavelength coverage to calculate coefficients.'
         
-            return render_template('ldc_error.html', teff=teff, logg=logg, feh=feh, \
+            return render_template('limb_darkening_error.html', teff=teff, logg=logg, feh=feh, \
                     band=bp_name, profile=', '.join(profiles), models=model_grid.path,\
                     message=message)
                          
     # Calculate the coefficients for each profile
-    grid_point = ExoCTK.ldc.ldcfit.ldc(teff, logg, feh, model_grid, profiles, 
+    grid_point = limb_darkening_fit.ldc(teff, logg, feh, model_grid, profiles, 
                     mu_min=mu_min, bandpass=bandpass, plot=False, colors=COLORS)
                     
     # Draw the figure
@@ -284,8 +274,8 @@ def exoctk_ldc_results():
         TOOLS = 'box_zoom,box_select,crosshair,resize,reset,hover'
         fig = figure(tools=TOOLS, x_range=Range1d(0, 1), y_range=Range1d(0, 1),
                      plot_width=800, plot_height=400)
-        ld_funcs = [ExoCTK.ldc.ldcfit.ld_profile(p) for p in profiles]
-        ExoCTK.ldc.ldcplot.ld_plot(ld_funcs, grid_point, fig=fig, bin_idx=i)
+        ld_funcs = [limb_darkening_fit.ld_profile(p) for p in profiles]
+        limb_darkening_plot.ld_plot(ld_funcs, grid_point, fig=fig, bin_idx=i)
                                     
         # Plot formatting
         fig.legend.location = 'bottom_right'
@@ -312,7 +302,7 @@ def exoctk_ldc_results():
     for profile in profiles:
         
         # Make LaTeX for polynomials
-        latex = ExoCTK.ldc.ldcfit.ld_profile(profile, latex=True)
+        latex = limb_darkening_fit.ld_profile(profile, latex=True)
         poly = '\({}\)'.format(latex).replace('*','\cdot').replace('\e','e')
         
         # Make the table into LaTeX
@@ -329,123 +319,31 @@ def exoctk_ldc_results():
 
         profile_tables.append(html_table)
         
-    return render_template('ldc_results.html', teff=teff, logg=logg, feh=feh, \
+    return render_template('limb_darkening_results.html', teff=teff, logg=logg, feh=feh, \
                 band=bp_name, mu=mu_eff, profile=', '.join(profiles), \
                 r=r_eff, models=model_grid.path, table=profile_tables, \
                 script=script, plot=div, file_as_string=repr(file_as_string), \
                 filt_plot=filt_plot, filt_script=filt_script, js=js_resources, css=css_resources)
 
 # Load the LDC error page
-@app_exoctk.route('/ldc_error', methods=['GET', 'POST'])
-def exoctk_ldc_error():
-    return render_template('ldc_error.html')
-
-# Load the TOT results page
-@app_exoctk.route('/tot_results', methods=['GET', 'POST'])
-def exoctk_tot_results():
-    
-    exo_dict  = ExoCTK.tot.transit_obs.load_exo_dict()
-    inst_dict = ExoCTK.tot.transit_obs.load_mode_dict('WFC3 G141')
-    
-    # Get the input from the form
-    exo_dict['star']['hmag']      = float(request.form['hmag'])     # H-band magnitude of the system
-    exo_dict['planet']['exopath'] = request.form['exopath']         # filename for model spectrum [wavelength, flux]
-    exo_dict['planet']['w_unit']  = request.form['w_unit']          # wavelength unit (um or nm)
-    exo_dict['planet']['f_unit']  = request.form['f_unit']          # flux unit (fp/f* or (rp/r*)^2)
-    exo_dict['planet']['depth']   = 4.0e-3                          # Approximate transit/eclipse depth for plotting purposes
-    exo_dict['planet']['i']       = float(request.form['i'])        # Orbital inclination in degrees
-    exo_dict['planet']['ars']     = float(request.form['ars'])      # Semi-major axis in units of stellar radii (a/R*)
-    exo_dict['planet']['period']  = float(request.form['period'])   # Orbital period in days
-    
-    # Detector and Observation inputs (Make these form inputs!)
-    exo_dict['calculation'] = 'scale'
-    inst_dict['configuration']['detector']['subarray']     = 'GRISM256'   # Subarray size, GRISM256 or GRISM512
-    inst_dict['configuration']['detector']['nsamp']        = 10           # WFC3 NSAMP, 1..15
-    inst_dict['configuration']['detector']['samp_seq']     = 'SPARS5'     # WFC3 SAMP-SEQ, SPARS5, SPARS10, or SPARS25
-    exo_dict['observation']['transit_duration']            = 4170         # Full transit/eclipse duration in seconds
-    exo_dict['observation']['norbits']                     = 4            # Number of HST orbits per visit
-    exo_dict['observation']['noccultations']               = 5            # Number of transits/eclipses
-    exo_dict['observation']['nchan']                       = 15           # Number of spectrophotometric channels
-    exo_dict['observation']['scanDirection']               = 'Forward'    # Spatial scan direction, Forward or Round Trip
-    exo_dict['observation']['schedulability']              = '30'         # % time HST can observe target (30 or 100)
-    
-    # Run PandExo
-    deptherr, rms, ptsOrbit = ExoCTK.tot.transit_obs.run_pandexo(exo_dict, inst_dict, output_file='wasp43b_G141.p')
-    
-    # Plot the model spectrum with simpulated data and uncertainties
-    specfile   = exo_dict['planet']['exopath']
-    w_unit     = exo_dict['planet']['w_unit']
-    grism      = inst_dict['configuration']['instrument']['disperser']
-    nchan      = exo_dict['observation']['nchan']
-    binspec = ExoCTK.tot.transit_obs.plot_PlanSpec(specfile, w_unit, grism, deptherr, nchan, smooth=10,
-                     labels=['Model Spectrum', 'Simulated Obs.'])
-    
-    # Make the matplotlib plot into a Bokeh plot
-    plt.savefig('static/plots/sim.png')
-    sim_plot = mpl.to_bokeh(plt.gcf())
-    output_file('test_sim.html')
-    save(sim_plot)
-    plt.close()
-    xmin, xmax = (1.125,1.650)
-    ymin, ymax = (np.min(binspec)-2*deptherr, np.max(binspec)+2*deptherr)
-    sim_plot.y_range = Range1d(ymin, ymax)
-    sim_plot.x_range = Range1d(xmin, 6)
-#    sim_plot.y_axis_label = 'Wavelength (micron)'
-    sim_script, sim_plot = components(sim_plot)
-    
-    # Plot the transit curves
-    numorbits = exo_dict['observation']['norbits']
-    depth     = exo_dict['planet']['depth']
-    inc       = exo_dict['planet']['i']
-    aRs       = exo_dict['planet']['ars']
-    period    = exo_dict['planet']['period']
-    windowSize= 20                                  # observation start window size in minutes
-    minphase, maxphase = ExoCTK.tot.transit_obs.calc_StartWindow('eclipse', rms, ptsOrbit, numorbits, depth, inc, 
-                                              aRs, period, windowSize, ecc=0, w=90.)
-                                              
-    # Make the matplotlib plot into a Bokeh plot
-    plt.savefig('static/plots/obs.png')
-    obs_plot = mpl.to_bokeh(plt.gcf())
-    output_file('test_obs.html')
-    save(obs_plot)
-    plt.close()
-    obs_script, obs_plot = components(obs_plot)
-    
-    exo_dict['minphase'] = round(minphase, 4)
-    exo_dict['maxphase'] = round(maxphase, 4)
-
-    sim = open('test_sim.html')
-    lines = sim.readlines()
-    sim_html = "".join(lines)
-    sim.close()
-
-    obs = open('test_obs.html')
-    lines = obs.readlines()
-    obs_html = "".join(lines)
-    print(obs_html)
-    html_dict = {'sim': sim_html, 'obs': obs_html}
-    
-    return render_template('tot_results.html', exo_dict=exo_dict, html_dict=html_dict)
-
-# Load the WIP page
-@app_exoctk.route('/wip')
-def exoctk_wip():
-    return render_template('wip.html')
+@app_exoctk.route('/limb_darkening_error', methods=['GET', 'POST'])
+def limb_darkening_error():
+    return render_template('limb_darkening_error.html')
 
 
-# Load the TOR page
-@app_exoctk.route('/tor', methods=['GET', 'POST'])
-def exoctk_tor():
+# Load the integrations and groups page
+@app_exoctk.route('/integrations_groups', methods=['GET', 'POST'])
+def integrations_groups():
 
     # Print out pandeia sat values
     with open(TOR_PANDEIA_PATH) as f:
         sat_data = json.load(f)['fullwell']
     
-    return render_template('tor.html', sat_data=sat_data)
+    return render_template('integrations_groups.html', sat_data=sat_data)
 
-# Load the TOR results
-@app_exoctk.route('/tor_results', methods=['GET', 'POST'])
-def exoctk_tor_results():
+# Load the integrations and groups results
+@app_exoctk.route('/integrations_groups_results', methods=['GET', 'POST'])
+def integrations_groups_results():
     
     # Read in parameters from form
     params = {}
@@ -453,32 +351,32 @@ def exoctk_tor_results():
         params[key] = dict(request.form)[key][0]
     print(params)
     try:
-        tor_err = 0
+        err = 0
     
         # Specific error catching
         if params['n_group'].isdigit():
             params['n_group'] = int(params['n_group'])
             if params['n_group'] <= 1:
-               tor_err = 'Please try again with at least one group.'
+               err = 'Please try again with at least one group.'
         else:
             if params['n_group'] != 'optimize':
-             tor_err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
+             err = "You need to double check your group input. Please put the number of groups per integration or 'optimize' and we can calculate it for you."
         if (False in [params['mag'].isdigit(), params['obs_time'].isdigit()]) and ('.' not in params['mag']) and ('.' not in params['obs_time']):
-            tor_err = 'Your magnitude or observation time is not a number, or you left the field blank.'
+            err = 'Your magnitude or observation time is not a number, or you left the field blank.'
     
         else:
             if (4.5 > float(params['mag'])) or (12.5 < float(params['mag'])):
-                tor_err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12.5?'
+                err = 'Looks like we do not have useful approximations for your magnitude. Could you give us a number between 5.5-12.5?'
             if float(params['obs_time']) <= 0:
-                tor_err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
+                err = 'You have a negative transit time -- I doubt that will be of much use to anyone.'
     
         if float(params['sat_max']) <= 0:
-            tor_err = 'You put in an underwhelming saturation level. There is something to be said for being too careful...'
+            err = 'You put in an underwhelming saturation level. There is something to be said for being too careful...'
         if (params['sat_mode'] == 'well') and float(params['sat_max']) > 1:
-            tor_err = 'You are saturating past the full well. Is that a good idea?'
+            err = 'You are saturating past the full well. Is that a good idea?'
 
-        if type(tor_err) == str:
-            return render_template('tor_error.html', tor_err=tor_err)
+        if type(err) == str:
+            return render_template('integrations_groups_error.html', err=err)
     
         # Only create the dict if the form input looks okay
         # Make sure everything is the right type
@@ -499,62 +397,59 @@ def exoctk_tor_results():
         params['filt_ta'] = params['{}_filt_ta'.format(ins)]
         params['subarray'] = params['{}_subarray'.format(ins)]
         params['subarray_ta'] = params['{}_subarray_ta'.format(ins)]
-        tor_output = create_tor_dict(params)
+        results = perform_calculation(params)
     
-        if type(tor_output) == dict:
-            tor_dict = tor_output
+        if type(results) == dict:
+            results_dict = results
             one_group_error = ""
             zero_group_error = ""
-            if tor_dict['n_group'] == 1:
+            if results_dict['n_group'] == 1:
                 one_group_error = 'Be careful! This only predicts one group, and you may be in danger of oversaturating!'
-            if tor_dict['max_ta_groups'] == 0:
+            if results_dict['max_ta_groups'] == 0:
                 zero_group_error ='Be careful! This oversaturated the TA in the minimum groups. Consider a different TA setup.'
-            if tor_dict['max_ta_groups'] == -1:
+            if results_dict['max_ta_groups'] == -1:
                 zero_group_error = 'This object is too faint to reach the required TA SNR in this filter. Consider a different TA setup.'
-                tor_dict['min_sat_ta'] = 0
-                tor_dict['t_duration_ta_max'] = 0
-                tor_dict['max_sat_ta'] = 0
-                tor_dict['t_duration_ta_max'] = 0
-            if tor_dict['max_sat_prediction'] > tor_dict['sat_max']:
+                results_dict['min_sat_ta'] = 0
+                results_dict['t_duration_ta_max'] = 0
+                results_dict['max_sat_ta'] = 0
+                results_dict['t_duration_ta_max'] = 0
+            if results_dict['max_sat_prediction'] > results_dict['sat_max']:
                 one_group_error = 'Hold up! You chose to input your own groups, and you have oversaturated the detector! Proceed with caution!'
             # Do some formatting for a prettier end product
-            tor_dict['filt'] = tor_dict['filt'].upper()
-            tor_dict['filt_ta'] = tor_dict['filt_ta'].upper()
-            tor_dict['band'] = tor_dict['band'].upper()
-            tor_dict['mod'] = tor_dict['mod'].upper()
-            if tor_dict['ins'] == 'niriss':
-                if tor_dict['subarray_ta'] == 'nrm':
-                    tor_dict['subarray_ta'] = 'SUBTASOSS -- BRIGHT'
+            results_dict['filt'] = results_dict['filt'].upper()
+            results_dict['filt_ta'] = results_dict['filt_ta'].upper()
+            results_dict['band'] = results_dict['band'].upper()
+            results_dict['mod'] = results_dict['mod'].upper()
+            if results_dict['ins'] == 'niriss':
+                if results_dict['subarray_ta'] == 'nrm':
+                    results_dict['subarray_ta'] = 'SUBTASOSS -- BRIGHT'
                 else:
-                    tor_dict['subarray_ta'] = 'SUBTASOSS -- FAINT'
-            tor_dict['subarray'] = tor_dict['subarray'].upper()
-            tor_dict['subarray_ta'] = tor_dict['subarray_ta'].upper()
+                    results_dict['subarray_ta'] = 'SUBTASOSS -- FAINT'
+            results_dict['subarray'] = results_dict['subarray'].upper()
+            results_dict['subarray_ta'] = results_dict['subarray_ta'].upper()
      
             form_dict = {'miri': 'MIRI', 'nircam': 'NIRCam', 'nirspec': 'NIRSpec', 'niriss': 'NIRISS'}
-            tor_dict['ins'] = form_dict[tor_dict['ins']]
+            results_dict['ins'] = form_dict[results_dict['ins']]
       
-            return render_template('tor_results.html', tor_dict=tor_dict, one_group_error=one_group_error,
+            return render_template('integrations_groups_results.html',
+                    results_dict=results_dict, one_group_error=one_group_error,
                                    zero_group_error=zero_group_error)
         
         else:
-            tor_err = tor_output
-            return render_template('tor_error.html', tor_err=tor_err)
+            err = results 
+            return render_template('integrations_groups_error.html', err=err)
     
     except IOError:
-        tor_err = 'One of you numbers is NOT a number! Please try again!'
+        err = 'One of you numbers is NOT a number! Please try again!'
     except Exception as e:
-        tor_err = 'This is not an error we anticipated, but the error caught was : ' + str(e)
-        return render_template('tor_error.html', tor_err=tor_err)
+        err = 'This is not an error we anticipated, but the error caught was : ' + str(e)
+        return render_template('integrations_groups_error.html', err=err)
 
 
-# Load the TOR background
-@app_exoctk.route('/tor_background')
-def exoctk_tor_background():
-    return render_template('tor_background.html')
 
-# Load the Tor2 page
-@app_exoctk.route('/tor2', methods = ['GET', 'POST'])
-def exoctk_tor2():
+# Load the contam and visibility page
+@app_exoctk.route('/contam_visibility', methods = ['GET', 'POST'])
+def contam_visibility():
 
     contamVars = {}
     if request.method == 'POST':
@@ -575,7 +470,7 @@ def exoctk_tor2():
         if request.form['submit'] == 'Resolve Target':
             contamVars['ra'], contamVars['dec'] = resolve.resolve_target(tname)
             
-            return render_template('tor2.html', contamVars = contamVars)
+            return render_template('contam_visibility.html', contamVars = contamVars)
             
         else:
             
@@ -616,26 +511,16 @@ def exoctk_tor2():
                     contamVars['contam'] = False
                     contam_script = contam_div = contam_js = contam_css = ''
             
-                return render_template('tor2_results.html', contamVars=contamVars, \
+                return render_template('contam_visibility_results.html', contamVars=contamVars, \
                         vis_plot=vis_div, vis_script=vis_script, vis_js=vis_js, vis_css=vis_css,\
                         contam_plot=contam_div, contam_script=contam_script, contam_js=contam_js, contam_css=contam_css)
 
             except Exception as e:
                 err = 'The following error occurred: ' + str(e)
-                return render_template('tor_error.html', tor_err=err)
+                return render_template('integrations_groups_error.html', err=err)
 
-    return render_template('tor2.html', contamVars = contamVars)
+    return render_template('contam_visibility.html', contamVars = contamVars)
 
-# Load filter profiles pages
-@app_exoctk.route('/filter_profile_<ins>')
-def exoctk_filter_profile(ins):
-
-    filt_imgs = glob.glob('static/filter_dat/' + ins + '/' + ins + '*')
-    names = [filt_img[19+len(ins):-4] for filt_img in filt_imgs]
-    print(filt_imgs)
-    filt_imgs = ['../' + filt_img for filt_img in filt_imgs]
-
-    return render_template('tor_filter_profile.html', names=names, filt_imgs=filt_imgs, ins=ins)
     
 # Save the results to file
 @app_exoctk.route('/download', methods=['POST'])
@@ -777,13 +662,13 @@ def _param_validation(args):
 
     return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
 
-@app_exoctk.route('/exotransmit_portal', methods=['GET','POST'])
-def exotransmit_portal():
+@app_exoctk.route('/exotransmit', methods=['GET','POST'])
+def exotransmit():
     """
         Run Exo-Transmit taking inputs from the HTML form and plot the results
         """
     if EXOTRANSMIT_DIR is None:
-        return render_template('tor_error.html', tor_err="There seems to be no directory in place for exo-transmit...")
+        return render_template('integrations_groups_error.html', err="There seems to be no directory in place for exo-transmit...")
     
     # Grab the inputs arguments from the URL
     args = flask.request.args
@@ -812,7 +697,7 @@ def exotransmit_portal():
     script, div = components(fig)
     
     html = flask.render_template(
-                                 'exotransmit_portal.html',
+                                 'exotransmit.html',
                                  plot_script=script,
                                  plot_div=div,
                                  js_resources=js_resources,
@@ -842,8 +727,8 @@ def _param_fort_validation(args):
     rstar_unit = args.get('rstar_unit','R_sun')
     return temp,chem,cloud,pmass,m_unit,reference_radius,r_unit,rstar,rstar_unit
 
-@app_exoctk.route('/fortney_portal', methods=['GET','POST'])
-def fortney_portal():
+@app_exoctk.route('/fortney', methods=['GET','POST'])
+def fortney():
     """
     Pull up Forntey Grid plot the results and download
     """
@@ -936,7 +821,7 @@ def fortney_portal():
     script, div = components(fig)
     
     html = flask.render_template(
-                                 'fortney_portal.html',
+                                 'fortney.html',
                                  plot_script=script,
                                  plot_div=div,
                                  js_resources=js_resources,
@@ -961,9 +846,9 @@ def save_exotransmit_result():
                                       "attachment; filename=exotransmit.dat"})
 
 
-@app_exoctk.route('/tor_download')
-def tor_download():
-    return send_file(TOR_PANDEIA_PATH, mimetype="text/json", attachment_filename='tor_input_data.json', as_attachment=True)
+@app_exoctk.route('/integrations_groups_download')
+def integrations_groups_download():
+    return send_file(TOR_PANDEIA_PATH, mimetype="text/json", attachment_filename='integrations_groups_input_data.json', as_attachment=True)
 
 
 @app_exoctk.route('/fortney_download')
