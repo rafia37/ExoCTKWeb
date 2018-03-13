@@ -49,7 +49,7 @@ from ExoCTK import core
 from ExoCTK import svo
 from ExoCTK.contam_visibility import resolve
 from ExoCTK.contam_visibility import visibilityPA as vpa
-from ExoCTK.contam_visibility import contam_visibility as fs
+from ExoCTK.contam_visibility import sossFieldSim as fs
 from ExoCTK.contam_visibility import sossContamFig as cf
 from ExoCTK.forward_models import exotransmit
 from ExoCTK.integrations_groups.integrations_groups import perform_calculation
@@ -66,7 +66,7 @@ app_exoctk.config['CACHE_TYPE'] = 'null'
 
 EXOTRANSMIT_DIR = os.environ.get('EXOTRANSMIT_DIR')
 MODELGRID_DIR = os.environ.get('MODELGRID_DIR')
-TOR_PANDEIA_PATH = os.environ.get('tor_pandeia_path')
+INTEGRATIONS_DIR = os.environ.get('INTEGRATIONS_DIR')
 FORTGRID_DIR = os.environ.get('FORTGRID_DIR')
 EXOCTKLOG_DIR = os.environ.get('EXOCTKLOG_DIR')
 
@@ -336,7 +336,7 @@ def limb_darkening_error():
 def integrations_groups():
 
     # Print out pandeia sat values
-    with open(TOR_PANDEIA_PATH) as f:
+    with open(INTEGRATIONS_DIR) as f:
         sat_data = json.load(f)['fullwell']
     
     return render_template('integrations_groups.html', sat_data=sat_data)
@@ -390,7 +390,7 @@ def integrations_groups_results():
                 params[key] = str(params[key])
     
         # Also get the data path in there
-        params['infile'] = TOR_PANDEIA_PATH 
+        params['infile'] = INTEGRATIONS_DIR 
     
         # Rename the ins-mode params to more general counterparts
         params['filt'] = params['{}_filt'.format(ins)]
@@ -848,7 +848,7 @@ def save_exotransmit_result():
 
 @app_exoctk.route('/integrations_groups_download')
 def integrations_groups_download():
-    return send_file(TOR_PANDEIA_PATH, mimetype="text/json", attachment_filename='integrations_groups_input_data.json', as_attachment=True)
+    return send_file(INTEGRATIONS_DIR, mimetype="text/json", attachment_filename='integrations_groups_input_data.json', as_attachment=True)
 
 
 @app_exoctk.route('/fortney_download')
