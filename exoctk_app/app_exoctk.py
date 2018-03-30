@@ -1007,16 +1007,16 @@ def secret_page():
     
     log_tables = []
     for table in tables:
-
+        
         try:
             data = log_exoctk.view_log(DB, table)
-            
+        
             # Add the results to the lists
             html_table = '\n'.join(data.pformat(max_width=500, html=True)).replace('<table','<table id="myTable" class="table table-striped table-hover"')
-            
+        
         except:
-            html_table = ''
-            
+            html_table = '<p>No data to display</p>'
+
         # Add the table title
         header = '<h3>{}</h3>'.format(table)
         html_table = header+html_table
