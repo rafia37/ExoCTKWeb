@@ -55,6 +55,8 @@ from ExoCTK.tor import sossFieldSim as fs
 from ExoCTK.tor import sossContamFig as cf
 import log_exoctk
 
+from svo_filters import svo
+
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
 
@@ -71,7 +73,7 @@ EXOCTKLOG_DIR = os.environ.get('EXOCTKLOG_DIR')
 # Load the database to log all form submissions
 dbpath = os.path.realpath(os.path.join(EXOCTKLOG_DIR,'exoctk_log.db'))
 if not os.path.isfile(dbpath):
-    log_exoctk.create_db(dbpath, os.path.join(EXOCTKLOG_DIR,'schema.sql'))
+    log_exoctk.create_db(dbpath)
 DB = log_exoctk.load_db(dbpath)
 
 # register the cache instance and binds it on to your app
@@ -99,7 +101,7 @@ def index():
 @app_exoctk.route('/ldc', methods=['GET', 'POST'])
 def exoctk_ldc():
     # Get all the available filters
-    filters = ExoCTK.svo.filters()['Band']
+    filters =  svo.filters()['Band']
     
     # Make HTML for filters
     filt_list = '\n'.join(['<option value="{0}"{1}> {0}</option>'.format(b,\
@@ -185,7 +187,7 @@ def exoctk_ldc_results():
     # Trim the grid to the correct wavelength
     # to speed up calculations, if a bandpass is given
     min_max = model_grid.wave_rng
-    if bandpass in ExoCTK.svo.filters()['Band'] or bandpass in ['tophat','NIRISS.GR700XD.1']:
+    if bandpass in  svo.filters()['Band'] or bandpass in ['tophat','NIRISS.GR700XD.1']:
         
         try:
             
@@ -199,9 +201,9 @@ def exoctk_ldc_results():
             # Manually create GR700XD filter
             if bandpass=='NIRISS.GR700XD.1':
                 p = os.path.join(os.path.dirname(ExoCTK.__file__),'data/filters/NIRISS.GR700XD.1.txt')
-                bandpass = ExoCTK.svo.Filter(bandpass, filter_directory=np.genfromtxt(p, unpack=True), **kwargs)
+                bandpass =  svo.Filter(bandpass, filter_directory=np.genfromtxt(p, unpack=True), **kwargs)
             else:
-                bandpass = ExoCTK.svo.Filter(bandpass, **kwargs)
+                bandpass =  svo.Filter(bandpass, **kwargs)
                 
             min_max = (bandpass.WavelengthMin,bandpass.WavelengthMax)
             n_bins = bandpass.n_bins
