@@ -658,7 +658,7 @@ def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
     os.mkdir(now)
     os.chdir(now)
     output_file = os.path.relpath('result.dat', start=EXOTRANSMIT_DIR)
-    exotransmit.exotransmit(base_dir=EXOTRANSMIT_DIR,
+    exotransmit(base_dir=EXOTRANSMIT_DIR,
                             EOS_file=os.path.join('/EOS', eos),
                             T_P_file=os.path.join('/T_P', tp),
                             g=g,
