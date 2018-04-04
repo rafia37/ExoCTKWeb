@@ -7,7 +7,7 @@ import sqlite3
 import datetime
 import astropy.table as at
 
-def create_db(dbpath, schema, overwrite=True):
+def create_db(dbpath, overwrite=True):
     """
     Create a new database at the given dbpath
 
@@ -25,8 +25,14 @@ def create_db(dbpath, schema, overwrite=True):
         if os.path.isfile(dbpath) and overwrite:
             os.system('rm {}'.format(dbpath))
             
-        os.system("cat {} | sqlite3 {}".format(schema, dbpath))
-            
+        # os.system("cat {} | sqlite3 {}".format(schema, dbpath))
+        
+        os.system("sqlite3 {}".format(dbpath))
+        os.system("CREATE TABLE 'exotransmit' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'eos' TEXT, 'tp' TEXT, 'g' REAL, 'R_p' REAL, 'R_s' REAL, 'P' REAL, 'Rayleigh' REAL, PRIMARY KEY(id));")
+        os.system("CREATE TABLE 'tor' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'ins' TEXT, 'mag' REAL, 'groups' TEXT, 'amps' INTEGER, 'subarray' TEXT, 'sat_lvl' REAL, 'sat' TEXT, 'T' REAL, 'n_reset' INTEGER, 'band' TEXT, 'filt' TEXT, PRIMARY KEY(id));")
+        os.system("CREATE TABLE 'ldc' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'n_bins' INTEGER, 'teff' REAL, 'logg' REAL, 'feh' REAL, 'bandpass' TEXT, 'modeldir' TEXT, 'wave_min' REAL, 'mu_min' REAL, 'wave_max' REAL, 'local_files' TEXT, 'pixels_per_bin' INTEGER, 'uniform' TEXT, 'linear' TEXT, 'quadratic' TEXT, 'squareroot' TEXT, 'logarithmic' TEXT, 'exponential' TEXT, 'three_parameter' TEXT, 'four_parameter' TEXT, PRIMARY KEY(id));")
+        os.system(".quit")
+        
         if os.path.isfile(dbpath):
             print("ExoCTK database created at {}".format(dbpath))
         
