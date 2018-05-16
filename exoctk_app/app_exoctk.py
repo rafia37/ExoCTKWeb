@@ -663,7 +663,7 @@ def _param_validation(args):
     return eos, tp, g, R_p, R_s, P, Rayleigh, invalid
 
 @app_exoctk.route('/exotransmit', methods=['GET','POST'])
-def exotransmit():
+def exotransmit_portal():
     """
         Run Exo-Transmit taking inputs from the HTML form and plot the results
         """
