@@ -20,23 +20,31 @@ def create_db(dbpath, overwrite=True):
     overwrite: bool
         Overwrite dbpath if it already exists
     """
-    if dbpath.endswith('.db'):
+    # Make sure the path is valid
+    if not os.path.exists(os.path.dirname(dbpath)):
+        raise IOError('Not a valid path:',dbpath)
         
-        if os.path.isfile(dbpath) and overwrite:
-            os.system('rm {}'.format(dbpath))
-
-        conn = sqlite3.connect(dbpath)
-        cur = conn.cursor()
-        cur.execute("CREATE TABLE 'exotransmit' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'eos' TEXT, 'tp' TEXT, 'g' REAL, 'R_p' REAL, 'R_s' REAL, 'P' REAL, 'Rayleigh' REAL, PRIMARY KEY(id));")
-        cur.execute("CREATE TABLE 'tor' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'ins' TEXT, 'mag' REAL, 'groups' TEXT, 'amps' INTEGER, 'subarray' TEXT, 'sat_lvl' REAL, 'sat' TEXT, 'T' REAL, 'n_reset' INTEGER, 'band' TEXT, 'filt' TEXT, PRIMARY KEY(id));")
-        cur.execute("CREATE TABLE 'ldc' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'n_bins' INTEGER, 'teff' REAL, 'logg' REAL, 'feh' REAL, 'bandpass' TEXT, 'modeldir' TEXT, 'wave_min' REAL, 'mu_min' REAL, 'wave_max' REAL, 'local_files' TEXT, 'pixels_per_bin' INTEGER, 'uniform' TEXT, 'linear' TEXT, 'quadratic' TEXT, 'squareroot' TEXT, 'logarithmic' TEXT, 'exponential' TEXT, 'three_parameter' TEXT, 'four_parameter' TEXT, PRIMARY KEY(id));")
-        conn.close()
+    # Make sure the file is a .db
+    if not dbpath.endswith('.db'):
+        raise IOError('Please provide a path and file name with a .db file extension')
         
-        if os.path.isfile(dbpath):
-            print("ExoCTK database created at {}".format(dbpath))
-        
-    else:
-        print("Please provide a path and file name with a .db file extension, e.g. /Users/<username>/Desktop/test.db")
+    # Remove existing file if overwriting
+    if os.path.isfile(dbpath) and overwrite:
+        os.system('rm {}'.format(dbpath))
+    
+    # Make the new file
+    os.system('touch {}'.format(dbpath))
+    
+    # Generate the tables
+    conn = sqlite3.connect(dbpath)
+    cur = conn.cursor()
+    cur.execute("CREATE TABLE 'exotransmit' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'eos' TEXT, 'tp' TEXT, 'g' REAL, 'R_p' REAL, 'R_s' REAL, 'P' REAL, 'Rayleigh' REAL, PRIMARY KEY(id));")
+    cur.execute("CREATE TABLE 'tor' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'ins' TEXT, 'mag' REAL, 'groups' TEXT, 'amps' INTEGER, 'subarray' TEXT, 'sat_lvl' REAL, 'sat' TEXT, 'T' REAL, 'n_reset' INTEGER, 'band' TEXT, 'filt' TEXT, PRIMARY KEY(id));")
+    cur.execute("CREATE TABLE 'ldc' ( 'id' INTEGER NOT NULL UNIQUE, 'date' TEXT NOT NULL, 'n_bins' INTEGER, 'teff' REAL, 'logg' REAL, 'feh' REAL, 'bandpass' TEXT, 'modeldir' TEXT, 'wave_min' REAL, 'mu_min' REAL, 'wave_max' REAL, 'local_files' TEXT, 'pixels_per_bin' INTEGER, 'uniform' TEXT, 'linear' TEXT, 'quadratic' TEXT, 'squareroot' TEXT, 'logarithmic' TEXT, 'exponential' TEXT, 'three_parameter' TEXT, 'four_parameter' TEXT, PRIMARY KEY(id));")
+    conn.close()
+    
+    if os.path.isfile(dbpath):
+        print("ExoCTK database created at {}".format(dbpath))
 
 def load_db(dbpath):
     """
