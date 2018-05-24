@@ -73,18 +73,18 @@
                         <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Observation Planning <span class="caret"></span></a>
                          <ul class="dropdown-menu">
-                                <li><a href="tor">Integrations Calculator</a></li>
-                                <li><a href="tor2">Contamination Overlap</a></li>
+                                <li><a href="integrations_groups">Groups and Integrations Calculator</a></li>
+                                <li><a href="contam_visibility">Contamination Overlap</a></li>
                         </ul>
                         </li>
                         <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Forward Modeling <span class="caret"></span></a>
                          <ul class="dropdown-menu">
-                                <li><a href="exotransmit_portal">Exo-Transmit</a></li>
-                                <li><a href="fortney_portal">Fortney Grid</a></li>
+                                <li><a href="exotransmit">Exo-Transmit</a></li>
+                                <li><a href="fortney">Fortney Grid</a></li>
                         </ul>
                         </li>
-                        <li><a href="ldc">Limb Darkening Calculator</a></li>
+                        <li><a href="limb_darkening">Limb Darkening Calculator</a></li>
                         
                         <li class="dropdown">
                         <a tabindex="0" href="https://exoctk.stsci.edu" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" data-submenu>PandExo <span class="caret"></span></a>
@@ -112,7 +112,7 @@
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
                             aria-haspopup="true" aria-expanded="false">ExoCTK Data <span class="caret"></span></a>
                      <ul class="dropdown-menu">
-                         <li><a href="{{ url_for('tor_download') }}">Integrations Calculator</a></li>
+                         <li><a href="{{ url_for('integrations_groups_download') }}">Integrations Calculator</a></li>
                          <li><a href="https://github.com/elizakempton/Exo_Transmit">Exo-Transmit</a></li>
                          <li><a href="{{ url_for('fortney_download') }}">Fortney Grid</a></li>
                      </ul>
