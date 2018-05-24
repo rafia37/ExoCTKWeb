@@ -57,6 +57,7 @@ from ExoCTK.limb_darkening import limb_darkening_fit
 from ExoCTK.limb_darkening import limb_darkening_plot
 import log_exoctk
 
+
 ## -- FLASK SET UP (?)
 app_exoctk = Flask(__name__)
 
@@ -73,7 +74,7 @@ EXOCTKLOG_DIR = os.environ.get('EXOCTKLOG_DIR')
 # Load the database to log all form submissions
 dbpath = os.path.realpath(os.path.join(EXOCTKLOG_DIR,'exoctk_log.db'))
 if not os.path.isfile(dbpath):
-    log_exoctk.create_db(dbpath, os.path.join(EXOCTKLOG_DIR,'schema.sql'))
+    log_exoctk.create_db(dbpath)
 DB = log_exoctk.load_db(dbpath)
 
 # register the cache instance and binds it on to your app
@@ -456,9 +457,13 @@ def contam_visibility():
         tname = request.form['targetname']
         contamVars['tname'] = tname
         contamVars['ra'], contamVars['dec'] = request.form['ra'], request.form['dec']
-        contamVars['binComp'] = request.form['bininfo']
         contamVars['PAmax'] = request.form['pamax']
         contamVars['PAmin'] = request.form['pamin']
+
+        if request.form['bininfo']!='':
+            contamVars['binComp'] = list(map(float, request.form['bininfo'].split(',')))
+        else:
+            contamVars['binComp'] = request.form['bininfo']
         
         radec = ', '.join([contamVars['ra'], contamVars['dec']])
         
@@ -539,7 +544,7 @@ def exotransmit_run(eos, tp, g, R_p, R_s, P, Rayleigh):
     os.mkdir(now)
     os.chdir(now)
     output_file = os.path.relpath('result.dat', start=EXOTRANSMIT_DIR)
-    exotransmit.exotransmit(base_dir=EXOTRANSMIT_DIR,
+    exotransmit(base_dir=EXOTRANSMIT_DIR,
                             EOS_file=os.path.join('/EOS', eos),
                             T_P_file=os.path.join('/T_P', tp),
                             g=g,
@@ -889,11 +894,15 @@ def secret_page():
     log_tables = []
     for table in tables:
         
-        data = log_exoctk.view_log(DB, table)
+        try:
+            data = log_exoctk.view_log(DB, table)
         
-        # Add the results to the lists
-        html_table = '\n'.join(data.pformat(max_width=500, html=True)).replace('<table','<table id="myTable" class="table table-striped table-hover"')
+            # Add the results to the lists
+            html_table = '\n'.join(data.pformat(max_width=500, html=True)).replace('<table','<table id="myTable" class="table table-striped table-hover"')
         
+        except:
+            html_table = '<p>No data to display</p>'
+
         # Add the table title
         header = '<h3>{}</h3>'.format(table)
         html_table = header+html_table
